@@ -1,0 +1,251 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-bg: #000000;
+  --color-surface: #111111;
+  --color-surface-2: #1a1a1a;
+  --color-accent: #c8f135;
+  --color-muted: #888888;
+  --color-border-custom: rgba(255, 255, 255, 0.1);
+}
+
+@layer base {
+  * {
+    @apply border-border-custom;
+  }
+  body {
+    @apply bg-bg text-white font-mono selection:bg-accent selection:text-black antialiased uppercase;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans uppercase;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+}
+
+@layer utilities {
+  .logo {
+    font-family: "Barlow", sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .scan-lines {
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.02) 0px,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    background-size: 100% 2px;
+  }
+
+  .bracket-btn {
+    @apply relative border border-white px-8 py-4 font-mono font-bold tracking-[0.15em] transition-all hover:bg-accent/15 active:scale-95;
+  }
+
+  .bracket-btn::before,
+  .bracket-btn::after,
+  .bracket-btn-inner::before,
+  .bracket-btn-inner::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: currentColor;
+    border-style: solid;
+    pointer-events: none;
+  }
+
+  /* Top Left */
+  .bracket-btn::before {
+    top: -1px;
+    left: -1px;
+    border-width: 1px 0 0 1px;
+  }
+
+  /* Bottom Right */
+  .bracket-btn::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 1px 1px 0;
+  }
+
+  /* Top Right */
+  .bracket-btn-inner::before {
+    top: -1px;
+    right: -1px;
+    border-width: 1px 1px 0 0;
+  }
+
+  /* Bottom Left */
+  .bracket-btn-inner::after {
+    bottom: -1px;
+    left: -1px;
+    border-width: 0 0 1px 1px;
+  }
+
+  .section-label {
+    @apply inline-flex items-center px-4 py-1 border border-white/20 relative font-mono text-[10px] tracking-[0.2em] text-muted;
+  }
+
+  .section-label::before,
+  .section-label::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 100%;
+    border-color: white;
+    border-style: solid;
+    top: 0;
+  }
+
+  .section-label::before {
+    left: -1px;
+    border-width: 1px 0 1px 1px;
+  }
+
+  .section-label::after {
+    right: -1px;
+    border-width: 1px 1px 1px 0;
+  }
+
+  .grid-dots {
+    background-image: radial-gradient(circle, var(--color-border-custom) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
+  .grid-dots-animated {
+    background-image: radial-gradient(circle, var(--color-border-custom) 1px, transparent 1px);
+    background-size: 30px 30px;
+    animation: drift 60s linear infinite;
+  }
+
+  .radial-fade {
+    background: radial-gradient(circle at center, transparent 0%, var(--color-bg) 100%);
+  }
+
+  /* Shimmer effect for skeleton loaders */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.03) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Scroll reveal animations */
+  .reveal-up {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .reveal-up.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Headline letter animation */
+  .letter-reveal {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(100%);
+    animation: letterUp 0.5s cubic-bezier(0.2, 0, 0.2, 1) forwards;
+  }
+
+  /* Background gradient shift */
+  .animate-gradient {
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+  }
+}
+
+@keyframes drift {
+  from { background-position: 0 0; }
+  to { background-position: 1000px 1000px; }
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@keyframes letterUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 5px rgba(200, 241, 53, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(200, 241, 53, 0.4); }
+  100% { box-shadow: 0 0 5px rgba(200, 241, 53, 0.2); }
+}
+
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-black;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-surface-2;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-accent;
+}
