@@ -7,8 +7,18 @@ import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize Gemini
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Lazy-load Gemini to prevent top-level initialization errors
+let genAI: any = null;
+const getAI = () => {
+  if (!genAI) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined. Please set it in the settings.");
+    }
+    genAI = new GoogleGenAI({ apiKey });
+  }
+  return genAI;
+};
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -109,7 +119,7 @@ export default function Documents() {
       Types: privacy_policy, terms_of_service, cookie_policy, eula, acceptable_use, disclaimer, return_policy, accessibility_statement.
       Ensure the content is professional, legally robust, and formatted with <h1>, <h2>, <p>, and <ul> tags. Add an effective date of ${new Date().toLocaleDateString()}.`;
 
-      const aiResponse = await ai.models.generateContent({
+      const aiResponse = await getAI().models.generateContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
       });
