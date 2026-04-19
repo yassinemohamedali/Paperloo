@@ -29,8 +29,7 @@ export default function Onboarding() {
       const { error: profileError } = await (supabase
         .from('profiles') as any)
         .update({ 
-          agency_name: agencyName,
-          onboarding_completed: true 
+          agency_name: agencyName
         } as any)
         .eq('id', user?.id as string);
       

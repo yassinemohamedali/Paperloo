@@ -63,7 +63,7 @@ export default function Billing() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, agency_name, plan')
         .eq('id', user?.id as string)
         .single();
       if (error) throw error;

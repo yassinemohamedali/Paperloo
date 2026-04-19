@@ -20,7 +20,7 @@ export default function Settings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, agency_name, logo_url, plan, white_label_enabled, weekly_digest_enabled, review_interval_days')
         .eq('id', user?.id as string)
         .single();
       if (error) throw error;

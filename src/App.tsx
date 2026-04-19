@@ -52,9 +52,10 @@ const OnboardingGuard = ({ children }: { children: React.ReactNode }) => {
     queryKey: ['onboarding-check', user?.id],
     queryFn: async () => {
       // 1. Get profile
+      // Avoid select('*') to prevent errors from missing columns that might be in types but not DB
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, agency_name, plan')
         .eq('id', user?.id as string)
         .maybeSingle();
       
@@ -83,13 +84,10 @@ const OnboardingGuard = ({ children }: { children: React.ReactNode }) => {
   const profile = data?.profile;
   const hasSites = data?.hasSites;
   
-  // Robust check: Onboarding is complete if:
-  // - The database flag is true
-  // - OR they already have sites (must have finished step 3)
-  // - OR the agency name is set (they finished step 1)
-  // This safeguards against missing columns or stale cache
+  // Robust check: Onboarding is complete if they already have sites (finished step 3)
+  // or if the agency name is set (finished step 1).
+  // This safeguards against missing columns or stale cache.
   const isComplete = Boolean(
-    (profile && (profile as any).onboarding_completed) || 
     hasSites || 
     (profile && (profile as any).agency_name)
   );

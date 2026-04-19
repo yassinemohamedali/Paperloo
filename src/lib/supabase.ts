@@ -21,7 +21,6 @@ export interface Database {
           white_label_enabled: boolean
           weekly_digest_enabled: boolean
           review_interval_days: number
-          onboarding_completed: boolean
           created_at: string
         }
         Insert: {
@@ -33,7 +32,6 @@ export interface Database {
           white_label_enabled?: boolean
           weekly_digest_enabled?: boolean
           review_interval_days?: number
-          onboarding_completed?: boolean
           created_at?: string
         }
         Update: {
@@ -45,7 +43,6 @@ export interface Database {
           white_label_enabled?: boolean
           weekly_digest_enabled?: boolean
           review_interval_days?: number
-          onboarding_completed?: boolean
           created_at?: string
         }
       }
