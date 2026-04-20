@@ -58,6 +58,7 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
   const embedCode = `<script src="${window.location.origin}/api/paperloo.js?siteId=${siteId}" async></script>`;
 
   if (isLoading) return <div className="animate-pulse h-64 bg-surface rounded" />;
+  if (!config) return <div className="p-8 text-center text-muted uppercase tracking-widest">CONFIGURATION NOT FOUND</div>;
 
   return (
     <div className="space-y-8">
@@ -93,7 +94,7 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
                   {['bottom-bar', 'top-bar', 'bottom-left', 'bottom-right', 'centered-modal'].map(pos => (
                     <button
                       key={pos}
-                      onClick={() => saveMutation.mutate({ ...config, position: pos })}
+                      onClick={() => config && saveMutation.mutate({ ...config, position: pos })}
                       className={cn(
                         "p-3 border text-[10px] font-bold uppercase tracking-widest transition-all",
                         config.position === pos ? "border-accent bg-accent/5 text-accent" : "border-white/10 hover:border-white/30"
@@ -111,10 +112,10 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
                   {['light', 'dark', 'auto'].map(t => (
                     <button
                       key={t}
-                      onClick={() => saveMutation.mutate({ ...config, theme: t })}
+                      onClick={() => config && saveMutation.mutate({ ...config, theme: t })}
                       className={cn(
                         "flex-1 p-3 border text-[10px] font-bold uppercase tracking-widest transition-all",
-                        config.theme === t ? "border-accent bg-accent/5 text-accent" : "border-white/10 hover:border-white/30"
+                        config?.theme === t ? "border-accent bg-accent/5 text-accent" : "border-white/10 hover:border-white/30"
                       )}
                     >
                       {t}
@@ -128,11 +129,11 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
                 <div className="flex gap-4 items-center">
                   <input 
                     type="color" 
-                    value={config.primary_color}
-                    onChange={(e) => saveMutation.mutate({ ...config, primary_color: e.target.value })}
+                    value={config?.primary_color || '#c8f135'}
+                    onChange={(e) => config && saveMutation.mutate({ ...config, primary_color: e.target.value })}
                     className="h-10 w-20 bg-transparent border border-white/10 cursor-pointer"
                   />
-                  <span className="text-xs font-mono uppercase">{config.primary_color}</span>
+                  <span className="text-xs font-mono uppercase">{config?.primary_color}</span>
                 </div>
               </div>
             </div>
@@ -144,16 +145,16 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted">ACCEPT BUTTON</label>
                   <input 
-                    value={config.accept_text}
-                    onChange={(e) => saveMutation.mutate({ ...config, accept_text: e.target.value })}
+                    value={config?.accept_text || ''}
+                    onChange={(e) => config && saveMutation.mutate({ ...config, accept_text: e.target.value })}
                     className="w-full bg-transparent border-b border-white/20 py-2 text-xs focus:border-accent outline-none uppercase"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted">REJECT BUTTON</label>
                   <input 
-                    value={config.reject_text}
-                    onChange={(e) => saveMutation.mutate({ ...config, reject_text: e.target.value })}
+                    value={config?.reject_text || ''}
+                    onChange={(e) => config && saveMutation.mutate({ ...config, reject_text: e.target.value })}
                     className="w-full bg-transparent border-b border-white/20 py-2 text-xs focus:border-accent outline-none uppercase"
                   />
                 </div>
@@ -229,33 +230,35 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
           <div className="absolute inset-0 scan-lines opacity-10" />
           <p className="text-muted text-[10px] font-bold uppercase tracking-widest">CLIENT SITE PREVIEW</p>
           
-          {/* Mock Banner */}
-          <div className={cn(
-            "absolute p-6 bg-surface border border-white/10 shadow-2xl space-y-4 transition-all duration-500",
-            config.position === 'bottom-bar' ? "bottom-0 left-0 right-0 border-x-0 border-b-0" :
-            config.position === 'top-bar' ? "top-0 left-0 right-0 border-x-0 border-t-0" :
-            config.position === 'bottom-left' ? "bottom-6 left-6 w-80" :
-            config.position === 'bottom-right' ? "bottom-6 right-6 w-80" :
-            "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96"
-          )}>
-            <div className="space-y-2">
-              <h6 className="text-xs font-black uppercase tracking-widest">WE VALUE YOUR PRIVACY</h6>
-              <p className="text-[10px] text-muted leading-relaxed uppercase tracking-wider">
-                WE USE COOKIES TO ENHANCE YOUR BROWSING EXPERIENCE AND ANALYZE OUR TRAFFIC.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-white text-black hover:bg-accent transition-colors">
-                {config.accept_text}
-              </button>
-              <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest border border-white/20 hover:bg-white/5 transition-colors">
-                {config.reject_text}
-              </button>
-              <button className="text-[10px] font-black uppercase tracking-widest text-muted hover:text-white transition-colors">
-                {config.manage_text}
-              </button>
-            </div>
-          </div>
+            {/* Mock Banner */}
+            {config && (
+              <div className={cn(
+                "absolute p-6 bg-surface border border-white/10 shadow-2xl space-y-4 transition-all duration-500",
+                config.position === 'bottom-bar' ? "bottom-0 left-0 right-0 border-x-0 border-b-0" :
+                config.position === 'top-bar' ? "top-0 left-0 right-0 border-x-0 border-t-0" :
+                config.position === 'bottom-left' ? "bottom-6 left-6 w-80" :
+                config.position === 'bottom-right' ? "bottom-6 right-6 w-80" :
+                "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96"
+              )}>
+                <div className="space-y-2">
+                  <h6 className="text-xs font-black uppercase tracking-widest">WE VALUE YOUR PRIVACY</h6>
+                  <p className="text-[10px] text-muted leading-relaxed uppercase tracking-wider">
+                    WE USE COOKIES TO ENHANCE YOUR BROWSING EXPERIENCE AND ANALYZE OUR TRAFFIC.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-white text-black hover:bg-accent transition-colors">
+                    {config.accept_text}
+                  </button>
+                  <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest border border-white/20 hover:bg-white/5 transition-colors">
+                    {config.reject_text}
+                  </button>
+                  <button className="text-[10px] font-black uppercase tracking-widest text-muted hover:text-white transition-colors">
+                    {config.manage_text}
+                  </button>
+                </div>
+              </div>
+            )}
         </div>
       )}
 

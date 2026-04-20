@@ -30,6 +30,17 @@ export default function Certificate() {
   </div>;
 
   const site = (certificate as any).sites as Site;
+  
+  if (!site) return (
+    <div className="h-screen w-screen bg-bg flex items-center justify-center text-center p-8 font-mono">
+      <div className="space-y-4">
+        <h1 className="text-4xl font-sans font-extrabold uppercase tracking-widest text-red-500">CERTIFICATE CORRUPT</h1>
+        <p className="text-muted text-xs uppercase tracking-widest leading-relaxed">THE SITE DATA ASSOCIATED WITH THIS CERTIFICATE IS MISSING OR NO LONGER EXISTS.</p>
+        <button onClick={() => window.history.back()} className="text-accent underline text-xs font-bold uppercase tracking-widest">GO BACK</button>
+      </div>
+    </div>
+  );
+
   const isExpired = new Date(certificate.valid_until) < new Date();
 
   const handleDownload = () => {

@@ -108,10 +108,14 @@ export default function Questionnaire() {
     try {
       if (!id) throw new Error("ID not found");
 
-      await generateDocuments(id, 'en');
+      const results = await generateDocuments(id, 'en');
 
-      toast.success('Documents generated successfully!');
-      navigate(`/sites/${id}/documents`);
+      if (results && results.length > 0) {
+        toast.success(`Generated ${results.length} documents successfully!`);
+        navigate(`/sites/${id}/documents`);
+      } else {
+        toast.error('AI generation started but no documents were saved. Check your Groq API key and try again.');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to generate documents');
       console.error(error);

@@ -54,13 +54,22 @@ export default function Documents() {
   const { data: documents = [], isLoading: docsLoading } = useQuery<Document[]>({
     queryKey: ['documents', id],
     queryFn: async () => {
+      console.log('Fetching documents for site:', id);
       const { data, error } = await supabase
         .from('documents')
         .select('*')
-        .eq('site_id', id as string)
-        .eq('is_active', true);
-      if (error) throw error;
-      return data || [];
+        .eq('site_id', id as string);
+      
+      if (error) {
+        console.error('Fetch documents error:', error);
+        throw error;
+      }
+      
+      console.log(`Documents fetch success. Found total: ${data?.length || 0}`);
+      const activeDocs = (data || []).filter(d => d.is_active);
+      console.log(`Active documents: ${activeDocs.length}`);
+      
+      return activeDocs as any;
     },
     enabled: !!id,
   });
@@ -98,10 +107,14 @@ export default function Documents() {
       const language = lang || selectedLanguage;
       return await generateDocuments(id, language);
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ['documents', id] });
       queryClient.invalidateQueries({ queryKey: ['document-versions', id] });
-      toast.success('Documents regenerated and versioned');
+      if (results && results.length > 0) {
+        toast.success(`Regenerated ${results.length} documents successfully!`);
+      } else {
+        toast.error('Regeneration failed to save any documents. Check your Groq API key.');
+      }
     },
     onError: (error: any) => toast.error(error.message),
   });

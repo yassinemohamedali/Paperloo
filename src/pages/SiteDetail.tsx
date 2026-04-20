@@ -101,8 +101,9 @@ export default function SiteDetail() {
           valid_until: validUntil.toISOString(),
           regulations_covered: site?.jurisdictions || ['GDPR']
         } as any)
-        .select()
+        .select('*')
         .single();
+      
       if (error) throw error;
       return data;
     },
@@ -110,6 +111,10 @@ export default function SiteDetail() {
       toast.success('Certificate issued!');
       navigate(`/certificate/${data.id}`);
     },
+    onError: (error: any) => {
+      console.error('Certificate issuance error:', error);
+      toast.error(`Failed to issue certificate: ${error.message}`);
+    }
   });
 
   const deleteMutation = useMutation({
