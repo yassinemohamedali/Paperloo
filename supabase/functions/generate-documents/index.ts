@@ -1,10 +1,73 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import Groq from "npm:groq-sdk"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+const groq = new Groq({
+  apiKey: Deno.env.get('GROQ_API_KEY')
+})
+
+const buildPrompt = (type: string, site: any, answers: any, jurisdictions: string[]) => {
+  const baseInfo = `
+    Company/Site name: ${site.name}
+    Website URL: ${site.url}
+    Jurisdictions: ${jurisdictions.join(', ')}
+    Contact email: ${answers.contact_email ?? 'privacy@' + site.url.replace(/https?:\/\//, '')}
+    Data collected: ${answers.data_collected?.join(', ') ?? 'email addresses, usage data'}
+    Uses cookies: ${answers.uses_cookies ? 'yes' : 'no'}
+    Cookie types: ${answers.cookie_types?.join(', ') ?? 'essential'}
+    Third party services: ${answers.third_party_services?.join(', ') ?? 'none'}
+    Sells data: ${answers.sells_data ? 'yes' : 'no'}
+    Has users under 13: ${answers.has_minors ? 'yes' : 'no'}
+    Effective date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+  `
+
+  const prompts: Record<string, string> = {
+    privacy_policy: `Generate a complete, professional Privacy Policy in HTML format for the following website. Include all required sections for the specified jurisdictions (GDPR rights if EU, CCPA rights if California, COPPA section if minors, etc.). Make it thorough, legally sound, and readable.\n\n${baseInfo}`,
+    
+    terms_of_service: `Generate a complete, professional Terms of Service agreement in HTML format for the following website. Include sections on use of service, intellectual property, limitation of liability, governing law, and termination. Make it appropriate for the specified jurisdictions.\n\n${baseInfo}`,
+    
+    cookie_policy: `Generate a complete, professional Cookie Policy in HTML format for the following website. Include what cookies are, types used, how to manage them, and third-party cookies. Be specific about the cookie types listed.\n\n${baseInfo}`,
+    
+    eula: `Generate a complete End User License Agreement (EULA) in HTML format for the following website/application. Include license grant, restrictions, termination, and disclaimer sections.\n\n${baseInfo}`,
+    
+    acceptable_use: `Generate a complete Acceptable Use Policy in HTML format for the following platform. Include prohibited activities, enforcement, and reporting procedures.\n\n${baseInfo}`,
+    
+    disclaimer: `Generate a complete Disclaimer in HTML format for the following website. Include general disclaimer, professional advice disclaimer, and limitation of liability.\n\n${baseInfo}`,
+    
+    return_policy: `Generate a complete Return and Refund Policy in HTML format for the following e-commerce website. Include return window, conditions, process, and refund timeline.\n\n${baseInfo}`,
+    
+    accessibility_statement: `Generate a complete Accessibility Statement in HTML format for the following website. Include WCAG 2.1 compliance level, known issues, and contact information for accessibility concerns.\n\n${baseInfo}`
+  }
+  
+  return prompts[type] ?? prompts.privacy_policy
+}
+
+const generateDocument = async (type: string, site: any, answers: any, jurisdictions: string[]) => {
+  const prompt = buildPrompt(type, site, answers, jurisdictions)
+  
+  const completion = await groq.chat.completions.create({
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a legal document specialist. Generate professional, legally-structured compliance documents in HTML format. Use proper headings, sections, and paragraphs. Be thorough and jurisdiction-specific. Return ONLY the HTML content, no intro or outro text.'
+      },
+      {
+        role: 'user',
+        content: prompt
+      }
+    ],
+    model: 'llama-3.3-70b-versatile',
+    temperature: 0.3,
+    max_tokens: 4000
+  })
+  
+  return completion.choices[0]?.message?.content ?? ''
 }
 
 serve(async (req) => {
@@ -75,11 +138,6 @@ serve(async (req) => {
 
     const answers = response?.answers || {}
     const jurisdictions = site.jurisdictions || []
-    const effectiveDate = new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
 
     const injectClauses = (type: string, position: string) => {
       return clauses
@@ -88,100 +146,34 @@ serve(async (req) => {
         .join('') || '';
     }
 
-    const generatePrivacyPolicy = () => {
-      let html = `<div dir="${language === 'AR' ? 'rtl' : 'ltr'}">`
-      html += injectClauses('privacy_policy', 'beginning');
-      html += `
-        <h1>Privacy Policy</h1>
-        <p><strong>Effective Date:</strong> ${effectiveDate}</p>
-        <p>This Privacy Policy describes how ${site.name} ("we", "us", or "our") collects, uses, and discloses your personal information when you visit ${site.url} (the "Site").</p>
-        
-        <h2>1. Information We Collect</h2>
-        <p>We collect information that you provide directly to us, information collected automatically when you use our Site, and information from third-party sources.</p>
-      `
-
-      if (answers.third_party_services?.length > 0) {
-        html += `<h3>Third-Party Services</h3><ul>`
-        answers.third_party_services.forEach((service: any) => {
-          html += `<li><strong>${service.name}:</strong> ${service.purpose}</li>`
-        })
-        html += `</ul>`
-      }
-
-      if (jurisdictions.includes('GDPR (EU)')) {
-        html += `
-          <h2>2. Lawful Basis for Processing (GDPR)</h2>
-          <p>If you are in the European Economic Area (EEA), we process your personal data under the following lawful bases:</p>
-          <ul>
-            <li>Your consent;</li>
-            <li>The performance of a contract between you and us;</li>
-            <li>Compliance with our legal obligations;</li>
-            <li>Our legitimate interests, provided they do not override your fundamental rights and freedoms.</li>
-          </ul>
-        `
-      }
-
-      html += `
-        <h2>Contact Us</h2>
-        <p>If you have any questions about this Privacy Policy, please contact us at paperloo.official@gmail.com.</p>
-      `
-      html += injectClauses('privacy_policy', 'end');
-      html += `</div>`
-      return html
-    }
-
-    const generateTermsOfService = () => {
-      let html = `<div dir="${language === 'AR' ? 'rtl' : 'ltr'}">`
-      html += injectClauses('terms_of_service', 'beginning');
-      html += `
-        <h1>Terms of Service</h1>
-        <p><strong>Effective Date:</strong> ${effectiveDate}</p>
-        <p>Welcome to ${site.name}. By accessing ${site.url}, you agree to be bound by these Terms of Service.</p>
-        
-        <h2>1. Use of the Site</h2>
-        <p>You agree to use the Site only for lawful purposes and in a way that does not infringe the rights of, restrict or inhibit anyone else's use and enjoyment of the Site.</p>
-        
-        <h2>2. Intellectual Property</h2>
-        <p>All content on this Site, including text, graphics, logos, and images, is the property of ${site.name} and is protected by intellectual property laws.</p>
-        
-        <h2>3. Contact</h2>
-        <p>Questions about the Terms of Service should be sent to us at paperloo.official@gmail.com.</p>
-      `
-      html += injectClauses('terms_of_service', 'end');
-      html += `</div>`
-      return html
-    }
-
-    const generateCookiePolicy = () => {
-      let html = `<div dir="${language === 'AR' ? 'rtl' : 'ltr'}">`
-      html += injectClauses('cookie_policy', 'beginning');
-      html += `
-        <h1>Cookie Policy</h1>
-        <p><strong>Effective Date:</strong> ${effectiveDate}</p>
-        <p>This Cookie Policy explains how ${site.name} uses cookies and similar technologies on ${site.url}.</p>
-      `
-      html += `
-        <h2>Contact Us</h2>
-        <p>If you have questions about our use of cookies, please contact us at paperloo.official@gmail.com.</p>
-      `
-      html += injectClauses('cookie_policy', 'end');
-      html += `</div>`
-      return html
-    }
-
     const docsToGenerate = [
-      { type: 'privacy_policy', content: generatePrivacyPolicy() },
-      { type: 'terms_of_service', content: generateTermsOfService() },
-      { type: 'cookie_policy', content: generateCookiePolicy() },
+      'privacy_policy',
+      'terms_of_service',
+      'cookie_policy',
+      'eula',
+      'acceptable_use',
+      'disclaimer',
+      'return_policy',
+      'accessibility_statement'
     ]
 
     const results = []
-    for (const doc of docsToGenerate) {
+    for (const type of docsToGenerate) {
+      const aiContent = await generateDocument(type, site, answers, jurisdictions)
+      
+      const finalContent = `
+        <div dir="${language === 'AR' ? 'rtl' : 'ltr'}">
+          ${injectClauses(type, 'beginning')}
+          ${aiContent}
+          ${injectClauses(type, 'end')}
+        </div>
+      `
+
       const { data: existingDoc } = await supabase
         .from('documents')
         .select('*')
         .eq('site_id', site_id)
-        .eq('type', doc.type)
+        .eq('type', type)
         .eq('language', language)
         .eq('is_active', true)
         .maybeSingle()
@@ -194,13 +186,13 @@ serve(async (req) => {
             site_id: site_id,
             content: existingDoc.content,
             version: existingDoc.version,
-            changelog_note: `AUTOMATED UPDATE FOR ${language} VERSION.`
+            changelog_note: `AI GENERATED UPDATE (${language}) VIA GROQ.`
           })
 
         const { data: updatedDoc, error: updateError } = await supabase
           .from('documents')
           .update({
-            content: doc.content,
+            content: finalContent,
             version: existingDoc.version + 1,
             created_at: new Date().toISOString()
           })
@@ -215,8 +207,8 @@ serve(async (req) => {
           .from('documents')
           .insert({
             site_id,
-            type: doc.type,
-            content: doc.content,
+            type: type,
+            content: finalContent,
             version: 1,
             is_active: true,
             language: language

@@ -5,20 +5,6 @@ import { supabase, Database } from '@/src/lib/supabase';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
-import { GoogleGenAI } from "@google/genai";
-
-// Lazy-load Gemini to prevent top-level initialization errors
-let genAI: any = null;
-const getAI = () => {
-  if (!genAI) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is not defined. Please set it in the settings.");
-    }
-    genAI = new GoogleGenAI({ apiKey });
-  }
-  return genAI;
-};
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type QuestionnaireResponse = Database['public']['Tables']['questionnaire_responses']['Row'];
@@ -119,72 +105,14 @@ export default function Questionnaire() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      if (!site) throw new Error("Site not found");
+      if (!id) throw new Error("ID not found");
 
-      const prompt = `Generate a set of legal documents (Privacy Policy, Terms of Service, Cookie Policy, EULA, Acceptable Use, Disclaimer, Return Policy, Accessibility Statement) for a website called "${site.name}" at URL "${site.url}".
-      Answers to questionnaire: ${JSON.stringify(answers || {})}
-      Language: en
-      Format: Return ONLY a valid JSON object where keys are document types and values are HTML content. Do not include markdown code blocks.
-      Types: privacy_policy, terms_of_service, cookie_policy, eula, acceptable_use, disclaimer, return_policy, accessibility_statement.
-      Ensure the content is professional, legally robust, and formatted with <h1>, <h2>, <p>, and <ul> tags. Add an effective date of ${new Date().toLocaleDateString()}.`;
-
-      const response = await getAI().models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
+      const { data, error } = await supabase.functions.invoke('generate-documents', {
+        body: { site_id: id, language: 'en' }
       });
 
-      const text = response.text;
-      if (!text) throw new Error("No response from AI");
-
-      // Extract JSON from text
-      let jsonStr = text;
-      if (text.includes('```json')) {
-        jsonStr = text.split('```json')[1].split('```')[0];
-      } else if (text.includes('```')) {
-        jsonStr = text.split('```')[1].split('```')[0];
-      }
-      
-      const docContents = JSON.parse(jsonStr.trim());
-
-      for (const [type, content] of Object.entries(docContents)) {
-        // Find existing doc
-        const { data: existingDoc } = await supabase
-          .from('documents')
-          .select('*')
-          .eq('site_id', id as string)
-          .eq('type', type)
-          .maybeSingle();
-
-        if (existingDoc) {
-          const doc = existingDoc as any;
-          // Versioning
-          await supabase.from('document_versions').insert({
-            document_id: doc.id,
-            site_id: id as string,
-            content: doc.content,
-            version: doc.version,
-            changelog_note: 'AI Regenerated'
-          } as any);
-
-          await (supabase
-            .from('documents') as any)
-            .update({ content: content as string, version: doc.version + 1 } as any)
-            .eq('id', doc.id);
-        } else {
-          await (supabase
-            .from('documents') as any)
-            .insert({
-              site_id: id as string,
-              type: type as any,
-              content: content as string,
-              version: 1,
-              language: 'en',
-              is_active: true
-            } as any);
-        }
-      }
-
-      await (supabase.from('sites') as any).update({ status: 'active', last_reviewed_at: new Date().toISOString() } as any).eq('id', id);
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Failed to generate documents');
 
       toast.success('Documents generated successfully!');
       navigate(`/sites/${id}/documents`);

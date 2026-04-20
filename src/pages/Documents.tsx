@@ -5,20 +5,6 @@ import { supabase, Database } from '@/src/lib/supabase';
 import { FileText, Copy, ExternalLink, RefreshCw, Eye, Code, X, History, Plus, Trash2, Download, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
-import { GoogleGenAI } from "@google/genai";
-
-// Lazy-load Gemini to prevent top-level initialization errors
-let genAI: any = null;
-const getAI = () => {
-  if (!genAI) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is not defined. Please set it in the settings.");
-    }
-    genAI = new GoogleGenAI({ apiKey });
-  }
-  return genAI;
-};
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -107,76 +93,15 @@ export default function Documents() {
 
   const regenerateMutation = useMutation({
     mutationFn: async (lang?: string) => {
-      if (!site) throw new Error("Site not found");
+      if (!id) throw new Error("ID not found");
       const language = lang || selectedLanguage;
 
-      const { data: response } = await (supabase.from('questionnaire_responses').select('*').eq('site_id', id as string) as any).maybeSingle();
-
-      const prompt = `Generate a set of legal documents (Privacy Policy, Terms of Service, Cookie Policy, EULA, Acceptable Use, Disclaimer, Return Policy, Accessibility Statement) for a website called "${site.name}" at URL "${site.url}".
-      Answers to questionnaire: ${JSON.stringify(response?.answers || {})}
-      Language: ${language}
-      Format: Return ONLY a valid JSON object where keys are document types and values are HTML content. Do not include markdown code blocks.
-      Types: privacy_policy, terms_of_service, cookie_policy, eula, acceptable_use, disclaimer, return_policy, accessibility_statement.
-      Ensure the content is professional, legally robust, and formatted with <h1>, <h2>, <p>, and <ul> tags. Add an effective date of ${new Date().toLocaleDateString()}.`;
-
-      const aiResponse = await getAI().models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
+      const { data, error } = await supabase.functions.invoke('generate-documents', {
+        body: { site_id: id, language }
       });
 
-      const text = aiResponse.text;
-      if (!text) throw new Error("No response from AI");
-
-      // Extract JSON from text
-      let jsonStr = text;
-      if (text.includes('```json')) {
-        jsonStr = text.split('```json')[1].split('```')[0];
-      } else if (text.includes('```')) {
-        jsonStr = text.split('```')[1].split('```')[0];
-      }
-      
-      const docContents = JSON.parse(jsonStr.trim());
-
-      for (const [type, content] of Object.entries(docContents)) {
-        // Find existing doc
-        const { data: existingDoc } = await supabase
-          .from('documents')
-          .select('*')
-          .eq('site_id', id as string)
-          .eq('type', type)
-          .eq('language', language)
-          .maybeSingle();
-
-        if (existingDoc) {
-          const doc = existingDoc as any;
-          // Versioning
-          await supabase.from('document_versions').insert({
-            document_id: doc.id,
-            site_id: id as string,
-            content: doc.content,
-            version: doc.version,
-            changelog_note: 'AI Regenerated'
-          } as any);
-
-          await (supabase
-            .from('documents') as any)
-            .update({ content: content as string, version: doc.version + 1 } as any)
-            .eq('id', doc.id);
-        } else {
-          await (supabase
-            .from('documents') as any)
-            .insert({
-              site_id: id as string,
-              type: type as any,
-              content: content as string,
-              version: 1,
-              language,
-              is_active: true
-            } as any);
-        }
-      }
-
-      await (supabase.from('sites') as any).update({ status: 'active', last_reviewed_at: new Date().toISOString() } as any).eq('id', id);
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Failed to generate documents');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents', id] });
