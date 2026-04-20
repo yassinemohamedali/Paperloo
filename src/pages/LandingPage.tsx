@@ -529,15 +529,26 @@ export default function LandingPage() {
             <div className="space-y-6">
               <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">LEGAL</p>
               <ul className="space-y-4 text-xs tracking-[0.15em]">
-                <li><a href="#" className="hover:text-accent transition-colors">PRIVACY</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">TERMS</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">COOKIES</a></li>
+                <li><Link to="/legal" className="hover:text-accent transition-colors uppercase">PRIVACY POLICY</Link></li>
+                <li><Link to="/legal" className="hover:text-accent transition-colors uppercase">TERMS OF SERVICE</Link></li>
+                <li><Link to="/legal" className="hover:text-accent transition-colors uppercase">DISCLAIMER</Link></li>
               </ul>
             </div>
           </div>
 
           <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between gap-6">
-            <p className="text-[10px] tracking-[0.2em] text-muted">© 2026 PAPERLOO. ALL RIGHTS RESERVED.</p>
+            <div className="flex flex-col gap-4">
+              <p className="text-[10px] tracking-[0.2em] text-muted">© 2026 PAPERLOO. ALL RIGHTS RESERVED.</p>
+              <div className="max-w-2xl bg-white/5 border border-white/10 p-4 rounded-lg">
+                <p className="text-[9px] leading-relaxed text-muted uppercase tracking-wider">
+                  <span className="text-red-400 font-black block mb-1">MANDATORY LEGAL DISCLOSURE</span>
+                  Paperloo.com is an automated AI platform and is not a law firm. We do not provide legal advice, 
+                  opinion or recommendations about your legal rights or strategies. The creator of this platform is not a licensed attorney. 
+                  Use of this service does not create an attorney-client relationship. All generated documents should be reviewed by 
+                  qualified legal counsel prior to use. Paperloo is an experimental tool provided "as-is" for automation purposes.
+                </p>
+              </div>
+            </div>
             <p className="text-[10px] tracking-[0.2em] text-muted">BUILT FOR ELITE AGENCIES.</p>
           </div>
         </div>

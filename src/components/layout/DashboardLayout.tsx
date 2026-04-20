@@ -7,7 +7,8 @@ import {
   Settings, 
   CreditCard, 
   LogOut,
-  Shield
+  Shield,
+  AlertCircle
 } from 'lucide-react';
 import { useAuthStore } from '@/src/store/authStore';
 import { cn } from '@/src/lib/utils';
@@ -108,8 +109,27 @@ export default function DashboardLayout() {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-10">
-          <Outlet />
+        <div className="flex-1 overflow-y-auto p-10 flex flex-col">
+          <div className="flex-1">
+            <Outlet />
+          </div>
+
+          {/* Persistent Legal Safety Footer */}
+          <footer className="mt-12 py-8 border-t border-border-custom bg-surface/50 rounded-t-[20px] px-8">
+            <div className="max-w-4xl mx-auto space-y-4">
+              <div className="flex items-center gap-3 text-red-400">
+                <AlertCircle className="h-5 w-5" />
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">Mandatory Legal Disclosure</h4>
+              </div>
+              <p className="text-[10px] leading-relaxed text-muted-custom uppercase tracking-wider">
+                Paperloo.com is an automated AI platform and is not a law firm. We do not provide legal advice, 
+                opinion or recommendations about your legal rights, remedies, defenses, options, selection of forms, 
+                or strategies. The creator of this platform is not a licensed attorney. Use of this service 
+                does not create an attorney-client relationship. All generated documents must be reviewed by 
+                qualified legal counsel prior to use in a production environment.
+              </p>
+            </div>
+          </footer>
         </div>
       </main>
     </div>

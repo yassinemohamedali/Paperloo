@@ -110,7 +110,13 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
       const endClauses = clauses?.filter(c => c.document_type === type && c.position === 'end')
         .map(c => `<h2>${c.title}</h2><p>${c.content}</p>`).join('') || '';
 
-      const finalContent = `<div dir="${language === 'ar' ? 'rtl' : 'ltr'}" class="legal-doc-content">${beginningClauses}${aiContent}${endClauses}</div>`;
+      const disclaimer = `
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; color: #ef4444; font-weight: bold; font-family: sans-serif;">
+          LEGAL DISCLAIMER: PAPERLOO IS AN AI-POWERED TOOL AND DOES NOT CONSTITUTE A LAW FIRM. THE CONTENT GENERATED HEREIN IS NOT LEGAL ADVICE AND DOES NOT CREATE AN ATTORNEY-CLIENT RELATIONSHIP. WE ARE NOT LICENSED ATTORNEYS. ALL DOCUMENTS SHOULD BE REVIEWED BY A QUALIFIED LEGAL PROFESSIONAL IN YOUR SPECIFIC JURISDICTION BEFORE USE.
+        </div>
+      `;
+
+      const finalContent = `<div dir="${language === 'ar' ? 'rtl' : 'ltr'}" class="legal-doc-content">${disclaimer}${beginningClauses}${aiContent}${endClauses}</div>`;
 
       // Save to DB
       console.log(`Checking for existing ${type}...`);

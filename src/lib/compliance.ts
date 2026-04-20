@@ -23,30 +23,62 @@ export async function calculateComplianceScore(siteId: string) {
   const docs = (documentsData as any[]) || [];
   const answers = site.questionnaire_responses?.[0]?.answers || {};
 
-  // 2. Calculation Logic
-
-  // Has all 3 documents: +30
+  // 2. Calculation Logic (Max 100)
+  
+  // A. Documents (Max 30)
   const hasPrivacy = docs.some(d => d.type === 'privacy_policy');
   const hasTerms = docs.some(d => d.type === 'terms_of_service');
   const hasCookie = docs.some(d => d.type === 'cookie_policy');
+  const docCount = [hasPrivacy, hasTerms, hasCookie].filter(Boolean).length;
+  const docScore = docCount * 10;
   
-  if (hasPrivacy && hasTerms && hasCookie) {
-    score += 30;
-    breakdown.documents = { score: 30, status: 'complete', label: 'All 3 documents generated' };
-  } else {
-    breakdown.documents = { score: 0, status: 'incomplete', label: 'Missing core documents' };
-  }
+  score += docScore;
+  breakdown.documents = { 
+    score: docScore, 
+    status: docCount === 3 ? 'complete' : 'incomplete', 
+    label: `${docCount}/3 core documents active` 
+  };
 
-  // Has correct jurisdictions: +20
-  const jurisdictions = answers.jurisdictions || [];
-  if (jurisdictions.length > 0) {
+  // B. Jurisdictions & Regulation Coverage (Max 20)
+  const siteJurisdictions = site.jurisdictions || [];
+  if (siteJurisdictions.length > 0) {
     score += 20;
-    breakdown.jurisdictions = { score: 20, status: 'complete', label: 'Jurisdictions defined' };
+    breakdown.jurisdictions = { 
+      score: 20, 
+      status: 'complete', 
+      label: `Covering ${siteJurisdictions.join(', ')}` 
+    };
   } else {
-    breakdown.jurisdictions = { score: 0, status: 'incomplete', label: 'No jurisdictions set' };
+    breakdown.jurisdictions = { score: 0, status: 'incomplete', label: 'No jurisdictions defined' };
   }
 
-  // Reviewed in last 90 days: +20
+  // C. Data Processing & Privacy Controls (Max 20)
+  let disclosurePoints = 0;
+  if (answers.collects_email) disclosurePoints += 5;
+  if (answers.uses_analytics) disclosurePoints += 5;
+  if (answers.collects_payment) disclosurePoints += 5;
+  if (answers.data_retention_period > 0) disclosurePoints += 5;
+  
+  score += disclosurePoints;
+  breakdown.disclosures = { 
+    score: disclosurePoints, 
+    status: disclosurePoints >= 15 ? 'complete' : 'incomplete', 
+    label: 'Privacy controls & disclosures' 
+  };
+
+  // D. Advanced Compliance (Max 15)
+  let advancedPoints = 0;
+  if (answers.has_data_officer) advancedPoints += 10;
+  if (answers.wants_wcag) advancedPoints += 5;
+  
+  score += advancedPoints;
+  breakdown.advanced = { 
+    score: advancedPoints, 
+    status: advancedPoints > 0 ? 'complete' : 'incomplete', 
+    label: 'DPO & Accessibility standards' 
+  };
+
+  // E. Review Recency (Max 15)
   const lastReviewed = site.last_reviewed_at ? new Date(site.last_reviewed_at) : null;
   const now = new Date();
   const ninetyDaysAgo = new Date();
@@ -55,13 +87,13 @@ export async function calculateComplianceScore(siteId: string) {
   sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
   if (lastReviewed && lastReviewed > ninetyDaysAgo) {
-    score += 20;
-    breakdown.review = { score: 20, status: 'complete', label: 'Recently reviewed' };
+    score += 15;
+    breakdown.review = { score: 15, status: 'complete', label: 'Recently reviewed' };
   } else {
     breakdown.review = { score: 0, status: 'incomplete', label: 'Review required' };
   }
 
-  // Generate Alert if stale (60+ days since last review)
+  // Generate Alert if stale
   if (!lastReviewed || lastReviewed < sixtyDaysAgo) {
     const { data: existingAlert } = await supabase
       .from('alerts')
@@ -83,30 +115,8 @@ export async function calculateComplianceScore(siteId: string) {
     }
   }
 
-  // Cookie policy matches cookie types: +15
-  const cookieTypes = answers.cookieTypes || [];
-  if (hasCookie && cookieTypes.length > 0) {
-    score += 15;
-    breakdown.cookies = { score: 15, status: 'complete', label: 'Cookie disclosure active' };
-  } else {
-    breakdown.cookies = { score: 0, status: 'incomplete', label: 'Cookie disclosure missing' };
-  }
-
-  // Contact email set: +10
-  if (answers.contactEmail) {
-    score += 10;
-    breakdown.contact = { score: 10, status: 'complete', label: 'Contact email provided' };
-  } else {
-    breakdown.contact = { score: 0, status: 'incomplete', label: 'Contact email missing' };
-  }
-
-  // Embed code confirmed: +5
-  if (answers.embedConfirmed) {
-    score += 5;
-    breakdown.embed = { score: 5, status: 'complete', label: 'Embed code installed' };
-  } else {
-    breakdown.embed = { score: 0, status: 'incomplete', label: 'Embed code not confirmed' };
-  }
+  // Final adjustments (Cap at 100)
+  score = Math.min(100, score);
 
   // 3. Determine Grade
   let grade = 'F';

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { generateDocuments } from '@/src/services/aiService';
+import { calculateComplianceScore } from '@/src/lib/compliance';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type QuestionnaireResponse = Database['public']['Tables']['questionnaire_responses']['Row'];
@@ -109,6 +110,9 @@ export default function Questionnaire() {
       if (!id) throw new Error("ID not found");
 
       const results = await generateDocuments(id, 'en');
+      
+      // Calculate real compliance score after generation
+      await calculateComplianceScore(id);
 
       if (results && results.length > 0) {
         toast.success(`Generated ${results.length} documents successfully!`);

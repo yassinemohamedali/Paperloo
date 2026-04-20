@@ -215,6 +215,12 @@ export default function Login() {
               CREATE ONE FOR FREE
             </Link>
           </p>
+
+          <div className="pt-8 border-t border-white/5">
+            <p className="text-[8px] text-muted-custom uppercase text-center leading-relaxed tracking-wider">
+              BY SIGNING IN, YOU ACKNOWLEDGE THAT <Link to="/legal" className="text-accent hover:underline">PAPERLOO IS NOT A LAW FIRM</Link> AND DOES NOT PROVIDE LEGAL ADVICE.
+            </p>
+          </div>
         </div>
       </div>
     </div>

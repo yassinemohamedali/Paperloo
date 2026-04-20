@@ -55,6 +55,36 @@ export default function SiteDetail() {
     enabled: !!id,
   });
 
+  const { data: scoreData, refetch: refetchScore, isFetching: isRecalculating } = useQuery({
+    queryKey: ['compliance-score', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('compliance_scores')
+        .select('*')
+        .eq('site_id', id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: !!id,
+  });
+
+  const recalculateMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) return;
+      return calculateComplianceScore(id);
+    },
+    onSuccess: () => {
+      toast.success('Compliance score recalculated');
+      queryClient.invalidateQueries({ queryKey: ['site', id] });
+      refetchScore();
+    },
+    onError: (error: any) => toast.error(`Recalculation failed: ${error.message}`)
+  });
+
   // Real-time comments
   useEffect(() => {
     if (!id) return;
@@ -213,11 +243,25 @@ export default function SiteDetail() {
               <div className="flex items-center gap-6">
                 <div className="text-right">
                   <p className="text-[10px] font-bold text-muted uppercase tracking-widest">COMPLIANCE GRADE</p>
-                  <p className="text-4xl font-sans font-extrabold text-accent tracking-[0.04em]">{site?.compliance_grade || 'F'}</p>
+                  <p className="text-4xl font-sans font-extrabold text-accent tracking-[0.04em]">
+                    {site?.compliance_grade || scoreData?.grade || 'F'}
+                  </p>
                 </div>
-                <div className="h-16 w-16 rounded-full border-4 border-accent flex items-center justify-center font-sans font-extrabold text-xl tracking-[0.04em] shadow-[4px_4px_0px_0px_rgba(200,241,53,0.2)]">
-                  {site?.compliance_grade === 'A' ? '95' : '85'}
-                </div>
+                <button 
+                  onClick={() => recalculateMutation.mutate()}
+                  disabled={recalculateMutation.isPending || isRecalculating}
+                  className="h-16 w-16 rounded-full border-4 border-accent flex flex-col items-center justify-center font-sans font-extrabold text-xl tracking-[0.04em] shadow-[4px_4px_0px_0px_rgba(200,241,53,0.2)] hover:bg-accent/10 transition-all group disabled:opacity-50"
+                  title="CLICK TO RECALCULATE"
+                >
+                  {(recalculateMutation.isPending || isRecalculating) ? (
+                    <RefreshCw className="h-6 w-6 animate-spin text-accent" />
+                  ) : (
+                    <>
+                      <span>{scoreData?.score ?? 0}</span>
+                      <RefreshCw className="h-2 w-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </>
+                  )}
+                </button>
               </div>
               <div className="flex flex-wrap justify-end gap-2">
                 {site?.jurisdictions?.map(j => (

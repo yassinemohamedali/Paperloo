@@ -235,6 +235,12 @@ export default function Signup() {
               SIGN IN HERE
             </Link>
           </p>
+
+          <div className="pt-8 border-t border-white/5">
+            <p className="text-[8px] text-muted-custom uppercase text-center leading-relaxed tracking-wider">
+              BY CREATING AN ACCOUNT, YOU AGREE TO OUR <Link to="/legal" className="text-accent hover:underline">TERMS</Link> AND ACKNOWLEDGE THAT WE ARE NOT A LAW FIRM.
+            </p>
+          </div>
         </div>
       </div>
     </div>

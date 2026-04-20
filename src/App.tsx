@@ -25,6 +25,8 @@ const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Regulations = lazy(() => import('./pages/Regulations'));
 const Partners = lazy(() => import('./pages/Partners'));
 const Trust = lazy(() => import('./pages/Trust'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
+const LegalPage = lazy(() => import('./pages/LegalPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Layout
@@ -140,6 +142,8 @@ const AnimatedRoutes = () => {
         <Route path="/docs/:siteId/:type" element={<PageTransition><PublicDocument /></PageTransition>} />
         <Route path="/client/:accessToken" element={<PageTransition><ClientPortal /></PageTransition>} />
         <Route path="/certificate/:id" element={<PageTransition><Certificate /></PageTransition>} />
+        <Route path="/auth/callback" element={<PageTransition><AuthCallback /></PageTransition>} />
+        <Route path="/legal" element={<PageTransition><LegalPage /></PageTransition>} />
         <Route path="/partners" element={<PageTransition><Partners /></PageTransition>} />
         <Route path="/trust" element={<PageTransition><Trust /></PageTransition>} />
 
