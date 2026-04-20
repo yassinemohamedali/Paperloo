@@ -5,6 +5,7 @@ import { supabase, Database } from '@/src/lib/supabase';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { generateDocuments } from '@/src/services/aiService';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type QuestionnaireResponse = Database['public']['Tables']['questionnaire_responses']['Row'];
@@ -107,12 +108,7 @@ export default function Questionnaire() {
     try {
       if (!id) throw new Error("ID not found");
 
-      const { data, error } = await supabase.functions.invoke('generate-documents', {
-        body: { site_id: id, language: 'en' }
-      });
-
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Failed to generate documents');
+      await generateDocuments(id, 'en');
 
       toast.success('Documents generated successfully!');
       navigate(`/sites/${id}/documents`);

@@ -5,6 +5,7 @@ import { supabase, Database } from '@/src/lib/supabase';
 import { FileText, Copy, ExternalLink, RefreshCw, Eye, Code, X, History, Plus, Trash2, Download, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
+import { generateDocuments } from '@/src/services/aiService';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -95,13 +96,7 @@ export default function Documents() {
     mutationFn: async (lang?: string) => {
       if (!id) throw new Error("ID not found");
       const language = lang || selectedLanguage;
-
-      const { data, error } = await supabase.functions.invoke('generate-documents', {
-        body: { site_id: id, language }
-      });
-
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Failed to generate documents');
+      return await generateDocuments(id, language);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents', id] });
