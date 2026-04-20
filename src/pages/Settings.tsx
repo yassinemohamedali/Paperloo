@@ -148,6 +148,19 @@ export default function Settings() {
           </div>
 
           <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted">CURRENT PLAN</label>
+            <div className="flex items-center gap-2 py-2">
+              <p className="text-xl font-sans font-extrabold text-accent uppercase tracking-wider">{profile.plan || 'STARTER'}</p>
+              <button 
+                onClick={() => navigate('/billing')} 
+                className="text-[10px] text-muted hover:text-accent font-bold uppercase tracking-widest ml-4 transition-colors"
+              >
+                UPGRADE →
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
             <label className="text-[10px] font-bold uppercase tracking-wider text-muted">EMAIL ADDRESS</label>
             <p className="text-lg font-medium text-muted py-2">{profile.email || 'N/A'}</p>
             <p className="text-[10px] text-muted font-bold uppercase tracking-widest">EMAIL CANNOT BE CHANGED</p>

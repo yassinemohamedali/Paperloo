@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import LeadScanner from '@/src/components/LeadScanner';
 
 const SERVICES = [
   { id: '01', name: 'PRIVACY POLICY GENERATION', description: 'AUTOMATED DRAFTING FOR GLOBAL COMPLIANCE.' },
@@ -300,6 +301,23 @@ export default function LandingPage() {
             <div className="absolute bottom-12 left-12">
               <h2 className="text-4xl font-sans font-extrabold tracking-[0.04em]">ROI DRIVEN <span className="whitespace-nowrap">COMPLIANCE.</span></h2>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Scanner Section */}
+      <section className="py-32 px-6 bg-black relative">
+        <div className="absolute inset-0 radial-fade-top opacity-50" />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="mb-20 text-center reveal-up">
+            <div className="section-label mb-8 inline-block">AUDIT YOUR AGENCY</div>
+            <h2 className="text-5xl md:text-7xl font-sans font-black tracking-tighter italic uppercase">
+              IS YOUR SITE <span className="text-accent">LEGALLY PROTECTED?</span>
+            </h2>
+          </div>
+          
+          <div className="reveal-up">
+            <LeadScanner />
           </div>
         </div>
       </section>

@@ -86,11 +86,30 @@ export default function Dashboard() {
     enabled: !!sites.length,
   });
 
-  if (sitesLoading || alertsLoading) {
+  const { data: leads = [], isLoading: leadsLoading } = useQuery<any[]>({
+    queryKey: ['leads', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      // If table doesn't exist yet, return empty but don't crash
+      if (error && error.code === '42P01') {
+        console.warn('Leads table missing. Dashboard showing fallback data.');
+        return [];
+      }
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  if (sitesLoading || alertsLoading || leadsLoading) {
     return (
       <div className="space-y-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[1, 2, 3].map(i => (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {[1, 2, 3, 4].map(i => (
             <div key={i} className="h-40 bg-surface border border-white/5 rounded-none relative overflow-hidden">
               <div className="absolute inset-0 shimmer" />
             </div>
@@ -106,6 +125,7 @@ export default function Dashboard() {
 
   const stats = [
     { label: 'Total Sites', value: sites?.length || 0, icon: Globe },
+    { label: 'Potential Leads', value: leads?.length || 0, icon: ShieldCheck, color: 'text-accent' },
     { label: 'Active Docs', value: docsCount || 0, icon: FileText },
     { label: 'Pending Alerts', value: alerts?.length || 0, icon: Bell, color: 'text-red-400' },
   ];
@@ -113,7 +133,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-12 font-mono">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {stats.map((stat, index) => (
           <div 
             key={stat.label} 
@@ -132,93 +152,109 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Sites Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase">RECENT SITES</h3>
-          <Link to="/sites" className="bracket-btn py-2 px-4 text-xs">
-            <span className="bracket-btn-inner"></span>
-            VIEW ALL
-          </Link>
-        </div>
-
-        {sites && sites.length > 0 ? (
-          <div className="bg-surface border border-white/10 overflow-hidden reveal-up active">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/10 bg-white/[0.02]">
-                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">SITE NAME</th>
-                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">URL</th>
-                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">GRADE</th>
-                  <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted text-right">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {sites.slice(0, 5).map((site, idx) => (
-                  <tr 
-                    key={site.id} 
-                    style={{ animationDelay: `${idx * 50}ms` }}
-                    className={cn(
-                      "group hover:bg-white/[0.02] transition-colors reveal-up active", 
-                      idx % 2 === 0 ? "bg-transparent" : "bg-white/[0.01]"
-                    )}
-                  >
-                    <td className="px-8 py-5 font-bold tracking-tight uppercase">{site.name}</td>
-                    <td className="px-8 py-5 text-muted text-xs tracking-wider uppercase">{site.url}</td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "h-8 w-8 rounded-full border flex items-center justify-center font-sans font-extrabold text-xs tracking-[0.04em]",
-                          site.compliance_grade === 'A' ? "border-green-500 text-green-500" :
-                          site.compliance_grade === 'B' ? "border-blue-500 text-blue-500" :
-                          site.compliance_grade === 'C' ? "border-yellow-500 text-yellow-500" :
-                          "border-red-500 text-red-500"
-                        )}>
-                          {site.compliance_grade || 'F'}
-                        </div>
-                        <span className="text-[10px] font-bold text-muted uppercase tracking-widest">
-                          {site.status}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <Link to={`/sites/${site.id}`} className="text-muted hover:text-accent transition-colors">
-                        <ExternalLink className="h-4 w-4 inline" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="bg-surface border border-white/10 py-24 flex flex-col items-center justify-center text-center space-y-8 reveal-up active">
-            <div className="relative h-32 w-32 flex items-center justify-center">
-              <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative z-10">
-                <path d="M30 20H80L100 40V100H30V20Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M80 20V40H100" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="65" cy="70" r="15" stroke="var(--color-accent)" strokeWidth="2" />
-                <path d="M60 70L63 73L70 66" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
-                  style={{ 
-                    strokeDasharray: 20, 
-                    strokeDashoffset: 20, 
-                    animation: 'draw 0.8s ease-out forwards 0.5s' 
-                  }} 
-                />
-              </svg>
-              <div className="absolute inset-0 bg-accent/5 rounded-full blur-2xl animate-pulse" />
-            </div>
-            <div className="space-y-2 max-w-xs">
-              <h4 className="text-2xl font-sans font-extrabold uppercase tracking-[0.04em]">NO SITES ADDED YET</h4>
-              <p className="text-muted font-light text-xs tracking-widest uppercase">ADD YOUR FIRST CLIENT SITE TO START GENERATING COMPLIANCE DOCUMENTS.</p>
-            </div>
-            <Link to="/sites" className="bracket-btn flex items-center gap-2 py-3 px-8 group">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        {/* Sites Section */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase italic underline underline-offset-8 decoration-accent/30">RECENT SITES</h3>
+            <Link to="/sites" className="bracket-btn py-2 px-4 text-xs font-black">
               <span className="bracket-btn-inner"></span>
-              <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
-              ADD FIRST SITE
+              ALL SITES
             </Link>
           </div>
-        )}
+
+          {sites && sites.length > 0 ? (
+            <div className="bg-surface border border-white/10 overflow-hidden reveal-up active shadow-2xl">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/[0.02]">
+                    <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">SITE NAME</th>
+                    <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">GRADE</th>
+                    <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted text-right">ACTION</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {sites.slice(0, 5).map((site, idx) => (
+                    <tr 
+                      key={site.id} 
+                      className="group hover:bg-white/[0.02] transition-colors"
+                    >
+                      <td className="px-8 py-5">
+                        <p className="font-bold tracking-tight uppercase">{site.name}</p>
+                        <p className="text-[10px] text-muted tracking-widest">{site.url}</p>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "h-8 w-8 rounded-full border flex items-center justify-center font-sans font-extrabold text-xs tracking-[0.04em]",
+                            site.compliance_grade === 'A' ? "border-green-500 text-green-500" :
+                            site.compliance_grade === 'B' ? "border-blue-500 text-blue-500" :
+                            site.compliance_grade === 'C' ? "border-yellow-500 text-yellow-500" :
+                            "border-red-500 text-red-500"
+                          )}>
+                            {site.compliance_grade || 'F'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <Link to={`/sites/${site.id}`} className="p-2 border border-white/10 hover:border-accent hover:text-accent transition-all inline-block">
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="bg-surface border border-white/10 py-16 flex flex-col items-center justify-center text-center space-y-6">
+              <p className="text-muted text-[10px] font-bold tracking-[0.3em] uppercase">No active sites monitoried</p>
+              <Link to="/sites" className="bracket-btn px-6 py-3 text-xs">
+                <span className="bracket-btn-inner"></span>
+                DEPLOY FIRST SITE
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Leads Sidebar */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase italic">WAITLIST</h3>
+            <span className="px-2 py-1 bg-accent/20 border border-accent/30 text-[10px] font-black text-accent uppercase tracking-widest rounded-sm">HOT LEADS</span>
+          </div>
+
+          <div className="bg-surface border border-white/10 divide-y divide-white/5 reveal-up active shadow-2xl">
+            {leads.length > 0 ? (
+              leads.slice(0, 8).map((lead, idx) => (
+                <div key={idx} className="p-4 hover:bg-white/[0.02] transition-colors group">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-text-custom tracking-tight leading-none group-hover:text-accent transition-colors">{lead.email}</p>
+                      <p className="text-[9px] text-muted font-light truncate max-w-[140px] uppercase tracking-wider">{lead.website_url}</p>
+                    </div>
+                    <span className="text-[10px] font-bold text-muted-custom whitespace-nowrap">
+                      {new Date(lead.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-12 text-center space-y-4">
+                <p className="text-muted text-[10px] font-bold tracking-[0.3em] uppercase leading-relaxed">No scanner leads captured yet.</p>
+                <p className="text-[9px] text-accent/60 uppercase tracking-widest leading-loose">
+                  Share your audit tool link to start filling this list with proof for your dad.
+                </p>
+              </div>
+            )}
+            
+            <div className="p-4 bg-accent/5">
+              <button className="text-[10px] font-black text-accent hover:underline uppercase tracking-[0.2em] w-full text-center py-2">
+                EXCEL EXPORT (CSV) →
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

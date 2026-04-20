@@ -74,22 +74,19 @@ export default function Billing() {
 
   const updatePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const resp = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId, userId: user?.id })
-      });
+      // Functional upgrade for demo purposes
+      const { error } = await (supabase
+        .from('profiles') as any)
+        .update({ plan: planId as any })
+        .eq('id', user?.id as string);
       
-      if (!resp.ok) {
-        const err = await resp.json();
-        throw new Error(err.error || 'Checkout failed');
-      }
-      
-      const { url } = await resp.json();
-      window.location.href = url;
+      if (error) throw error;
+      return { success: true, planId };
     },
-    onSuccess: () => {
-      toast.info('Redirecting to checkout...');
+    onSuccess: (data) => {
+      const planName = PLANS.find(p => p.id === data.planId)?.name;
+      toast.success(`${planName} Plan Activated!`);
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
     },
     onError: (error: any) => toast.error(error.message),
   });

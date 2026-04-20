@@ -1,13 +1,26 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/src/lib/supabase';
+import { toast } from 'sonner';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 1. Monitor auth state change
+    // 1. Check for error in URL
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash || window.location.search);
+    const error = params.get('error_description') || params.get('error');
+
+    if (error) {
+      toast.error(`AUTH ERROR: ${error.replace(/\+/g, ' ')}`);
+      const t = setTimeout(() => navigate('/login'), 3000);
+      return () => clearTimeout(t);
+    }
+
+    // 2. Monitor auth state change
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('AuthCallback Event:', event);
       if (session) {
         // Send message to parent window if we're in a popup
         if (window.opener) {
