@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { supabase, Database } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
-import { Globe, FileText, Bell, Plus, ExternalLink, X, ShieldCheck } from 'lucide-react';
+import { Globe, FileText, Bell, Plus, ExternalLink, X } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 type Site = Database['public']['Tables']['sites']['Row'];
@@ -86,30 +86,11 @@ export default function Dashboard() {
     enabled: !!sites.length,
   });
 
-  const { data: leads = [], isLoading: leadsLoading } = useQuery<any[]>({
-    queryKey: ['leads', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      // If table doesn't exist yet, return empty but don't crash
-      if (error && error.code === '42P01') {
-        console.warn('Leads table missing. Dashboard showing fallback data.');
-        return [];
-      }
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user?.id,
-  });
-
-  if (sitesLoading || alertsLoading || leadsLoading) {
+  if (sitesLoading || alertsLoading) {
     return (
       <div className="space-y-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {[1, 2, 3, 4].map(i => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[1, 2, 3].map(i => (
             <div key={i} className="h-40 bg-surface border border-white/5 rounded-none relative overflow-hidden">
               <div className="absolute inset-0 shimmer" />
             </div>
@@ -125,7 +106,6 @@ export default function Dashboard() {
 
   const stats = [
     { label: 'Total Sites', value: sites?.length || 0, icon: Globe },
-    { label: 'Potential Leads', value: leads?.length || 0, icon: ShieldCheck, color: 'text-accent' },
     { label: 'Active Docs', value: docsCount || 0, icon: FileText },
     { label: 'Pending Alerts', value: alerts?.length || 0, icon: Bell, color: 'text-red-400' },
   ];
@@ -133,7 +113,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-12 font-mono">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {stats.map((stat, index) => (
           <div 
             key={stat.label} 
@@ -152,9 +132,9 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="space-y-12">
         {/* Sites Section */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase italic underline underline-offset-8 decoration-accent/30">RECENT SITES</h3>
             <Link to="/sites" className="bracket-btn py-2 px-4 text-xs font-black">
@@ -169,6 +149,7 @@ export default function Dashboard() {
                 <thead>
                   <tr className="border-b border-white/10 bg-white/[0.02]">
                     <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">SITE NAME</th>
+                    <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">URL</th>
                     <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted">GRADE</th>
                     <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-muted text-right">ACTION</th>
                   </tr>
@@ -179,10 +160,8 @@ export default function Dashboard() {
                       key={site.id} 
                       className="group hover:bg-white/[0.02] transition-colors"
                     >
-                      <td className="px-8 py-5">
-                        <p className="font-bold tracking-tight uppercase">{site.name}</p>
-                        <p className="text-[10px] text-muted tracking-widest">{site.url}</p>
-                      </td>
+                      <td className="px-8 py-5 font-bold tracking-tight uppercase">{site.name}</td>
+                      <td className="px-8 py-5 text-muted text-xs tracking-wider uppercase">{site.url}</td>
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-3">
                           <div className={cn(
@@ -215,45 +194,6 @@ export default function Dashboard() {
               </Link>
             </div>
           )}
-        </div>
-
-        {/* Leads Sidebar */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase italic">WAITLIST</h3>
-            <span className="px-2 py-1 bg-accent/20 border border-accent/30 text-[10px] font-black text-accent uppercase tracking-widest rounded-sm">HOT LEADS</span>
-          </div>
-
-          <div className="bg-surface border border-white/10 divide-y divide-white/5 reveal-up active shadow-2xl">
-            {leads.length > 0 ? (
-              leads.slice(0, 8).map((lead, idx) => (
-                <div key={idx} className="p-4 hover:bg-white/[0.02] transition-colors group">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-text-custom tracking-tight leading-none group-hover:text-accent transition-colors">{lead.email}</p>
-                      <p className="text-[9px] text-muted font-light truncate max-w-[140px] uppercase tracking-wider">{lead.website_url}</p>
-                    </div>
-                    <span className="text-[10px] font-bold text-muted-custom whitespace-nowrap">
-                      {new Date(lead.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="p-12 text-center space-y-4">
-                <p className="text-muted text-[10px] font-bold tracking-[0.3em] uppercase leading-relaxed">No scanner leads captured yet.</p>
-                <p className="text-[9px] text-accent/60 uppercase tracking-widest leading-loose">
-                  Share your audit tool link to start filling this list with proof for your dad.
-                </p>
-              </div>
-            )}
-            
-            <div className="p-4 bg-accent/5">
-              <button className="text-[10px] font-black text-accent hover:underline uppercase tracking-[0.2em] w-full text-center py-2">
-                EXCEL EXPORT (CSV) →
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

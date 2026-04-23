@@ -25,13 +25,17 @@ export default function Onboarding() {
 
   const completeOnboardingMutation = useMutation({
     mutationFn: async () => {
-      // Update profile
+      if (!user?.id) throw new Error('Not authenticated');
+
+      // Update profile - ensure we have at least a default name
+      const finalAgencyName = agencyName.trim() || 'My Agency';
+      
       const { error: profileError } = await (supabase
         .from('profiles') as any)
         .update({ 
-          agency_name: agencyName
+          agency_name: finalAgencyName
         } as any)
-        .eq('id', user?.id as string);
+        .eq('id', user.id);
       
       if (profileError) throw profileError;
 
@@ -40,7 +44,7 @@ export default function Onboarding() {
         const { error: siteError } = await (supabase
           .from('sites') as any)
           .insert({
-            agency_id: user?.id as string,
+            agency_id: user.id,
             name: siteData.name,
             url: siteData.url,
             jurisdictions: siteData.jurisdictions,
@@ -50,10 +54,16 @@ export default function Onboarding() {
         if (siteError) throw siteError;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    onSuccess: async () => {
+      // Use await to ensure invalidation is processed
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+      await queryClient.invalidateQueries({ queryKey: ['onboarding-check'] });
+      
       toast.success('Onboarding complete! Welcome to Paperloo.');
-      navigate('/dashboard');
+      // Small delay to ensure state propagates
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     },
     onError: (error: any) => toast.error(error.message)
   });

@@ -74,7 +74,8 @@ const OnboardingGuard = ({ children }: { children: React.ReactNode }) => {
       };
     },
     enabled: !!user?.id,
-    retry: false // Fail fast if there's a real issue
+    retry: false, // Fail fast if there's a real issue
+    staleTime: 0 // Always fetch fresh to avoid stale onboarding state
   });
 
   if (isLoading) return (

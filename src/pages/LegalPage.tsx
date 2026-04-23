@@ -65,7 +65,7 @@ export default function LegalPage() {
         </div>
 
         <footer className="pt-24 text-[10px] text-muted-custom tracking-[0.2em] uppercase text-center border-t border-white/5">
-          © 2026 PAPERLOO · REGISTERED IN EGYPT · FOR EDUCATIONAL AND AUTOMATION PURPOSES ONLY.
+          © 2026 PAPERLOO · SECURE COMPLIANCE AUTOMATION · GLOBAL OPERATIONS.
         </footer>
       </div>
     </div>

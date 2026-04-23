@@ -66,7 +66,7 @@ export default function Documents() {
       }
       
       console.log(`Documents fetch success. Found total: ${data?.length || 0}`);
-      const activeDocs = (data || []).filter(d => d.is_active);
+      const activeDocs = (data || []).filter((d: any) => d.is_active);
       console.log(`Active documents: ${activeDocs.length}`);
       
       return activeDocs as any;
