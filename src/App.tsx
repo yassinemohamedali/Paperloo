@@ -53,6 +53,8 @@ const OnboardingGuard = ({ children }: { children: React.ReactNode }) => {
   const { data, isLoading } = useQuery({
     queryKey: ['onboarding-check', user?.id],
     queryFn: async () => {
+      console.log('OnboardingGuard: Verifying status for user', user?.id);
+      
       // 1. Get profile
       // Avoid select('*') to prevent errors from missing columns that might be in types but not DB
       const { data: profile, error: profileError } = await supabase
@@ -66,6 +68,8 @@ const OnboardingGuard = ({ children }: { children: React.ReactNode }) => {
         .from('sites')
         .select('*', { count: 'exact', head: true })
         .eq('agency_id', user?.id as string);
+
+      console.log('OnboardingGuard: Check complete', { hasSites: (count || 0) > 0, hasAgency: !!profile?.agency_name });
 
       return {
         profile,

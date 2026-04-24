@@ -45,7 +45,7 @@ export default function LeadScanner() {
     } catch (err) {
       // If table doesn't exist yet, we still show success for the demo
       setStep('captured');
-      console.log("Lead captured (demo mode):", email);
+      console.log("Compliance audit request captured:", email);
     }
   };
 

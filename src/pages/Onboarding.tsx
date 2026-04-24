@@ -56,14 +56,17 @@ export default function Onboarding() {
     },
     onSuccess: async () => {
       // Use await to ensure invalidation is processed
+      console.log('Onboarding: Success! Invalidating queries and redirecting...');
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
       await queryClient.invalidateQueries({ queryKey: ['onboarding-check'] });
       
       toast.success('Onboarding complete! Welcome to Paperloo.');
-      // Small delay to ensure state propagates
+      
+      // Force a full reload to the dashboard to completely break any stale state loops
+      // and ensure the OnboardingGuard initializes with fresh data from the server.
       setTimeout(() => {
-        navigate('/dashboard');
-      }, 100);
+        window.location.href = '/dashboard';
+      }, 500);
     },
     onError: (error: any) => toast.error(error.message)
   });
