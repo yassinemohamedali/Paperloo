@@ -81,6 +81,7 @@ export default function Signup() {
       email: data.email,
       password: data.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           agency_name: data.agencyName,
         }
