@@ -30,7 +30,11 @@ export default function Login() {
     });
 
     if (error) {
-      toast.error(error.message);
+      if (error.message.toLowerCase().includes('rate limit')) {
+        toast.error('Sign in limit reached. Please try again later or use Google Login.');
+      } else {
+        toast.error(error.message);
+      }
       setLoading(false);
     } else {
       toast.success('Welcome back!');
@@ -55,7 +59,11 @@ export default function Login() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        skipBrowserRedirect: true
+        skipBrowserRedirect: true,
+        queryParams: {
+          prompt: 'select_account',
+          access_type: 'offline',
+        }
       },
     });
 

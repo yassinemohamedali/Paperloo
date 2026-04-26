@@ -40,7 +40,11 @@ export default function Signup() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        skipBrowserRedirect: true
+        skipBrowserRedirect: true,
+        queryParams: {
+          prompt: 'select_account',
+          access_type: 'offline',
+        }
       },
     });
 
@@ -75,24 +79,28 @@ export default function Signup() {
     }
   };
 
-  const onSubmit = async (data: SignupForm) => {
+  const onSubmit = async (formData: SignupForm) => {
     setLoading(true);
     const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
+      email: formData.email,
+      password: formData.password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
-          agency_name: data.agencyName,
+          agency_name: formData.agencyName,
         }
       }
     });
 
     if (error) {
-      toast.error(error.message);
+      if (error.message.toLowerCase().includes('rate limit')) {
+        toast.error('Email limit reached. Please try again in an hour or use Google Login.');
+      } else {
+        toast.error(error.message);
+      }
       setLoading(false);
     } else {
-      toast.success('Account created! Please check your email.');
+      toast.success('Account created! Welcome to Paperloo.');
       navigate('/dashboard');
     }
   };
