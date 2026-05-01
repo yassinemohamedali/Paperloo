@@ -18,8 +18,14 @@
   * {
     @apply border-border-custom;
   }
-  body {
+  html, body {
     @apply bg-bg text-white font-mono selection:bg-accent selection:text-black antialiased uppercase;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  body {
+    position: relative;
+    width: 100%;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans uppercase;

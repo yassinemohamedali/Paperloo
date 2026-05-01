@@ -22,6 +22,24 @@
     <meta property="twitter:image" content="https://paperloo.vercel.app/og-image.png" />
 
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23c8f135'/><text y='70' x='50' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif' font-size='65' font-weight='900' fill='black'>P</text></svg>" />
+    <script>
+      // Fix for "Cannot set property fetch of #<Window> which has only a getter"
+      // This happens because some SDKs (like Groq/OpenAI via Stainless) try to polyfill fetch
+      // by assigning to globalThis.fetch, which is window in the browser.
+      (function() {
+        try {
+          var originalFetch = window.fetch;
+          Object.defineProperty(window, 'fetch', {
+            get: function() { return originalFetch; },
+            set: function(v) { originalFetch = v; },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          console.warn('Paperloo: Failed to make fetch configurable', e);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

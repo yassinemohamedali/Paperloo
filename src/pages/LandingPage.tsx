@@ -144,7 +144,7 @@ export default function LandingPage() {
         "fixed top-0 left-0 right-0 z-[100] transition-all duration-300 px-6 md:px-12 py-6 flex items-center justify-between border-b border-white/10",
         isScrolled ? "bg-black/90 backdrop-blur-md" : "bg-black"
       )}>
-        <Link to="/" className="text-3xl logo">
+        <Link to="/" className="text-xl sm:text-3xl logo">
           PAPERLOO
         </Link>
         
@@ -227,21 +227,21 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <h1 className="text-6xl md:text-[120px] leading-[0.9] font-sans font-extrabold mb-12 tracking-[0.04em]">
+          <h1 className="text-4xl sm:text-6xl md:text-[120px] leading-[0.9] font-sans font-extrabold mb-12 tracking-[0.04em] break-words">
             <AnimatedHeadline text="COMPLIANCE DOCS" /><br />
             <AnimatedHeadline text="FOR EVERY CLIENT SITE." />
           </h1>
 
-          <p className="text-muted text-sm md:text-lg tracking-[0.15em] max-w-3xl mx-auto mb-16">
+          <p className="text-muted text-xs sm:text-sm md:text-lg tracking-[0.15em] max-w-3xl mx-auto mb-16 px-4">
             UPGRADE YOUR AGENCY WITH AUTOMATED COMPLIANCE DOCUMENTS AND ELITE LEVEL DELIVERY.
           </p>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-            <Link to="/signup" className="bracket-btn w-full md:w-auto group">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 px-6">
+            <Link to="/signup" className="bracket-btn w-full md:w-auto group py-5 sm:py-4">
               <span className="bracket-btn-inner"></span>
               GET STARTED
             </Link>
-            <a href="https://wa.me/201553521107" className="bracket-btn w-full md:w-auto border-accent text-accent group">
+            <a href="https://wa.me/201553521107" className="bracket-btn w-full md:w-auto border-accent text-accent group py-5 sm:py-4">
               <span className="bracket-btn-inner"></span>
               <div className="flex items-center justify-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -328,9 +328,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="mb-24 reveal-up">
             <div className="section-label mb-8">TAILORED SERVICES</div>
-            <h2 className="text-6xl md:text-8xl font-sans font-black tracking-tighter">
-              CUSTOM <span className="whitespace-nowrap">COMPLIANCE</span><br />FOR YOUR AGENCY
-            </h2>
+          <h2 className="text-3xl sm:text-6xl md:text-8xl font-sans font-black tracking-tighter">
+            CUSTOM <span className="sm:whitespace-nowrap">COMPLIANCE</span><br className="hidden sm:block" /> FOR YOUR AGENCY
+          </h2>
           </div>
 
           <div className="flex flex-col">
@@ -343,8 +343,8 @@ export default function LandingPage() {
                 <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent scale-y-0 group-hover:scale-y-100 transition-transform origin-top duration-500"></div>
                 
                 <div className="relative z-10 space-y-4 md:max-w-xl">
-                  <h3 className="text-3xl md:text-4xl font-sans font-extrabold tracking-[0.04em]">{service.name}</h3>
-                  <p className="text-muted text-xs tracking-[0.2em]">{service.description}</p>
+                  <h3 className="text-2xl md:text-4xl font-sans font-extrabold tracking-[0.04em]">{service.name}</h3>
+                  <p className="text-muted text-[10px] sm:text-xs tracking-[0.2em]">{service.description}</p>
                 </div>
 
                 <div className="hidden md:block absolute right-12 top-8 text-[120px] font-sans font-extrabold text-white/[0.15] leading-none pointer-events-none">

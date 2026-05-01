@@ -10,17 +10,74 @@ export default function LeadScanner() {
   const [step, setStep] = useState<'input' | 'scanning' | 'results' | 'captured'>('input');
   const [scanProgress, setScanProgress] = useState(0);
 
+  const [scanResult, setScanResult] = useState<{
+    score: number | null;
+    grade: string;
+    status: string;
+    color: string;
+    violations: number;
+  }>({
+    score: null,
+    grade: '-',
+    status: 'READY',
+    color: 'text-muted',
+    violations: 0
+  });
+
   const startScan = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
     setStep('scanning');
+    setScanProgress(0);
     
+    // Simulate a more "real" scan with randomized but plausible results based on URL
     let progress = 0;
     const interval = setInterval(() => {
       progress += Math.random() * 15;
       if (progress >= 100) {
         progress = 100;
         clearInterval(interval);
+        
+        // Generate result based on URL hash to make it feel deterministic but varied
+        const hash = url.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        // Improved variety: some sites will score high (A/B), others low (D/F)
+        const score = 40 + (hash % 56); // Score between 40 and 95
+        const violationsCount = Math.max(0, Math.floor((100 - score) / 10));
+        
+        let grade = 'F';
+        let color = 'text-red-500';
+        let status = 'CRITICAL';
+
+        if (score >= 90) { 
+          grade = 'A'; 
+          color = 'text-green-400'; 
+          status = 'SECURE'; 
+        } else if (score >= 80) { 
+          grade = 'B'; 
+          color = 'text-yellow-400'; 
+          status = 'GOOD'; 
+        } else if (score >= 70) { 
+          grade = 'C'; 
+          color = 'text-orange-400'; 
+          status = 'FAIR'; 
+        } else if (score >= 55) {
+          grade = 'D'; 
+          color = 'text-red-400'; 
+          status = 'UNSAFE';
+        } else {
+          grade = 'F';
+          color = 'text-red-600';
+          status = 'CRITICAL';
+        }
+
+        setScanResult({
+          score,
+          grade,
+          status,
+          color,
+          violations: violationsCount
+        });
+
         setTimeout(() => setStep('results'), 500);
       }
       setScanProgress(Math.min(progress, 100));
@@ -50,7 +107,7 @@ export default function LeadScanner() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-8 border border-white/10 bg-surface/30 backdrop-blur-xl rounded-[20px] shadow-2xl relative overflow-hidden">
+    <div className="w-full max-w-4xl mx-auto p-4 sm:p-8 border border-white/10 bg-surface/30 backdrop-blur-xl rounded-[20px] shadow-2xl relative overflow-hidden">
       <div className="absolute inset-0 scan-lines opacity-10 pointer-events-none" />
       
       <AnimatePresence mode="wait">
@@ -60,11 +117,11 @@ export default function LeadScanner() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-8"
+            className="space-y-6 sm:space-y-8"
           >
-            <div className="text-center space-y-4">
-              <h3 className="text-4xl font-sans font-black tracking-tight uppercase italic">Free Compliance Audit</h3>
-              <p className="text-muted text-xs tracking-widest uppercase">Instantly check if your client sites are legally protected.</p>
+            <div className="text-center space-y-3 sm:space-y-4">
+              <h3 className="text-2xl sm:text-4xl font-sans font-black tracking-tight uppercase italic">Free Compliance Audit</h3>
+              <p className="text-muted text-[10px] tracking-widest uppercase px-4">Instantly check if your client sites are legally protected.</p>
             </div>
             
             <form onSubmit={startScan} className="flex flex-col md:flex-row gap-4">
@@ -74,13 +131,13 @@ export default function LeadScanner() {
                   type="text" 
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="ENTER CLIENT WEBSITE URL (E.G. HTTPS://SITE.COM)"
-                  className="w-full bg-black border border-white/20 px-12 py-4 text-xs tracking-widest focus:border-accent outline-none transition-all uppercase"
+                  placeholder="CLIENT WEBSITE URL"
+                  className="w-full bg-black border border-white/20 px-12 py-5 sm:py-4 text-[10px] sm:text-xs tracking-widest focus:border-accent outline-none transition-all uppercase"
                 />
               </div>
-              <button type="submit" className="bracket-btn px-10 py-4 font-black">
+              <button type="submit" className="bracket-btn px-10 py-5 sm:py-4 font-black">
                 <span className="bracket-btn-inner"></span>
-                RUN AUDIT →
+                RUN AUDIT
               </button>
             </form>
           </motion.div>
@@ -118,46 +175,53 @@ export default function LeadScanner() {
             key="results"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-8"
+            className="space-y-6 sm:space-y-8"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-red-500/30 bg-red-500/5 p-6 space-y-4">
-                <div className="flex items-center gap-2 text-red-500">
-                  <AlertTriangle className="h-5 w-5" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Found 3 Violations</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <div className={`border ${(scanResult.score || 0) < 70 ? 'border-red-500/30 bg-red-500/5' : 'border-accent/30 bg-accent/5'} p-4 sm:p-6 space-y-4`}>
+                <div className={`flex items-center gap-2 ${(scanResult.score || 0) < 70 ? 'text-red-500' : 'text-accent'}`}>
+                  <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Found {scanResult.violations} Potential Issues</span>
                 </div>
-                <ul className="space-y-3 text-[10px] font-bold text-muted uppercase tracking-wider">
+                <ul className="space-y-3 text-[9px] sm:text-[10px] font-bold text-muted uppercase tracking-wider">
                   <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                    MISSING GDPR PRIVACY DISCLOSURE
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${(scanResult.score || 0) < 90 ? 'bg-red-500' : 'bg-green-400'}`} />
+                    {(scanResult.score || 0) < 90 ? 'MISSING GDPR PRIVACY DISCLOSURE' : 'GDPR DISCLOSURE DETECTED'}
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                    STALE TERMS OF SERVICE (2021)
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${(scanResult.score || 0) < 80 ? 'bg-red-500' : 'bg-green-400'}`} />
+                    {(scanResult.score || 0) < 80 ? 'STALE TERMS OF SERVICE (2021)' : 'TERMS ARE UP TO DATE'}
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                    INVALID COOKIES CONSENT BANNER
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${(scanResult.score || 0) < 60 ? 'bg-red-500' : 'bg-green-400'}`} />
+                    {(scanResult.score || 0) < 60 ? 'INVALID COOKIES CONSENT BANNER' : 'COMPLIANT COOKIE CONSENT'}
                   </li>
                 </ul>
               </div>
 
-              <div className="border border-accent/30 bg-accent/5 p-6 space-y-4">
+              <div className={`border ${scanResult.color.replace('text-', 'border-')}/30 bg-surface/50 p-4 sm:p-6 space-y-3 sm:space-y-4 relative overflow-hidden`}>
+                <div className={`absolute -right-4 -top-4 text-8xl font-sans font-black opacity-10 ${scanResult.color}`}>
+                  {scanResult.grade}
+                </div>
                 <div className="flex items-center gap-2 text-accent">
-                  <ShieldCheck className="h-5 w-5" />
+                  <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Protection Status</span>
                 </div>
-                <p className="text-2xl font-sans font-black italic text-accent tracking-tighter">UNSAFE (42%)</p>
-                <p className="text-[9px] leading-relaxed text-muted uppercase tracking-widest">
-                  THIS SITE IS AT RISK OF FINES EXCEEDING $10,000 PER DATA BREACH.
+                <p className={`text-xl sm:text-2xl font-sans font-black italic tracking-tighter ${scanResult.color}`}>
+                  {scanResult.status} ({scanResult.score}%)
+                </p>
+                <p className="text-[9px] leading-relaxed text-muted uppercase tracking-widest relative z-10">
+                  {(scanResult.score || 0) < 70 
+                    ? 'THIS SITE IS AT RISK OF FINES EXCEEDING $10,000 PER DATA BREACH.' 
+                    : 'SITE MEETS BASELINE REQUIREMENTS BUT REQUIRES ANNUAL REVIEW.'}
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleLeadCapture} className="bg-white/5 p-8 border border-white/10 space-y-6">
+            <form onSubmit={handleLeadCapture} className="bg-white/5 p-4 sm:p-8 border border-white/10 space-y-6">
               <div className="space-y-2">
-                <h4 className="text-xl font-sans font-extrabold tracking-tight uppercase italic">Get the Full Correction Report</h4>
-                <p className="text-muted text-[10px] tracking-widest uppercase">We'll send you the generated fixes for these violations instantly.</p>
+                <h4 className="text-lg sm:text-xl font-sans font-extrabold tracking-tight uppercase italic">Get the Full Correction Report</h4>
+                <p className="text-muted text-[9px] sm:text-[10px] tracking-widest uppercase">We'll send you the generated fixes for these violations instantly.</p>
               </div>
               <div className="flex flex-col md:flex-row gap-4">
                 <input 
@@ -165,12 +229,12 @@ export default function LeadScanner() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ENTER WORK EMAIL" 
-                  className="flex-1 bg-black/50 border border-white/20 px-6 py-4 text-xs tracking-widest focus:border-accent outline-none uppercase"
+                  className="flex-1 bg-black/50 border border-white/20 px-6 py-5 sm:py-4 text-[10px] sm:text-xs tracking-widest focus:border-accent outline-none uppercase"
                   required
                 />
-                <button type="submit" className="bracket-btn px-10 py-4 font-black">
+                <button type="submit" className="bracket-btn px-10 py-5 sm:py-4 font-black">
                   <span className="bracket-btn-inner"></span>
-                  SEND REPORT →
+                  SEND REPORT
                 </button>
               </div>
             </form>

@@ -69,7 +69,7 @@ const OnboardingGuard = ({ children }: { children: React.ReactNode }) => {
         .select('*', { count: 'exact', head: true })
         .eq('agency_id', user?.id as string);
 
-      console.log('OnboardingGuard: Check complete', { hasSites: (count || 0) > 0, hasAgency: !!profile?.agency_name });
+      console.log('OnboardingGuard: Check complete', { hasSites: (count || 0) > 0, hasAgency: profile ? !!(profile as any).agency_name : false });
 
       return {
         profile,

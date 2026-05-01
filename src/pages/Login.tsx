@@ -31,7 +31,9 @@ export default function Login() {
 
     if (error) {
       if (error.message.toLowerCase().includes('rate limit')) {
-        toast.error('Sign in limit reached. Please try again later or use Google Login.');
+        toast.error('Email limit reached. Please try again in an hour or use Google Login.');
+      } else if (error.message.toLowerCase().includes('disabled')) {
+        toast.error('Email logins are currently disabled in Supabase. Please use Google Login instead.');
       } else {
         toast.error(error.message);
       }
@@ -99,7 +101,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-black overflow-hidden font-mono">
+    <div className="flex min-h-screen w-full bg-black font-mono">
       {/* Left Panel */}
       <div className="hidden lg:flex flex-1 bg-surface border-r border-white/10 flex-col p-16 justify-between relative overflow-hidden">
         <div className="absolute inset-0 scan-lines opacity-20" />
@@ -127,9 +129,9 @@ export default function Login() {
       </div>
 
       {/* Right Panel (Form) */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-black relative overflow-hidden">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8 bg-black relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-accent/5 animate-gradient opacity-30 pointer-events-none" />
-        <div className="w-full max-w-sm space-y-12 relative z-10">
+        <div className="w-full max-w-sm space-y-8 sm:space-y-12 relative z-10 py-12">
           <div className="space-y-4">
             <h2 className="text-4xl font-sans font-extrabold tracking-[0.04em]">SIGN IN</h2>
             <p className="text-muted text-xs tracking-[0.15em]">ENTER YOUR CREDENTIALS TO ACCESS YOUR DASHBOARD.</p>
