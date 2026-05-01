@@ -5,28 +5,28 @@ import { Shield, Lock, Scale, Globe, Activity, CheckCircle2 } from 'lucide-react
 const BADGES = [
   {
     icon: Shield,
-    title: 'GDPR COMPLIANT PLATFORM',
-    description: 'WE ADHERE TO THE HIGHEST DATA PROTECTION STANDARDS FOR OUR OWN OPERATIONS.'
+    title: 'ENTERPRISE COMPLIANCE',
+    description: 'WE ADHERE TO SOC2-ALIGNED PRIVACY PROTOCOLS FOR ALL GLOBAL OPERATIONS.'
   },
   {
     icon: Lock,
-    title: '256-BIT ENCRYPTION',
-    description: 'ALL DATA IN TRANSIT AND AT REST IS PROTECTED BY INDUSTRY-STANDARD AES-256 ENCRYPTION.'
+    title: 'AES-256 INFRASTRUCTURE',
+    description: 'ALL DATA ARCHITECTURE IS PROTECTED BY BILATERAL 256-BIT ENCRYPTION STANDARDS.'
   },
   {
     icon: Scale,
-    title: 'ATTORNEY-REVIEWED TEMPLATES',
-    description: 'OUR DOCUMENT ENGINE IS BUILT ON LEGAL FRAMEWORKS REVIEWED BY PRIVACY EXPERTS.'
+    title: 'GOVERNANCE AUDITS',
+    description: 'OUR INFRASTRUCTURE IS CONTINUOUSLY REVIEWED BY GLOBAL COMPLIANCE EXPERTS.'
   },
   {
     icon: Globe,
-    title: 'MULTI-JURISDICTION COVERAGE',
-    description: 'NATIVE SUPPORT FOR GDPR, CCPA, PIPEDA, LGPD AND MORE GLOBAL REGULATIONS.'
+    title: 'JURISDICTIONAL SCALE',
+    description: 'NATIVE ADAPTATION FOR GDPR, CCPA, PIPEDA, LGPD AND INTERNATIONAL REGULATIONS.'
   },
   {
     icon: Activity,
-    title: '99.9% UPTIME',
-    description: 'OUR INFRASTRUCTURE IS DESIGNED FOR MAXIMUM RELIABILITY AND DOCUMENT AVAILABILITY.'
+    title: 'INFRASTRUCTURE UPTIME',
+    description: 'MISSION-CRITICAL RELIABILITY ENSURING REVENUE CONTINUITY FOR OUR PARTNERS.'
   }
 ];
 
@@ -38,7 +38,7 @@ export default function Trust() {
         <Link to="/" className="text-2xl logo">PAPERLOO</Link>
         <Link to="/signup" className="bracket-btn py-2 px-6 text-xs">
           <span className="bracket-btn-inner"></span>
-          GET STARTED
+          REQUEST ACCESS
         </Link>
       </nav>
 
@@ -46,10 +46,10 @@ export default function Trust() {
         {/* Header */}
         <section className="text-center space-y-8">
           <h1 className="text-6xl md:text-8xl font-sans font-black tracking-tighter leading-[0.9]">
-            TRUST &<br />SECURITY
+            TRUST CENTER &<br />DATA INTEGRITY
           </h1>
           <p className="text-muted text-lg tracking-[0.15em] max-w-2xl mx-auto uppercase">
-            WE TAKE COMPLIANCE SERIOUSLY. HERE IS HOW WE PROTECT YOUR AGENCY AND YOUR CLIENTS.
+            THE PAPERLOO PLATFORM IS ENGINEERED FOR HIGH-AUTHORITY DATA GOVERNANCE.
           </p>
         </section>
 
@@ -78,16 +78,16 @@ export default function Trust() {
           <div className="absolute inset-0 scan-lines opacity-10 pointer-events-none" />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
             <div className="space-y-8">
-              <h2 className="text-4xl font-sans font-black tracking-tight uppercase">SECURE BY DESIGN</h2>
+              <h2 className="text-4xl font-sans font-black tracking-tight uppercase">INFRASTRUCTURE SECURITY</h2>
               <p className="text-muted text-sm tracking-[0.15em] leading-relaxed uppercase">
-                PAPERLOO IS BUILT ON TOP-TIER CLOUD INFRASTRUCTURE WITH AUTOMATED SECURITY MONITORING, REGULAR AUDITS, AND STRICT ACCESS CONTROLS.
+                THE PAPERLOO GOVERNANCE STACK IS BUILT ON CLOUD-NATIVE ARCHITECTURE WITH SOC2-ALIGNED MONITORING AND STRINGENT ACCESS PROTOCOLS.
               </p>
               <ul className="space-y-4">
                 {[
-                  'ISOLATED CLIENT DATA ENVIRONMENTS',
-                  'AUTOMATED DAILY BACKUPS',
-                  'REAL-TIME THREAT DETECTION',
-                  'SOC 2 COMPLIANT DATA CENTERS'
+                  'ISOLATED MULTI-TENANT DATA ARCHITECTURE',
+                  'AUTOMATED GOVERNANCE BACKUPS',
+                  'REAL-TIME COMPLIANCE MONITORING',
+                  'SOC 2 ALIGNED DATA INFRASTRUCTURE'
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest">
                     <div className="w-1 h-1 bg-accent" />

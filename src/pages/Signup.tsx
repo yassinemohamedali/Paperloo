@@ -121,12 +121,12 @@ export default function Signup() {
 
         <div className="relative z-10 max-w-md">
           <h1 className="text-7xl font-sans font-extrabold leading-[0.9] mb-8 tracking-[0.04em]">
-            START <br />
-            BUILDING <br />
-            TRUST.
+            SECURE <br />
+            GLOBAL <br />
+            STATIONS.
           </h1>
           <p className="text-muted text-sm tracking-[0.15em] leading-relaxed">
-            JOIN HUNDREDS OF AGENCIES WHO USE PAPERLOO TO AUTOMATE THEIR LEGAL COMPLIANCE AND PROTECT THEIR CLIENTS.
+            THE PAPERLOO PLATFORM ARCHITECTS HIGH-AUTHORITY COMPLIANCE FOR ENTERPRISE-GRADE DIGITAL INFRASTRUCTURE.
           </p>
         </div>
 
@@ -140,8 +140,8 @@ export default function Signup() {
         <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-accent/5 animate-gradient opacity-30 pointer-events-none" />
         <div className="w-full max-w-sm space-y-8 sm:space-y-12 relative z-10 py-12">
           <div className="space-y-4">
-            <h2 className="text-4xl font-sans font-extrabold tracking-[0.04em]">CREATE ACCOUNT</h2>
-            <p className="text-muted text-xs tracking-[0.15em]">START YOUR 14-DAY FREE TRIAL TODAY.</p>
+            <h2 className="text-4xl font-sans font-extrabold tracking-[0.04em]">PILOT APPLICATION</h2>
+            <p className="text-muted text-xs tracking-[0.15em]">REQUEST EARLY ACCESS TO THE GOVERNANCE PIPELINE.</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -195,7 +195,7 @@ export default function Signup() {
               className="bracket-btn w-full flex items-center justify-center gap-2"
             >
               <span className="bracket-btn-inner"></span>
-              {loading ? 'CREATING ACCOUNT...' : 'GET STARTED'}
+              {loading ? 'PROCESSING APPLICATION...' : 'APPLY FOR ACCESS'}
               {!loading && (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7" />

@@ -114,12 +114,12 @@ export default function Login() {
 
         <div className="relative z-10 max-w-md">
           <h1 className="text-7xl font-sans font-extrabold leading-[0.9] mb-8 tracking-[0.04em]">
-            COMPLIANCE <br />
-            WITHOUT THE <br />
-            HEADACHE.
+            SYSTEM <br />
+            ACCESS <br />
+            PORTAL.
           </h1>
           <p className="text-muted text-sm tracking-[0.15em] leading-relaxed">
-            THE ALL-IN-ONE LEGAL INFRASTRUCTURE FOR WEB AGENCIES. AUTOMATE PRIVACY POLICIES, TERMS, AND COOKIE CONSENT FOR ALL YOUR CLIENTS IN ONE PLACE.
+            AUTHORIZED PERSONNEL ONLY. ACCESS THE GLOBAL GOVERNANCE INFRASTRUCTURE AND MANIPULATE COMPLIANCE DEPLOYMENTS.
           </p>
         </div>
 
@@ -133,8 +133,8 @@ export default function Login() {
         <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-accent/5 animate-gradient opacity-30 pointer-events-none" />
         <div className="w-full max-w-sm space-y-8 sm:space-y-12 relative z-10 py-12">
           <div className="space-y-4">
-            <h2 className="text-4xl font-sans font-extrabold tracking-[0.04em]">SIGN IN</h2>
-            <p className="text-muted text-xs tracking-[0.15em]">ENTER YOUR CREDENTIALS TO ACCESS YOUR DASHBOARD.</p>
+            <h2 className="text-4xl font-sans font-extrabold tracking-[0.04em]">INFRASTRUCTURE SECURE SIGN-IN</h2>
+            <p className="text-muted text-xs tracking-[0.15em]">ENTER AUTHENTICATION CREDENTIALS TO ACCESS THE CORE ENGINE.</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">

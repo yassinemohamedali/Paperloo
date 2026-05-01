@@ -5,36 +5,35 @@ import { cn } from '@/src/lib/utils';
 import LeadScanner from '@/src/components/LeadScanner';
 
 const SERVICES = [
-  { id: '01', name: 'PRIVACY POLICY GENERATION', description: 'AUTOMATED DRAFTING FOR GLOBAL COMPLIANCE.' },
-  { id: '02', name: 'TERMS OF SERVICE', description: 'CUSTOM LEGAL FRAMEWORKS FOR ANY PLATFORM.' },
-  { id: '03', name: 'COOKIE POLICY', description: 'DYNAMIC CONSENT MANAGEMENT SOLUTIONS.' },
-  { id: '04', name: 'JURISDICTION ENGINE', description: 'MULTI-REGION LEGAL ADAPTATION ON THE FLY.' },
-  { id: '05', name: 'REGULATION ALERTS', description: 'REAL-TIME UPDATES ON GLOBAL LEGAL CHANGES.' },
+  { id: '01', name: 'GLOBAL DISCLOSURE ENGINE', description: 'ENTERPRISE-GRADE AUTOMATED DRAFTING FOR INTERNATIONAL COMPLIANCE.' },
+  { id: '02', name: 'GOVERNANCE FRAMEWORKS', description: 'SCALABLE LEGAL INFRASTRUCTURE FOR MULTI-TENANT PLATFORMS.' },
+  { id: '03', name: 'CONSENT ARCHITECTURE', description: 'DYNAMIC DATA PRIVACY AND CONSENT MANAGEMENT PIPELINES.' },
+  { id: '04', name: 'JURISDICTIONAL ADAPTATION', description: 'REAL-TIME REGULATORY SYNCHRONIZATION ACROSS ALL REGIONS.' },
+  { id: '05', name: 'RISK MITIGATION ALERTS', description: 'PROACTIVE MONITORING OF GLOBAL REGULATORY SHIFTS.' },
 ];
 
 const ADVANTAGES = [
-  { title: 'TOP-TIER COMPLIANCE DOCS', content: 'OUR DOCUMENTS ARE CRAFTED BY LEGAL EXPERTS AND AUTOMATED BY ELITE ENGINEERS.' },
-  { title: 'MULTI-JURISDICTION COVERAGE', content: 'GDPR, CCPA, PIPEDA, AND MORE. WE COVER EVERY MAJOR REGULATION WORLDWIDE.' },
-  { title: 'FAST TURNAROUND', content: 'GO FROM ZERO TO COMPLIANT IN SECONDS, NOT WEEKS.' },
-  { title: 'MODERN CLEAN DESIGN', content: 'DOCUMENTS THAT LOOK AS GOOD AS THE SITES YOU BUILD.' },
-  { title: 'BUILT ON ANY PLATFORM', content: 'EMBED ANYWHERE. WORDPRESS, WEBFLOW, SHOPIFY, OR CUSTOM BUILDS.' },
-  { title: 'HIGH PERFORMANCE', content: 'LIGHTWEIGHT SCRIPTS THAT NEVER SLOW DOWN YOUR CLIENT SITES.' },
+  { title: 'COMPLIANCE INFRASTRUCTURE', content: 'THE PAPERLOO PLATFORM INTEGRATES DIRECTLY INTO YOUR TECH STACK, PROVIDING AUTOMATED LEGAL DISCLOSURES AT SCALE.' },
+  { title: 'ENTERPRISE GOVERNANCE', content: 'FULL GDPR, CCPA, AND PIPEDA ALIGNMENT THROUGH OUR PROPRIETARY AUTOMATED COMPLIANCE PROTOCOLS.' },
+  { title: 'INSTANT DEPLOYMENT', content: 'REDUCE TIME-TO-COMPLIANCE FROM MONTHS TO MILLISECONDS WITH OUR CLOUD-NATIVE INFRASTRUCTURE.' },
+  { title: 'MINIMALIST ARCHITECTURE', content: 'HIGH-AUTHORITY DOCUMENT DESIGN THAT REINFORCES BRAND TRUST WITHOUT ADDING OVERHEAD.' },
+  { title: 'PLATFORM AGNOSTIC', content: 'UNIFIED API ACCESS FOR CUSTOM BUILDS, E-COMMERCE, AND ENTERPRISE CMS ECOSYSTEMS.' },
+  { title: 'ZERO-LATENCY DELIVERY', content: 'EDGE-COMPUTING POWERED SCRIPTS ENSURING REVENUE-CRITICAL PERFORMANCE IS NEVER COMPROMISED.' },
 ];
 
 const PROCESS = [
   { 
-    title: 'DISCOVER AND PLAN', 
-    bullets: ['CLIENT DATA AUDIT', 'JURISDICTION MAPPING', 'RISK ASSESSMENT'],
+    title: 'AUDIT & ASSESSMENT', 
+    bullets: ['ENTERPRISE DATA AUDIT', 'JURISDICTIONAL MAPPING', 'INFRASTRUCTURE ANALYSIS'],
     icon: (
       <svg className="w-12 h-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 8v8M8 12h8" />
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
       </svg>
     )
   },
   { 
-    title: 'AGREEMENT AND SETUP', 
-    bullets: ['PLAN SELECTION', 'DASHBOARD ACCESS', 'SITE INTEGRATION'],
+    title: 'GOVERNANCE SETUP', 
+    bullets: ['SaaS GOVERNANCE PLAN', 'API INTEGRATION', 'SECURITY PROTOCOLS'],
     icon: (
       <svg className="w-12 h-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
         <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -43,11 +42,12 @@ const PROCESS = [
     )
   },
   { 
-    title: 'DESIGN BUILD AND LAUNCH', 
-    bullets: ['DOC GENERATION', 'STYLING & EMBED', 'LIVE MONITORING'],
+    title: 'GLOBAL DEPLOYMENT', 
+    bullets: ['INFRASTRUCTURE ROLLOUT', 'LIVE MONITORING', 'COMPLIANCE SYNC'],
     icon: (
       <svg className="w-12 h-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 8v8M8 12h8" />
       </svg>
     )
   },
@@ -144,20 +144,46 @@ export default function LandingPage() {
         "fixed top-0 left-0 right-0 z-[100] transition-all duration-300 px-6 md:px-12 py-6 flex items-center justify-between border-b border-white/10",
         isScrolled ? "bg-black/90 backdrop-blur-md" : "bg-black"
       )}>
-        <Link to="/" className="text-xl sm:text-3xl logo">
-          PAPERLOO
-        </Link>
-        
-        <button 
-          onClick={() => setMenuOpen(true)}
-          className="p-2 hover:text-accent transition-colors"
-        >
-          <div className="space-y-1.5">
-            <div className="w-8 h-0.5 bg-white"></div>
-            <div className="w-8 h-0.5 bg-white"></div>
-            <div className="w-8 h-0.5 bg-white"></div>
+        <div className="flex items-center gap-12">
+          <Link to="/" className="text-xl sm:text-3xl logo">
+            PAPERLOO
+          </Link>
+          
+          <div className="hidden lg:flex items-center gap-8">
+            <div className="group relative">
+              <button className="text-[10px] tracking-[0.2em] font-bold text-muted hover:text-accent flex items-center gap-1">
+                SOLUTIONS <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div className="absolute top-full left-0 mt-4 w-64 bg-surface border border-white/10 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                <ul className="space-y-4">
+                  <li><Link to="/solutions/agencies" className="block text-[10px] tracking-widest hover:text-accent">MARKETING AGENCIES</Link></li>
+                  <li><Link to="/solutions/ecommerce" className="block text-[10px] tracking-widest hover:text-accent">E-COMMERCE</Link></li>
+                  <li><Link to="/solutions/enterprise" className="block text-[10px] tracking-widest hover:text-accent">GLOBAL ENTERPRISE</Link></li>
+                </ul>
+              </div>
+            </div>
+            <Link to="/trust" className="text-[10px] tracking-[0.2em] font-bold text-muted hover:text-accent">SECURITY</Link>
+            <Link to="/docs" className="text-[10px] tracking-[0.2em] font-bold text-muted hover:text-accent">DEVELOPERS</Link>
           </div>
-        </button>
+        </div>
+        
+        <div className="flex items-center gap-6">
+          <Link to="/login" className="hidden sm:block text-[10px] tracking-[0.2em] font-bold text-muted hover:text-accent">LOGIN</Link>
+          <Link to="/signup" className="bracket-btn py-2 px-6 text-[10px] tracking-widest">
+            <span className="bracket-btn-inner"></span>
+            REQUEST ACCESS
+          </Link>
+          <button 
+            onClick={() => setMenuOpen(true)}
+            className="p-2 hover:text-accent transition-colors lg:hidden"
+          >
+            <div className="space-y-1.5">
+              <div className="w-8 h-0.5 bg-white"></div>
+              <div className="w-8 h-0.5 bg-white"></div>
+              <div className="w-8 h-0.5 bg-white"></div>
+            </div>
+          </button>
+        </div>
       </nav>
 
       {/* Fullscreen Menu */}
@@ -223,40 +249,39 @@ export default function LandingPage() {
           <div className="mb-12">
             <div className="inline-flex items-center gap-3 px-6 py-2 border border-white rounded-full">
               <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-              <span className="text-[10px] tracking-[0.3em] font-bold whitespace-nowrap">COMPLIANCE · AUTOMATED</span>
+              <span className="text-[10px] tracking-[0.3em] font-bold whitespace-nowrap uppercase">Compliance Infrastructure · Automated</span>
             </div>
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-[120px] leading-[0.9] font-sans font-extrabold mb-12 tracking-[0.04em] break-words">
-            <AnimatedHeadline text="COMPLIANCE DOCS" /><br />
-            <AnimatedHeadline text="FOR EVERY CLIENT SITE." />
+            <AnimatedHeadline text="GLOBAL DISCLOSURE" /><br />
+            <AnimatedHeadline text="INFRASTRUCTURE." />
           </h1>
 
           <p className="text-muted text-xs sm:text-sm md:text-lg tracking-[0.15em] max-w-3xl mx-auto mb-16 px-4">
-            UPGRADE YOUR AGENCY WITH AUTOMATED COMPLIANCE DOCUMENTS AND ELITE LEVEL DELIVERY.
+            WE PROVIDE THE UNDERLYING LEGAL ARCHITECTURE FOR SCALE-UP AGENCIES AND GLOBAL ENTERPRISE SaaS SOLUTIONS.
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 px-6">
             <Link to="/signup" className="bracket-btn w-full md:w-auto group py-5 sm:py-4">
               <span className="bracket-btn-inner"></span>
-              GET STARTED
+              APPLY FOR PILOT PROGRAM
             </Link>
-            <a href="https://wa.me/201553521107" className="bracket-btn w-full md:w-auto border-accent text-accent group py-5 sm:py-4">
+            <Link to="/trust" className="bracket-btn w-full md:w-auto border-accent text-accent group py-5 sm:py-4">
               <span className="bracket-btn-inner"></span>
               <div className="flex items-center justify-center gap-2">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                </svg>
-                WHATSAPP CHAT
+                TRUST CENTER
               </div>
-            </a>
+            </Link>
           </div>
 
           {/* Client Logos */}
           <div className="mt-24 flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-30 grayscale">
-            <span className="text-xs tracking-[0.3em] font-bold">SENSIBA LLP</span>
+            <span className="text-xs tracking-[0.3em] font-bold uppercase">Sensiba lLP</span>
             <div className="w-px h-4 bg-white/20"></div>
-            <span className="text-xs tracking-[0.3em] font-bold">CORE SYSTEMS</span>
+            <span className="text-xs tracking-[0.3em] font-bold uppercase">Core Systems</span>
+            <div className="w-px h-4 bg-white/20"></div>
+            <span className="text-xs tracking-[0.3em] font-bold uppercase">Nexus Infrastructure</span>
           </div>
         </div>
       </section>
@@ -310,9 +335,9 @@ export default function LandingPage() {
         <div className="absolute inset-0 radial-fade-top opacity-50" />
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="mb-20 text-center reveal-up">
-            <div className="section-label mb-8 inline-block">AUDIT YOUR AGENCY</div>
+            <div className="section-label mb-8 inline-block">SYSTEM AUDIT</div>
             <h2 className="text-5xl md:text-7xl font-sans font-black tracking-tighter italic uppercase">
-              IS YOUR SITE <span className="text-accent">LEGALLY PROTECTED?</span>
+              DEEPLY ANALYZE <span className="text-accent">RISK EXPOSURE.</span>
             </h2>
           </div>
           
@@ -327,9 +352,9 @@ export default function LandingPage() {
         <div className="absolute inset-0 grid-dots-animated opacity-10 pointer-events-none" />
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="mb-24 reveal-up">
-            <div className="section-label mb-8">TAILORED SERVICES</div>
+            <div className="section-label mb-8">COMPLIANCE AS INFRASTRUCTURE</div>
           <h2 className="text-3xl sm:text-6xl md:text-8xl font-sans font-black tracking-tighter">
-            CUSTOM <span className="sm:whitespace-nowrap">COMPLIANCE</span><br className="hidden sm:block" /> FOR YOUR AGENCY
+            THE <span className="sm:whitespace-nowrap italic">PAPERLOO</span><br className="hidden sm:block" /> GOVERNANCE STACK
           </h2>
           </div>
 
@@ -408,9 +433,9 @@ export default function LandingPage() {
       <section className="py-32 px-6 bg-black">
         <div className="max-w-7xl mx-auto">
           <div className="mb-24 reveal-up">
-            <div className="section-label mb-8">BY DIGITAL PARTNERS</div>
+            <div className="section-label mb-8">THE STANDARD FOR GLOBAL FIRMS</div>
             <h2 className="text-6xl md:text-8xl font-sans font-black tracking-tighter">
-              WHY SERIOUS<br />AGENCIES CHOOSE US
+              WHY THE WORLD'S<br />LEADING SaaS TRUST US
             </h2>
           </div>
 
@@ -455,8 +480,8 @@ export default function LandingPage() {
       {/* Process Section */}
       <section className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-6xl md:text-8xl font-sans font-extrabold tracking-[0.04em] mb-24 text-center reveal-up">
-            TIME TO UPGRADE<br />YOUR <span className="whitespace-nowrap">COMPLIANCE</span>
+          <h2 className="text-6xl md:text-8xl font-sans font-extrabold tracking-[0.04em] mb-24 text-center reveal-up uppercase">
+            UPGRADE YOUR<br /><span className="whitespace-nowrap">GOVERNANCE ENGINE</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -490,84 +515,121 @@ export default function LandingPage() {
         <div className="absolute inset-0 scan-lines pointer-events-none opacity-10"></div>
         <div className="relative z-10 max-w-5xl mx-auto reveal-up">
           <h2 className="text-7xl md:text-[120px] font-sans font-extrabold tracking-[0.04em] leading-[0.9] mb-12">
-            YOUR CLIENTS<br />DESERVE BETTER
+            READY FOR <br />INFRASTRUCTURE?
           </h2>
           <p className="text-muted text-sm md:text-lg tracking-[0.15em] mb-16 max-w-2xl mx-auto">
-            LET'S AUTOMATE THEIR COMPLIANCE AND BUILD SOMETHING YOU CAN BE PROUD OF.
+            WE ARE CURRENTLY ACCEPTING A LIMITED NUMBER OF ENTERPRISE PILOT PARTNERS.
           </p>
           <Link to="/signup" className="bracket-btn inline-block">
             <span className="bracket-btn-inner"></span>
-            START YOUR PROJECT TODAY
+            APPLY FOR EARLY ACCESS
           </Link>
+        </div>
+      </section>
+
+      {/* Trust Center / Data Integrity Section */}
+      <section className="py-32 px-6 border-y border-white/5 bg-surface/30">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          <div className="reveal-up">
+            <div className="section-label mb-8">TRUST CENTER & DATA INTEGRITY</div>
+            <h2 className="text-5xl font-sans font-black tracking-tighter mb-8 italic uppercase">
+              YOUR DATA IS <span className="text-accent underline decoration-2">SECURE.</span>
+            </h2>
+            <div className="space-y-6 text-muted text-sm tracking-widest leading-loose">
+              <p>THE PAPERLOO PLATFORM IS BUILT WITH A SECURITY-FIRST ARCHITECTURE. ALL DATA IS ENCRYPTED AT REST VIA AES-256 AND PROTECTED DURING TRANSIT WITH TLS 1.3 PROTOCOLS.</p>
+              <p>WE ADHERE TO SOC2-ALIGNED GOVERNANCE PRACTICES, ENSURING THAT OUR AUTOMATED WORKFLOWS MEET THE RIGOROUS STANDARDS REQUIRED BY GLOBAL ENTERPRISE LEGAL DEPARTMENTS.</p>
+            </div>
+            <Link to="/trust" className="inline-block mt-12 text-[10px] font-bold tracking-[0.4em] text-accent hover:underline">
+              VIEW FULL SECURITY WHITEPAPER →
+            </Link>
+          </div>
+          <div className="reveal-up delay-200">
+            <div className="aspect-square bg-black border border-white/10 p-1 relative overflow-hidden group">
+              <div className="absolute inset-0 grid-dots opacity-20"></div>
+              <div className="relative h-full flex flex-col items-center justify-center space-y-12 text-center p-12">
+                <div className="w-24 h-24 border border-accent flex items-center justify-center rotate-45 group-hover:rotate-0 transition-transform duration-700">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="-rotate-45 group-hover:rotate-0 transition-transform duration-700">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-3xl font-sans font-black tracking-[0.1em]">SOC2 ALIGNED</p>
+                  <p className="text-[10px] tracking-[0.3em] text-accent">ENTERPRISE-STRENGTH PROTECTION</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="bg-black py-24 px-6 border-t border-white/10">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-16 mb-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-16 mb-24 uppercase">
             <div className="lg:col-span-1 space-y-8">
               <span className="text-4xl logo">PAPERLOO</span>
-              <p className="text-muted text-sm tracking-[0.15em] max-w-xs">
-                STOP STALLING. START SCALING WITH PAPERLOO.
+              <p className="text-muted text-[10px] tracking-[0.15em] max-w-xs leading-relaxed">
+                THE GLOBAL STANDARD FOR AUTOMATED COMPLIANCE INFRASTRUCTURE.
               </p>
               <div className="space-y-2">
-                <p className="text-accent text-xl tracking-tighter">paperloo.official@gmail.com</p>
-                <p className="text-accent text-xl tracking-tighter">+20 155 352 1107</p>
+                <p className="text-accent text-sm tracking-[0.1em]">compliance@paperloo.com</p>
+                <div className="pt-4 space-y-1">
+                  <p className="text-[9px] text-white/40 tracking-[0.3em]">GLOBAL PRESENCE</p>
+                  <p className="text-[10px] tracking-[0.2em] font-bold">ALEXANDRIA | NEW YORK | LONDON</p>
+                </div>
               </div>
             </div>
 
             <div className="space-y-6">
-              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">PRODUCT</p>
-              <ul className="space-y-4 text-xs tracking-[0.15em]">
-                <li><a href="#" className="hover:text-accent transition-colors">DASHBOARD</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">DOC GENERATOR</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">JURISDICTIONS</a></li>
+              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">SOLUTIONS</p>
+              <ul className="space-y-4 text-[10px] tracking-[0.15em]">
+                <li><Link to="/solutions/agencies" className="hover:text-accent transition-colors">MARKETING AGENCIES</Link></li>
+                <li><Link to="/solutions/ecommerce" className="hover:text-accent transition-colors">E-COMMERCE</Link></li>
+                <li><Link to="/solutions/enterprise" className="hover:text-accent transition-colors">GLOBAL ENTERPRISE</Link></li>
               </ul>
             </div>
 
             <div className="space-y-6">
-              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">COMPLIANCE</p>
-              <ul className="space-y-4 text-xs tracking-[0.15em]">
-                <li><a href="#" className="hover:text-accent transition-colors">GDPR</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">CCPA</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">PIPEDA</a></li>
+              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">INFRASTRUCTURE</p>
+              <ul className="space-y-4 text-[10px] tracking-[0.15em]">
+                <li><Link to="/docs" className="hover:text-accent transition-colors">DOCUMENTATION</Link></li>
+                <li><Link to="/docs/api" className="hover:text-accent transition-colors">API REFERENCE</Link></li>
+                <li><Link to="/status" className="hover:text-accent transition-colors">SYSTEM STATUS</Link></li>
               </ul>
             </div>
 
             <div className="space-y-6">
-              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">SOCIALS</p>
-              <ul className="space-y-4 text-xs tracking-[0.15em]">
-                <li><a href="#" className="hover:text-accent transition-colors">TWITTER</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">LINKEDIN</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">INSTAGRAM</a></li>
+              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">GOVERNANCE</p>
+              <ul className="space-y-4 text-[10px] tracking-[0.15em]">
+                <li><Link to="/trust" className="hover:text-accent transition-colors">TRUST CENTER</Link></li>
+                <li><Link to="/trust/security" className="hover:text-accent transition-colors">SECURITY POLICY</Link></li>
+                <li><Link to="/trust/privacy" className="hover:text-accent transition-colors">DATA PRIVACY</Link></li>
               </ul>
             </div>
 
             <div className="space-y-6">
               <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">LEGAL</p>
-              <ul className="space-y-4 text-xs tracking-[0.15em]">
-                <li><Link to="/legal" className="hover:text-accent transition-colors uppercase">PRIVACY POLICY</Link></li>
-                <li><Link to="/legal" className="hover:text-accent transition-colors uppercase">TERMS OF SERVICE</Link></li>
-                <li><Link to="/legal" className="hover:text-accent transition-colors uppercase">DISCLAIMER</Link></li>
+              <ul className="space-y-4 text-[10px] tracking-[0.15em]">
+                <li><Link to="/legal" className="hover:text-accent transition-colors">PRIVACY POLICY</Link></li>
+                <li><Link to="/legal" className="hover:text-accent transition-colors">TERMS OF SERVICE</Link></li>
+                <li><Link to="/legal" className="hover:text-accent transition-colors">DISCLAIMER</Link></li>
               </ul>
             </div>
           </div>
 
           <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between gap-6">
             <div className="flex flex-col gap-4">
-              <p className="text-[10px] tracking-[0.2em] text-muted">© 2026 PAPERLOO. ALL RIGHTS RESERVED.</p>
+              <p className="text-[10px] tracking-[0.2em] text-muted">© 2026 THE PAPERLOO PLATFORM. ALL RIGHTS RESERVED.</p>
               <div className="max-w-2xl bg-white/5 border border-white/10 p-4 rounded-lg">
                 <p className="text-[9px] leading-relaxed text-muted uppercase tracking-wider">
                   <span className="text-red-400 font-black block mb-1">MANDATORY LEGAL DISCLOSURE</span>
-                  Paperloo.com is an automated AI platform and is not a law firm. We do not provide legal advice, 
-                  opinion or recommendations about your legal rights or strategies. The creator of this platform is not a licensed attorney. 
-                  Use of this service does not create an attorney-client relationship. All generated documents should be reviewed by 
-                  qualified legal counsel prior to use. Paperloo is an experimental tool provided "as-is" for automation purposes.
+                  Paperloo Infrastructure is an automated AI platform and is not a law firm. We do not provide legal advice, 
+                  opinion or recommendations about your legal rights or strategies. Use of this service does not create an attorney-client relationship. All generated documents should be reviewed by 
+                  qualified legal counsel prior to use.
                 </p>
               </div>
             </div>
-            <p className="text-[10px] tracking-[0.2em] text-muted">BUILT FOR ELITE AGENCIES.</p>
+            <p className="text-[10px] tracking-[0.2em] text-muted">BUILT FOR GLOBAL ENTERPRISE.</p>
           </div>
         </div>
       </footer>
