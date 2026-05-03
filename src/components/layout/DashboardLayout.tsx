@@ -16,12 +16,12 @@ import { useAuthStore } from '@/src/store/authStore';
 import { cn } from '@/src/lib/utils';
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Globe, label: 'Sites', path: '/sites' },
-  { icon: Bell, label: 'Alerts', path: '/alerts' },
-  { icon: Shield, label: 'Regulations', path: '/regulations' },
-  { icon: CreditCard, label: 'Billing', path: '/billing' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: LayoutDashboard, label: 'System Overview', path: '/dashboard' },
+  { icon: Globe, label: 'Deployment Hub', path: '/sites' },
+  { icon: Bell, label: 'Risk Monitor', path: '/alerts' },
+  { icon: Shield, label: 'Governance Library', path: '/regulations' },
+  { icon: CreditCard, label: 'Revenue Governance', path: '/billing' },
+  { icon: Settings, label: 'System Config', path: '/settings' },
 ];
 
 export default function DashboardLayout() {
@@ -50,19 +50,23 @@ export default function DashboardLayout() {
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-8 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-accent" />
-            <span className="logo text-xl">Paperloo</span>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 flex-shrink-0 bg-accent rounded-[6px] flex items-center justify-center p-1">
+              <svg viewBox="0 0 100 100" className="w-full h-full fill-black">
+                <path d="M35 25h15c10 0 15 5 15 12.5S60 50 50 50H35v25h-5V25zm5 20h10c7 0 10-3 10-7.5S57 30 50 30H40v15z" />
+              </svg>
+            </div>
+            <span className="logo text-lg tracking-widest whitespace-nowrap">PAPERLOO INF</span>
           </div>
           <button 
-            className="md:hidden p-2 text-muted-custom"
+            className="md:hidden p-2 text-muted"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
+        <nav className="flex-1 px-4 space-y-1 mt-4 overflow-y-auto uppercase">
           {navItems.map((item, index) => (
             <NavLink
               key={item.path}

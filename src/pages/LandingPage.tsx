@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import LeadScanner from '@/src/components/LeadScanner';
@@ -113,6 +113,7 @@ const GlobeSVG = () => {
 };
 
 export default function LandingPage() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
@@ -146,7 +147,7 @@ export default function LandingPage() {
       )}>
         <div className="flex items-center gap-12">
           <Link to="/" className="text-xl sm:text-3xl logo">
-            PAPERLOO
+            PAPERLOO INFRASTRUCTURE
           </Link>
           
           <div className="hidden lg:flex items-center gap-8">
@@ -197,7 +198,7 @@ export default function LandingPage() {
             className="fixed inset-0 z-[200] bg-black flex flex-col p-12"
           >
             <div className="flex justify-between items-center mb-24">
-              <span className="text-3xl logo">PAPERLOO</span>
+              <span className="text-3xl logo">PAPERLOO INF</span>
               <button onClick={() => setMenuOpen(false)} className="p-2 hover:text-accent">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6L6 18M6 6l12 12" />
@@ -206,13 +207,21 @@ export default function LandingPage() {
             </div>
             
             <div className="flex flex-col gap-8">
-              {['SERVICES', 'WHY US', 'PROCESS', 'CONTACT'].map((item) => (
+              {[
+                { label: 'SOLUTIONS', path: '/#solutions' },
+                { label: 'SECURITY', path: '/trust' },
+                { label: 'DEVELOPERS', path: '/docs' },
+                { label: 'PILOT PROGRAM', path: '/signup' }
+              ].map((item) => (
                 <button 
-                  key={item}
-                  onClick={() => setMenuOpen(false)}
-                  className="text-6xl md:text-8xl font-sans font-extrabold text-left hover:text-accent transition-colors tracking-[0.04em]"
+                  key={item.label}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    item.path.startsWith('/#') ? window.location.hash = item.path.substring(2) : navigate(item.path);
+                  }}
+                  className="text-4xl md:text-6xl font-sans font-black text-left hover:text-accent transition-colors tracking-tighter italic uppercase"
                 >
-                  {item}
+                  {item.label}
                 </button>
               ))}
             </div>
@@ -567,7 +576,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-16 mb-24 uppercase">
             <div className="lg:col-span-1 space-y-8">
-              <span className="text-4xl logo">PAPERLOO</span>
+              <span className="text-4xl logo">PAPERLOO INFRASTRUCTURE</span>
               <p className="text-muted text-[10px] tracking-[0.15em] max-w-xs leading-relaxed">
                 THE GLOBAL STANDARD FOR AUTOMATED COMPLIANCE INFRASTRUCTURE.
               </p>
