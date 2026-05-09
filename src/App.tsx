@@ -5,6 +5,7 @@ import { supabase, Database } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
+import ConsentManager from './components/ConsentManager';
 
 // Lazy load pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -25,6 +26,10 @@ const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Regulations = lazy(() => import('./pages/Regulations'));
 const Partners = lazy(() => import('./pages/Partners'));
 const Trust = lazy(() => import('./pages/Trust'));
+const Docs = lazy(() => import('./pages/Docs'));
+const SolutionsAgencies = lazy(() => import('./pages/SolutionsAgencies'));
+const SolutionsEcommerce = lazy(() => import('./pages/SolutionsEcommerce'));
+const SolutionsEnterprise = lazy(() => import('./pages/SolutionsEnterprise'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -151,6 +156,10 @@ const AnimatedRoutes = () => {
         <Route path="/legal" element={<PageTransition><LegalPage /></PageTransition>} />
         <Route path="/partners" element={<PageTransition><Partners /></PageTransition>} />
         <Route path="/trust" element={<PageTransition><Trust /></PageTransition>} />
+        <Route path="/docs" element={<PageTransition><Docs /></PageTransition>} />
+        <Route path="/solutions/agencies" element={<PageTransition><SolutionsAgencies /></PageTransition>} />
+        <Route path="/solutions/ecommerce" element={<PageTransition><SolutionsEcommerce /></PageTransition>} />
+        <Route path="/solutions/enterprise" element={<PageTransition><SolutionsEnterprise /></PageTransition>} />
 
         {/* Protected Routes */}
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingGuard><PageTransition><Onboarding /></PageTransition></OnboardingGuard></ProtectedRoute>} />
@@ -208,6 +217,7 @@ export default function App() {
       <Suspense fallback={<div className="h-screen w-screen bg-bg" />}>
         <AnimatedRoutes />
       </Suspense>
+      <ConsentManager />
       <Toaster 
         position="top-right" 
         toastOptions={{

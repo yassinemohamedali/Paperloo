@@ -152,14 +152,14 @@ export default function LandingPage() {
           
           <div className="hidden lg:flex items-center gap-8">
             <div className="group relative">
-              <button className="text-[10px] tracking-[0.2em] font-bold text-muted hover:text-accent flex items-center gap-1">
-                SOLUTIONS <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+              <button className="text-[10px] tracking-[0.2em] font-bold text-muted hover:text-accent flex items-center gap-1 uppercase">
+                Solutions <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
               <div className="absolute top-full left-0 mt-4 w-64 bg-surface border border-white/10 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                 <ul className="space-y-4">
-                  <li><Link to="/solutions/agencies" className="block text-[10px] tracking-widest hover:text-accent">MARKETING AGENCIES</Link></li>
-                  <li><Link to="/solutions/ecommerce" className="block text-[10px] tracking-widest hover:text-accent">E-COMMERCE</Link></li>
-                  <li><Link to="/solutions/enterprise" className="block text-[10px] tracking-widest hover:text-accent">GLOBAL ENTERPRISE</Link></li>
+                  <li><Link to="/solutions/agencies" className="block text-[10px] tracking-widest hover:text-accent uppercase">Marketing Agencies</Link></li>
+                  <li><Link to="/solutions/ecommerce" className="block text-[10px] tracking-widest hover:text-accent uppercase">E-Commerce</Link></li>
+                  <li><Link to="/solutions/enterprise" className="block text-[10px] tracking-widest hover:text-accent uppercase">Global Enterprise</Link></li>
                 </ul>
               </div>
             </div>
@@ -217,7 +217,15 @@ export default function LandingPage() {
                   key={item.label}
                   onClick={() => {
                     setMenuOpen(false);
-                    item.path.startsWith('/#') ? window.location.hash = item.path.substring(2) : navigate(item.path);
+                    if (item.path.startsWith('/#')) {
+                      if (window.location.pathname !== '/') {
+                        navigate(item.path);
+                      } else {
+                        document.getElementById(item.path.substring(2))?.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    } else {
+                      navigate(item.path);
+                    }
                   }}
                   className="text-4xl md:text-6xl font-sans font-black text-left hover:text-accent transition-colors tracking-tighter italic uppercase"
                 >
@@ -357,7 +365,7 @@ export default function LandingPage() {
       </section>
 
       {/* Services Section */}
-      <section className="py-32 px-6 relative overflow-hidden">
+      <section id="solutions" className="py-32 px-6 relative overflow-hidden">
         <div className="absolute inset-0 grid-dots-animated opacity-10 pointer-events-none" />
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="mb-24 reveal-up">

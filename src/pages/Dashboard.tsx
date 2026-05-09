@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { supabase, Database } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
-import { Globe, FileText, Bell, Plus, ExternalLink, X } from 'lucide-react';
+import { Globe, FileText, Bell, Plus, ExternalLink, X, Activity, ShieldCheck, Zap, Database as DbIcon, Fingerprint } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 type Site = Database['public']['Tables']['sites']['Row'];
@@ -105,41 +105,103 @@ export default function Dashboard() {
   }
 
   const stats = [
-    { label: 'Total Sites', value: sites?.length || 0, icon: Globe },
-    { label: 'Active Docs', value: docsCount || 0, icon: FileText },
-    { label: 'Pending Alerts', value: alerts?.length || 0, icon: Bell, color: 'text-red-400' },
+    { label: 'Global Deployments', value: sites?.length || 0, icon: Globe },
+    { label: 'Governance Nodes', value: docsCount || 0, icon: DbIcon },
+    { label: 'Risk Indices', value: alerts?.length || 0, icon: Bell, color: 'text-red-400' },
   ];
 
   return (
     <div className="space-y-12 font-mono">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {stats.map((stat, index) => (
-          <div 
-            key={stat.label} 
-            style={{ animationDelay: `${index * 100}ms` }}
-            className="bg-surface border border-white/10 p-8 flex flex-col justify-between min-h-[140px] relative overflow-hidden group hover:border-accent/50 hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(200,241,53,0.05)] reveal-up active"
-          >
-            <div className="absolute inset-0 scan-lines opacity-10 pointer-events-none" />
-            <div className="flex items-center justify-between relative z-10">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted group-hover:text-text-custom transition-colors">{stat.label}</span>
-              <stat.icon className={cn("h-4 w-4 transition-all duration-300 group-hover:scale-110", stat.color || "text-accent")} />
-            </div>
-            <span className="text-6xl font-sans font-extrabold tracking-[0.04em] relative z-10">
-              <CountUp value={stat.value} />
-            </span>
+      {/* Infrastructure Overview */}
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="w-full lg:w-2/3 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {stats.map((stat, index) => (
+              <div 
+                key={stat.label} 
+                style={{ animationDelay: `${index * 100}ms` }}
+                className="bg-surface border border-white/10 p-6 flex flex-col justify-between min-h-[120px] relative overflow-hidden group hover:border-accent transition-all duration-500 reveal-up active"
+              >
+                <div className="absolute inset-0 scan-lines opacity-10 pointer-events-none" />
+                <div className="flex items-center justify-between relative z-10 mb-4">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted">{stat.label}</span>
+                  <stat.icon className={cn("h-4 w-4", stat.color || "text-accent")} />
+                </div>
+                <span className="text-5xl font-sans font-black tracking-tighter relative z-10 italic">
+                  <CountUp value={stat.value} />
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
+
+          {/* Activity Feed / System Logs */}
+          <div className="bg-surface border border-white/10 p-8 reveal-up active delay-100">
+            <div className="flex items-center justify-between mb-8">
+              <h4 className="text-sm font-sans font-black tracking-widest uppercase italic">Infrastructure Activity Log</h4>
+              <div className="flex items-center gap-2 text-[9px] font-bold text-accent animate-pulse">
+                <div className="w-1.5 h-1.5 bg-accent rounded-full" />
+                LIVE SYNC ACTIVE
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              {[
+                { time: '14:22:01', event: 'Consent Hashed', detail: '0x7F2A...B901 (TCF 2.2)', icon: Fingerprint },
+                { time: '14:15:45', event: 'Policy Rollout', detail: 'Privacy v2.1 -> nexus.io', icon: Zap },
+                { time: '13:58:12', event: 'Compliance Audit', detail: 'GDPR Baseline Verified', icon: ShieldCheck },
+              ].map((log, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 border border-white/5 hover:bg-white/[0.02] transition-colors group">
+                  <div className="text-[10px] text-muted font-bold tracking-tighter w-16">{log.time}</div>
+                  <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
+                    <log.icon className="w-4 h-4 text-accent/50 group-hover:text-accent transition-colors" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold tracking-widest uppercase">{log.event}</p>
+                    <p className="text-[9px] text-muted tracking-wider">{log.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Global Health Map / Meta-Metrics */}
+        <div className="w-full lg:w-1/3 bg-black border border-white/10 p-8 relative overflow-hidden group min-h-[400px]">
+          <div className="absolute inset-0 grid-dots opacity-20" />
+          <div className="relative z-10">
+            <h4 className="text-sm font-sans font-black tracking-widest uppercase italic mb-8">Governance Integrity</h4>
+            <div className="flex flex-col items-center justify-center p-8 text-center space-y-8">
+              <div className="relative w-48 h-48">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/5" />
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="210 300" className="text-accent shadow-[0_0_20px_rgba(200,241,53,0.5)]" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-5xl font-sans font-black tracking-tighter italic">94%</span>
+                  <span className="text-[9px] font-bold text-muted tracking-widest">SYSTEM AVG</span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <p className="text-[10px] text-muted tracking-widest leading-relaxed uppercase">
+                  Your infrastructure is currently performing within optimal compliance parameters across all jurisdictions.
+                </p>
+                <button className="text-[9px] font-bold tracking-widest text-accent hover:underline uppercase">
+                  View Full Audit Report →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-12">
         {/* Sites Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase italic underline underline-offset-8 decoration-accent/30">RECENT SITES</h3>
-            <Link to="/sites" className="bracket-btn py-2 px-4 text-xs font-black">
+            <h4 className="text-sm font-sans font-black tracking-widest uppercase italic mb-4">Active Deployment Hub</h4>
+            <Link to="/sites" className="bracket-btn py-2 px-4 text-[9px] font-black">
               <span className="bracket-btn-inner"></span>
-              ALL SITES
+              ALL DEPLOYMENTS
             </Link>
           </div>
 
