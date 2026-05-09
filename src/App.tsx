@@ -30,6 +30,11 @@ const Docs = lazy(() => import('./pages/Docs'));
 const SolutionsAgencies = lazy(() => import('./pages/SolutionsAgencies'));
 const SolutionsEcommerce = lazy(() => import('./pages/SolutionsEcommerce'));
 const SolutionsEnterprise = lazy(() => import('./pages/SolutionsEnterprise'));
+const Status = lazy(() => import('./pages/Status'));
+const ApiReference = lazy(() => import('./pages/ApiReference'));
+const AuditReport = lazy(() => import('./pages/AuditReport'));
+const SecurityPolicy = lazy(() => import('./pages/SecurityPolicy'));
+const DataPrivacy = lazy(() => import('./pages/DataPrivacy'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -157,6 +162,10 @@ const AnimatedRoutes = () => {
         <Route path="/partners" element={<PageTransition><Partners /></PageTransition>} />
         <Route path="/trust" element={<PageTransition><Trust /></PageTransition>} />
         <Route path="/docs" element={<PageTransition><Docs /></PageTransition>} />
+        <Route path="/docs/api" element={<PageTransition><ApiReference /></PageTransition>} />
+        <Route path="/status" element={<PageTransition><Status /></PageTransition>} />
+        <Route path="/trust/security" element={<PageTransition><SecurityPolicy /></PageTransition>} />
+        <Route path="/trust/privacy" element={<PageTransition><DataPrivacy /></PageTransition>} />
         <Route path="/solutions/agencies" element={<PageTransition><SolutionsAgencies /></PageTransition>} />
         <Route path="/solutions/ecommerce" element={<PageTransition><SolutionsEcommerce /></PageTransition>} />
         <Route path="/solutions/enterprise" element={<PageTransition><SolutionsEnterprise /></PageTransition>} />
@@ -166,6 +175,7 @@ const AnimatedRoutes = () => {
         
         <Route element={<ProtectedRoute><OnboardingGuard><DashboardLayout /></OnboardingGuard></ProtectedRoute>}>
           <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+          <Route path="/audit-report" element={<PageTransition><AuditReport /></PageTransition>} />
           <Route path="/sites" element={<PageTransition><Sites /></PageTransition>} />
           <Route path="/sites/:id" element={<PageTransition><SiteDetail /></PageTransition>} />
           <Route path="/sites/:id/questionnaire" element={<PageTransition><Questionnaire /></PageTransition>} />

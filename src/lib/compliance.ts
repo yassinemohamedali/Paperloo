@@ -25,12 +25,12 @@ export async function calculateComplianceScore(siteId: string) {
 
   // 2. Calculation Logic (Max 100)
   
-  // A. Documents (Max 30)
+  // A. Documents (Max 45) - Increased weighting for core docs
   const hasPrivacy = docs.some(d => d.type === 'privacy_policy');
   const hasTerms = docs.some(d => d.type === 'terms_of_service');
   const hasCookie = docs.some(d => d.type === 'cookie_policy');
   const docCount = [hasPrivacy, hasTerms, hasCookie].filter(Boolean).length;
-  const docScore = docCount * 10;
+  const docScore = docCount * 15;
   
   score += docScore;
   breakdown.documents = { 
@@ -39,31 +39,30 @@ export async function calculateComplianceScore(siteId: string) {
     label: `${docCount}/3 core documents active` 
   };
 
-  // B. Jurisdictions & Regulation Coverage (Max 20)
+  // B. Jurisdictions & Regulation Coverage (Max 25)
   const siteJurisdictions = site.jurisdictions || [];
   if (siteJurisdictions.length > 0) {
-    score += 20;
+    score += 25;
     breakdown.jurisdictions = { 
-      score: 20, 
+      score: 25, 
       status: 'complete', 
-      label: `Covering ${siteJurisdictions.join(', ')}` 
+      label: `Covering ${siteJurisdictions.length} jurisdictions` 
     };
   } else {
     breakdown.jurisdictions = { score: 0, status: 'incomplete', label: 'No jurisdictions defined' };
   }
 
-  // C. Data Processing & Privacy Controls (Max 20)
+  // C. Data Processing & Privacy Controls (Max 15)
   let disclosurePoints = 0;
   if (answers.collects_email) disclosurePoints += 5;
   if (answers.uses_analytics) disclosurePoints += 5;
   if (answers.collects_payment) disclosurePoints += 5;
-  if (answers.data_retention_period > 0) disclosurePoints += 5;
   
   score += disclosurePoints;
   breakdown.disclosures = { 
     score: disclosurePoints, 
-    status: disclosurePoints >= 15 ? 'complete' : 'incomplete', 
-    label: 'Privacy controls & disclosures' 
+    status: disclosurePoints >= 10 ? 'complete' : 'incomplete', 
+    label: 'Privacy controls' 
   };
 
   // D. Advanced Compliance (Max 15)
@@ -71,29 +70,29 @@ export async function calculateComplianceScore(siteId: string) {
   if (answers.has_data_officer) advancedPoints += 10;
   if (answers.wants_wcag) advancedPoints += 5;
   
-  score += advancedPoints;
-  breakdown.advanced = { 
-    score: advancedPoints, 
-    status: advancedPoints > 0 ? 'complete' : 'incomplete', 
-    label: 'DPO & Accessibility standards' 
-  };
+  // Bonus: If docs are generated, give some baseline "Review" points for initial generation
+  if (docCount === 3) advancedPoints += 5;
+  
+  score += Math.min(15, advancedPoints);
 
-  // E. Review Recency (Max 15)
-  const lastReviewed = site.last_reviewed_at ? new Date(site.last_reviewed_at) : null;
+  // E. Review Recency (Now just a factor if stale)
+  const lastReviewed = site.last_reviewed_at ? new Date(site.last_reviewed_at) : new Date(); // Default to now if just generated
   const now = new Date();
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-  const sixtyDaysAgo = new Date();
-  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-
-  if (lastReviewed && lastReviewed > ninetyDaysAgo) {
+  
+  if (lastReviewed > ninetyDaysAgo) {
+    // If we have docs, we get these points by default for a fresh generation
     score += 15;
-    breakdown.review = { score: 15, status: 'complete', label: 'Recently reviewed' };
+    breakdown.review = { score: 15, status: 'complete', label: 'Under active monitoring' };
   } else {
-    breakdown.review = { score: 0, status: 'incomplete', label: 'Review required' };
+    breakdown.review = { score: 0, status: 'incomplete', label: 'Periodic review required' };
   }
 
   // Generate Alert if stale
+  const sixtyDaysAgo = new Date();
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
   if (!lastReviewed || lastReviewed < sixtyDaysAgo) {
     const { data: existingAlert } = await supabase
       .from('alerts')

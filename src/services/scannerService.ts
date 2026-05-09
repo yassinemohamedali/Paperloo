@@ -26,8 +26,8 @@ export class SmartScanner {
     ];
 
     try {
-      const { error } = await supabase
-        .from('cookie_scans')
+      const { error } = await (supabase
+        .from('cookie_scans') as any)
         .insert({
           site_id: siteId,
           cookies: cookies,

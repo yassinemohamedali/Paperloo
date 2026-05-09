@@ -86,6 +86,23 @@ export default function Dashboard() {
     enabled: !!sites.length,
   });
 
+  const { data: averageScore = 0 } = useQuery({
+    queryKey: ['average-score', user?.id, sites.length],
+    queryFn: async () => {
+      if (sites.length === 0) return 0;
+      const { data, error } = await supabase
+        .from('compliance_scores')
+        .select('score')
+        .in('site_id', sites.map(s => s.id));
+      
+      if (error) throw error;
+      if (!data || data.length === 0) return 0;
+      const total = (data as { score: number | null }[]).reduce((acc, curr) => acc + (curr.score || 0), 0);
+      return Math.round(total / data.length);
+    },
+    enabled: !!sites.length,
+  });
+
   if (sitesLoading || alertsLoading) {
     return (
       <div className="space-y-12">
@@ -174,20 +191,33 @@ export default function Dashboard() {
               <div className="relative w-48 h-48">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/5" />
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="210 300" className="text-accent shadow-[0_0_20px_rgba(200,241,53,0.5)]" />
+                  <circle 
+                    cx="50" 
+                    cy="50" 
+                    r="45" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeDasharray={`${(averageScore / 100) * 283} 283`}
+                    className="text-accent shadow-[0_0_20px_rgba(200,241,53,0.5)] transition-all duration-1000" 
+                  />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-5xl font-sans font-black tracking-tighter italic">94%</span>
-                  <span className="text-[9px] font-bold text-muted tracking-widest">SYSTEM AVG</span>
+                  <span className="text-5xl font-sans font-black tracking-tighter italic">
+                    <CountUp value={averageScore} />%
+                  </span>
+                  <span className="text-[9px] font-bold text-muted tracking-widest uppercase">INFRASTRUCTURE HEALTH</span>
                 </div>
               </div>
               <div className="space-y-4">
                 <p className="text-[10px] text-muted tracking-widest leading-relaxed uppercase">
-                  Your infrastructure is currently performing within optimal compliance parameters across all jurisdictions.
+                  {averageScore >= 90 ? 'Your infrastructure is currently performing within optimal compliance parameters.' : 
+                   averageScore >= 70 ? 'Your infrastructure health is stable, but several governance nodes require attention.' :
+                   'Critical compliance vulnerabilities detected. Immediate infrastructure review recommended.'}
                 </p>
-                <button className="text-[9px] font-bold tracking-widest text-accent hover:underline uppercase">
+                <Link to="/audit-report" className="text-[9px] font-black tracking-widest text-accent hover:underline uppercase inline-block">
                   View Full Audit Report →
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -238,9 +268,20 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td className="px-8 py-5 text-right">
-                        <Link to={`/sites/${site.id}`} className="p-2 border border-white/10 hover:border-accent hover:text-accent transition-all inline-block">
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-3">
+                          <Link 
+                            to={`/sites/${site.id}/documents`} 
+                            className="text-[10px] font-black tracking-widest text-muted hover:text-accent border border-white/10 px-3 py-1.5 hover:border-accent transition-all"
+                          >
+                            VIEW AUDIT
+                          </Link>
+                          <Link 
+                            to={`/sites/${site.id}`} 
+                            className="p-2 border border-white/10 hover:border-accent hover:text-accent transition-all"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
