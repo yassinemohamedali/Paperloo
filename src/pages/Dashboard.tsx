@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { supabase, Database } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
-import { Globe, FileText, Bell, Plus, ExternalLink, X, Activity, ShieldCheck, Zap, Database as DbIcon, Fingerprint } from 'lucide-react';
+import { Globe, FileText, Bell, Plus, ExternalLink, X, Activity, ShieldCheck, Zap, Database as DbIcon, Fingerprint, Cpu, Lock, Network, Share2, Layers, EyeOff, Scale, Server, Shield } from 'lucide-react';
+import { ADVANCED_FEATURES } from '@/src/services/infrastructureService';
 import { cn } from '@/src/lib/utils';
 
 type Site = Database['public']['Tables']['sites']['Row'];
@@ -297,6 +298,59 @@ export default function Dashboard() {
               </Link>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ADVANCED INFRASTRUCTURE NODES - THE "ICEBERG" FEATURES */}
+      <div className="space-y-6 reveal-up active delay-100">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h4 className="text-sm font-sans font-black tracking-widest uppercase italic border-b-2 border-accent inline-block">Subsurface Protocol Nodes</h4>
+            <p className="text-[9px] text-muted font-bold tracking-widest uppercase opacity-50">Infrastructure Integrity Monitoring v4.1</p>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1 bg-accent/5 border border-accent/20">
+            <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
+            <span className="text-[9px] font-black tracking-widest text-accent uppercase">All Nodes Active</span>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {ADVANCED_FEATURES.map((feature) => (
+            <div key={feature.id} className="bg-surface border border-white/5 p-6 hover:border-accent/30 transition-all group relative overflow-hidden backdrop-blur-sm">
+              <div className="absolute top-0 right-0 p-2 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                {feature.category === 'AI_OVERSIGHT' && <Cpu className="w-12 h-12" />}
+                {feature.category === 'SECURITY' && <Lock className="w-12 h-12" />}
+                {feature.category === 'GOVERNANCE' && <Network className="w-12 h-12" />}
+                {feature.category === 'DATA_SOVEREIGNTY' && <Globe className="w-12 h-12" />}
+              </div>
+              
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-1.5">
+                  <div className={cn(
+                    "w-1 h-1 rounded-full",
+                    feature.status === 'ENFORCED' ? "bg-accent shadow-[0_0_8px_rgba(200,241,53,0.8)]" : 
+                    feature.status === 'MONITORING' ? "bg-blue-400" : "bg-white/20"
+                  )} />
+                  <span className="text-[8px] font-black tracking-widest uppercase text-white/50">{feature.category}</span>
+                </div>
+              </div>
+
+              <h5 className="text-[10px] font-black tracking-tighter uppercase mb-3 italic leading-none">{feature.name}</h5>
+
+              <div className="space-y-4 relative z-10">
+                <div>
+                  <p className="text-[8px] font-bold text-accent mb-1 uppercase tracking-widest italic opacity-80">Logic:</p>
+                  <p className="text-[9px] text-muted leading-tight uppercase font-medium">{feature.logic}</p>
+                </div>
+                <div className="pt-2 border-t border-white/5">
+                  <p className="text-[8px] font-bold text-white mb-1 uppercase tracking-widest italic opacity-50">Pitch:</p>
+                  <p className="text-[9px] text-muted/60 leading-tight uppercase italic">{feature.pitch}</p>
+                </div>
+              </div>
+              
+              <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          ))}
         </div>
       </div>
     </div>
