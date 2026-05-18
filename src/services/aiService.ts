@@ -182,5 +182,14 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
   }).eq('id', siteId);
   
   console.log('Fallback generation complete. Saved', results.length, 'documents.');
+  
+  // Trigger compliance calculation after saving documents
+  try {
+    const { calculateComplianceScore } = await import('@/src/lib/compliance');
+    await calculateComplianceScore(siteId);
+  } catch (err) {
+    console.error('Failed to trigger compliance score update after doc generation:', err);
+  }
+
   return results;
 };

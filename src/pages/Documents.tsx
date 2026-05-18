@@ -6,6 +6,7 @@ import { FileText, Copy, ExternalLink, RefreshCw, Eye, Code, X, History, Plus, T
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import { generateDocuments } from '@/src/services/aiService';
+import { calculateComplianceScore } from '@/src/lib/compliance';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -107,11 +108,22 @@ export default function Documents() {
       const language = lang || selectedLanguage;
       return await generateDocuments(id, language);
     },
-    onSuccess: (results) => {
+    onSuccess: async (results) => {
       queryClient.invalidateQueries({ queryKey: ['documents', id] });
       queryClient.invalidateQueries({ queryKey: ['document-versions', id] });
+      queryClient.invalidateQueries({ queryKey: ['site', id] });
+      
       if (results && results.length > 0) {
         toast.success(`Regenerated ${results.length} documents successfully!`);
+        // Recalculate score after doc generation
+        if (id) {
+          try {
+            await calculateComplianceScore(id);
+            queryClient.invalidateQueries({ queryKey: ['average-score'] });
+          } catch (err) {
+            console.error('Failed to recalculate score:', err);
+          }
+        }
       } else {
         toast.error('Regeneration failed to save any documents. Check your Groq API key.');
       }

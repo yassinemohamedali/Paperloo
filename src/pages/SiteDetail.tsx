@@ -62,11 +62,18 @@ export default function SiteDetail() {
         .from('compliance_scores')
         .select('*')
         .eq('site_id', id)
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
       
       if (error) throw error;
+      
+      // If no score exists yet, trigger a calculation
+      if (!data && id) {
+        console.log('No score found, triggering initial calculation...');
+        return await calculateComplianceScore(id);
+      }
+      
       return data as any;
     },
     enabled: !!id,

@@ -30,16 +30,29 @@ export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
   const queryClient = useQueryClient();
   const [isScanning, setIsScanning] = useState(false);
 
-  const { data: scans, isLoading } = useQuery<CookieScan[]>({
+  const { data: scans, isLoading, error: queryError } = useQuery<CookieScan[]>({
     queryKey: ['cookie_scans', siteId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('cookie_scans')
-        .select('*')
-        .eq('site_id', siteId)
-        .order('scanned_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from('cookie_scans')
+          .select('*')
+          .eq('site_id', siteId)
+          .order('scanned_at', { ascending: false });
+        
+        if (error) {
+          // Check for Table Not Found error (42P01 in PG)
+          if (error.code === '42P01') {
+            console.error('DATABASE ERROR: The "cookie_scans" table is missing from your Supabase instance. Please run the migrations in /supabase/migrations/ to create it.');
+            return [];
+          }
+          throw error;
+        }
+        return data;
+      } catch (err: any) {
+        console.error('Cookie scans query failed:', err);
+        return [];
+      }
     }
   });
 
@@ -47,38 +60,47 @@ export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
     mutationFn: async () => {
       setIsScanning(true);
       
-      const prompt = `Analyze the website URL "${siteUrl}" and predict the typical tracking cookies and scripts it would use. 
-      Consider common integrations like Google Analytics, Facebook Pixel, Stripe, etc.
-      Return ONLY a valid JSON array of objects with fields: name, domain, duration, category (Essential, Analytics, Marketing, Functional), status (Detected). 
-      Do NOT include markdown code blocks or any text other than the JSON array.`;
+      try {
+        const prompt = `Analyze the website URL "${siteUrl}" and predict the typical tracking cookies and scripts it would use. 
+        Consider common integrations like Google Analytics, Facebook Pixel, Stripe, etc.
+        Return ONLY a valid JSON array of objects with fields: name, domain, duration, category (Essential, Analytics, Marketing, Functional), status (Detected). 
+        Do NOT include markdown code blocks or any text other than the JSON array.`;
 
-      const completion = await getGroq().chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.2,
-      });
+        const completion = await getGroq().chat.completions.create({
+          messages: [{ role: 'user', content: prompt }],
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0.2,
+        });
 
-      const text = completion.choices[0]?.message?.content;
-      if (!text) throw new Error("No response from AI");
+        const text = completion.choices[0]?.message?.content;
+        if (!text) throw new Error("No response from AI");
 
-      // Extract JSON from text
-      let jsonStr = text;
-      if (text.includes('```json')) {
-        jsonStr = text.split('```json')[1].split('```')[0];
-      } else if (text.includes('```')) {
-        jsonStr = text.split('```')[1].split('```')[0];
+        // Extract JSON from text
+        let jsonStr = text;
+        if (text.includes('```json')) {
+          jsonStr = text.split('```json')[1].split('```')[0];
+        } else if (text.includes('```')) {
+          jsonStr = text.split('```')[1].split('```')[0];
+        }
+        
+        const cookies = JSON.parse(jsonStr.trim());
+
+        const { error } = await supabase.from('cookie_scans').insert({
+          site_id: siteId,
+          cookies: cookies as any,
+          status: 'completed',
+          scanned_at: new Date().toISOString()
+        } as any);
+
+        if (error) {
+          if (error.code === '42P01') {
+             throw new Error('Database table "cookie_scans" is missing. Please run the Supabase migrations.');
+          }
+          throw error;
+        }
+      } catch (err: any) {
+        throw err;
       }
-      
-      const cookies = JSON.parse(jsonStr.trim());
-
-      const { error } = await supabase.from('cookie_scans').insert({
-        site_id: siteId,
-        cookies: cookies as any,
-        status: 'completed',
-        scanned_at: new Date().toISOString()
-      } as any);
-
-      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cookie_scans', siteId] });

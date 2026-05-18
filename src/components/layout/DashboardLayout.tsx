@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/src/lib/supabase';
 import { 
   LayoutDashboard, 
   Globe, 
@@ -29,6 +31,20 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const { data: profile } = useQuery<any>({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id as string)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id
+  });
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/login');
@@ -50,13 +66,17 @@ export default function DashboardLayout() {
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 flex-shrink-0 bg-accent rounded-[6px] flex items-center justify-center p-1">
-              <svg viewBox="0 0 100 100" className="w-full h-full fill-black">
-                <path d="M35 25h15c10 0 15 5 15 12.5S60 50 50 50H35v25h-5V25zm5 20h10c7 0 10-3 10-7.5S57 30 50 30H40v15z" />
-              </svg>
-            </div>
-            <span className="logo text-lg tracking-widest whitespace-nowrap">PAPERLOO INF</span>
+          <div className="flex items-center gap-3 overflow-hidden">
+            {profile?.logo_url ? (
+               <img src={profile.logo_url} alt="Logo" className="w-8 h-8 rounded-lg object-cover border border-white/10" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-8 h-8 flex-shrink-0 bg-accent rounded-[6px] flex items-center justify-center p-1">
+                <Shield className="h-4 w-4 text-black" />
+              </div>
+            )}
+            <span className="logo text-lg tracking-widest whitespace-nowrap truncate uppercase">
+              {profile?.agency_name || 'PAPERLOO INF'}
+            </span>
           </div>
           <button 
             className="md:hidden p-2 text-muted"

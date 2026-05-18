@@ -5,30 +5,41 @@ export async function calculateComplianceScore(siteId: string) {
   const breakdown: Record<string, any> = {};
 
   // 1. Fetch site, documents, and questionnaire responses
-  const { data: siteData } = await supabase
+  console.log(`Calculating compliance for site: ${siteId}`);
+  const { data: siteData, error: siteError } = await supabase
     .from('sites')
     .select('*, questionnaire_responses(*)')
     .eq('id', siteId)
     .single();
 
+  if (siteError) {
+    console.error('Error fetching site data:', siteError);
+    return null;
+  }
+
   const site = siteData as any;
   if (!site) return null;
 
-  const { data: documentsData } = await supabase
+  const { data: documentsData, error: docsError } = await supabase
     .from('documents')
-    .select('type, created_at')
+    .select('type, created_at, is_active')
     .eq('site_id', siteId)
     .eq('is_active', true);
 
+  if (docsError) console.error('Error fetching docs:', docsError);
+
   const docs = (documentsData as any[]) || [];
+  console.log('Found documents:', docs.map(d => d.type));
   const answers = site.questionnaire_responses?.[0]?.answers || {};
 
   // 2. Calculation Logic (Max 100)
   
   // A. Documents (Max 45) - Increased weighting for core docs
-  const hasPrivacy = docs.some(d => d.type === 'privacy_policy');
-  const hasTerms = docs.some(d => d.type === 'terms_of_service');
-  const hasCookie = docs.some(d => d.type === 'cookie_policy');
+  // Ensure types are trimmed and compared correctly
+  const hasPrivacy = docs.some(d => d.type.trim() === 'privacy_policy');
+  const hasTerms = docs.some(d => d.type.trim() === 'terms_of_service');
+  const hasCookie = docs.some(d => d.type.trim() === 'cookie_policy');
+  
   const docCount = [hasPrivacy, hasTerms, hasCookie].filter(Boolean).length;
   const docScore = docCount * 15;
   
@@ -117,22 +128,28 @@ export async function calculateComplianceScore(siteId: string) {
   // Final adjustments (Cap at 100)
   score = Math.min(100, score);
 
-  // 3. Determine Grade
+  // 3. Determine Grade - Soften thresholds to encourage infrastructure health
   let grade = 'F';
-  if (score >= 90) grade = 'A';
-  else if (score >= 75) grade = 'B';
-  else if (score >= 60) grade = 'C';
-  else if (score >= 40) grade = 'D';
+  if (score >= 85) grade = 'A';      // Professional Grade
+  else if (score >= 70) grade = 'B'; // Stable
+  else if (score >= 45) grade = 'C'; // Developing
+  else if (score >= 20) grade = 'D'; // Vulnerable
+  else grade = 'F';                 // Critical
 
   // 4. Store in database
-  await (supabase
+  console.log(`Final calculated score: ${score} (${grade})`);
+  
+  const { error: scoreError } = await (supabase
     .from('compliance_scores') as any)
     .insert({
       site_id: siteId,
       score,
       grade,
-      breakdown
+      breakdown,
+      updated_at: new Date().toISOString()
     } as any);
+
+  if (scoreError) console.error('Error saving score:', scoreError);
 
   await (supabase
     .from('sites') as any)
