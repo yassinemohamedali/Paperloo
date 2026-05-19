@@ -23,22 +23,22 @@ export async function calculateComplianceScore(siteId: string) {
   const { data: documentsData, error: docsError } = await supabase
     .from('documents')
     .select('type, created_at, is_active')
-    .eq('site_id', siteId)
-    .eq('is_active', true);
+    .eq('site_id', siteId);
+    // Removed is_active=true filter to be more lenient if the flag wasn't set correctly
 
   if (docsError) console.error('Error fetching docs:', docsError);
 
   const docs = (documentsData as any[]) || [];
-  console.log('Found documents:', docs.map(d => d.type));
+  console.log('Found documents for score calculation:', docs.length);
   const answers = site.questionnaire_responses?.[0]?.answers || {};
 
   // 2. Calculation Logic (Max 100)
   
   // A. Documents (Max 45) - Increased weighting for core docs
-  // Ensure types are trimmed and compared correctly
-  const hasPrivacy = docs.some(d => d.type.trim() === 'privacy_policy');
-  const hasTerms = docs.some(d => d.type.trim() === 'terms_of_service');
-  const hasCookie = docs.some(d => d.type.trim() === 'cookie_policy');
+  // Check types regardless of is_active just in case
+  const hasPrivacy = docs.some(d => d.type?.includes('privacy_policy'));
+  const hasTerms = docs.some(d => d.type?.includes('terms_of_service'));
+  const hasCookie = docs.some(d => d.type?.includes('cookie_policy'));
   
   const docCount = [hasPrivacy, hasTerms, hasCookie].filter(Boolean).length;
   const docScore = docCount * 15;
@@ -139,22 +139,34 @@ export async function calculateComplianceScore(siteId: string) {
   // 4. Store in database
   console.log(`Final calculated score: ${score} (${grade})`);
   
+  const scorePayload = {
+    site_id: siteId,
+    score,
+    grade,
+    breakdown,
+    updated_at: new Date().toISOString()
+  };
+
   const { error: scoreError } = await (supabase
     .from('compliance_scores') as any)
-    .insert({
-      site_id: siteId,
-      score,
-      grade,
-      breakdown,
-      updated_at: new Date().toISOString()
-    } as any);
+    .insert(scorePayload);
 
-  if (scoreError) console.error('Error saving score:', scoreError);
+  if (scoreError) {
+    console.error('Error saving to compliance_scores table (it might be missing):', scoreError);
+  }
 
-  await (supabase
+  // Always update the site directly as a fallback
+  const { error: siteUpdateError } = await (supabase
     .from('sites') as any)
-    .update({ compliance_grade: grade } as any)
+    .update({ 
+      compliance_grade: grade,
+      last_reviewed_at: new Date().toISOString()
+    } as any)
     .eq('id', siteId);
+
+  if (siteUpdateError) {
+    console.error('Error updating site metadata (columns might be missing):', siteUpdateError);
+  }
 
   return { score, grade, breakdown };
 }

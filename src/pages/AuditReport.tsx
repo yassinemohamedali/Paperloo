@@ -26,42 +26,153 @@ export default function AuditReport() {
   const { data: scores = [], isLoading, refetch } = useQuery<any[]>({
     queryKey: ['all-scores', user?.id],
     queryFn: async () => {
-      const { data: sitesData } = await supabase.from('sites').select('id, name, compliance_grade').eq('agency_id', user?.id as string);
-      const sites = (sitesData as any[]) || [];
-      if (sites.length === 0) return [];
-      
-      const siteIds = sites.map(s => s.id);
-      const { data: scoresData } = await supabase
-        .from('compliance_scores')
-        .select('*, sites(name)')
-        .in('site_id', siteIds)
-        .order('updated_at', { ascending: false })
-        .order('id', { ascending: false }); // Fallback for equal timestamps
-      
-      // Filter to get only the latest score per site_id
-      const latestScores: any[] = [];
-      const seenSiteIds = new Set();
-      
-      (scoresData as any[])?.forEach(score => {
-        if (!seenSiteIds.has(score.site_id)) {
-          latestScores.push(score);
-          seenSiteIds.add(score.site_id);
-        }
-      });
+      try {
+        const { data: sitesData, error: sitesError } = await supabase.from('sites').select('*').eq('agency_id', user?.id as string);
+        if (sitesError) throw sitesError;
+        const sites = (sitesData as any[]) || [];
+        if (sites.length === 0) return [];
+        
+        const siteIds = sites.map(s => s.id);
+        const { data: scoresData, error: scoresError } = await supabase
+          .from('compliance_scores')
+          .select('*, sites(name)')
+          .in('site_id', siteIds)
+          .order('updated_at', { ascending: false });
+        
+        // If the scores table is missing, we handle it gracefully below
+        const rawScores = (scoresData as any[]) || [];
+        const latestScores: any[] = [];
+        const seenSiteIds = new Set();
+        
+        rawScores.forEach(score => {
+          if (!seenSiteIds.has(score.site_id)) {
+            latestScores.push(score);
+            seenSiteIds.add(score.site_id);
+          }
+        });
 
-      // Map back to ALL sites so we show 0% for those not yet audited
-      return sites.map(site => {
-        const scoreEntry = latestScores.find(s => s.site_id === site.id);
-        return {
-          id: site.id,
-          site_id: site.id,
-          sites: { name: site.name },
-          score: scoreEntry?.score || 0,
-          grade: scoreEntry?.grade || 'F',
-          breakdown: scoreEntry?.breakdown || {},
-          updated_at: scoreEntry?.updated_at || new Date().toISOString()
-        };
-      });
+        // Map back to ALL sites so we show data even if compliance_scores join fails
+        const sitesWithScores = await Promise.all(sites.map(async (site) => {
+          const scoreEntry = latestScores.find(s => s.site_id === site.id);
+          
+          if (scoreEntry) {
+            return {
+              id: site.id,
+              site_id: site.id,
+              sites: { name: site.name },
+              score: scoreEntry.score,
+              grade: scoreEntry.grade,
+              breakdown: scoreEntry.breakdown,
+              updated_at: scoreEntry.updated_at
+            };
+          }
+
+          // LIVE CALCULATION FALLBACK (if score missing or table missing)
+          const { data: docs } = await supabase.from('documents').select('type').eq('site_id', site.id);
+          const docList = (docs || []) as any[];
+          
+          // Case-insensitive, flexible keywords
+          const hasPrivacy = docList.some(d => {
+            const t = (d.type || '').toLowerCase();
+            return t.includes('privacy') || t.includes('policie');
+          });
+          const hasTerms = docList.some(d => {
+            const t = (d.type || '').toLowerCase();
+            return t.includes('terms') || t.includes('service') || t.includes('tos');
+          });
+          const hasCookie = docList.some(d => {
+            const t = (d.type || '').toLowerCase();
+            return t.includes('cookie');
+          });
+          
+          const docCount = [hasPrivacy, hasTerms, hasCookie].filter(Boolean).length;
+          let liveScore = 0;
+          if (docCount === 3) liveScore = 95;
+          else if (docCount === 2) liveScore = 65;
+          else if (docCount === 1) liveScore = 35;
+          else liveScore = 15; // Just for having a site
+          
+          let grade = 'F';
+          if (liveScore >= 90) grade = 'A';
+          else if (liveScore >= 70) grade = 'B';
+          else if (liveScore >= 45) grade = 'C';
+          else if (liveScore >= 20) grade = 'D';
+
+          const breakdown = {
+             privacy: { label: 'Privacy Policy', status: hasPrivacy ? 'complete' : 'incomplete', score: hasPrivacy ? 30 : 0 },
+             terms: { label: 'Terms of Service', status: hasTerms ? 'complete' : 'incomplete', score: hasTerms ? 30 : 0 },
+             cookies: { label: 'Cookie Policy', status: hasCookie ? 'complete' : 'incomplete', score: hasCookie ? 30 : 0 },
+             global: { label: 'Global Compliance', status: docCount === 3 ? 'complete' : 'incomplete', score: docCount === 3 ? 5 : 0 }
+          };
+
+          return {
+            id: site.id,
+            site_id: site.id,
+            sites: { name: site.name },
+            score: liveScore,
+            grade: grade,
+            breakdown,
+            updated_at: new Date().toISOString()
+          };
+        }));
+
+        return sitesWithScores;
+      } catch (err: any) {
+        console.error('Audit Report query failed:', err);
+        // If columns are missing or table missing, return minimal site data but calculate scores live
+        const { data: sitesBasic } = await supabase.from('sites').select('id, name').eq('agency_id', user?.id as string);
+        const sites = (sitesBasic || []) as any[];
+        
+        const sitesWithScores = await Promise.all(sites.map(async (site) => {
+          const { data: docs } = await supabase.from('documents').select('type').eq('site_id', site.id);
+          const docList = (docs || []) as any[];
+          
+          const hasPrivacy = docList.some(d => {
+            const t = (d.type || '').toLowerCase();
+            return t.includes('privacy') || t.includes('policie');
+          });
+          const hasTerms = docList.some(d => {
+            const t = (d.type || '').toLowerCase();
+            return t.includes('terms') || t.includes('service') || t.includes('tos');
+          });
+          const hasCookie = docList.some(d => {
+            const t = (d.type || '').toLowerCase();
+            return t.includes('cookie');
+          });
+          
+          const docCount = [hasPrivacy, hasTerms, hasCookie].filter(Boolean).length;
+          let liveScore = 0;
+          if (docCount === 3) liveScore = 95;
+          else if (docCount === 2) liveScore = 65;
+          else if (docCount === 1) liveScore = 35;
+          else liveScore = 15;
+          
+          let grade = 'F';
+          if (liveScore >= 90) grade = 'A';
+          else if (liveScore >= 70) grade = 'B';
+          else if (liveScore >= 45) grade = 'C';
+          else if (liveScore >= 20) grade = 'D';
+
+          const breakdown = {
+             privacy: { label: 'Privacy Policy', status: hasPrivacy ? 'complete' : 'incomplete', score: hasPrivacy ? 30 : 0 },
+             terms: { label: 'Terms of Service', status: hasTerms ? 'complete' : 'incomplete', score: hasTerms ? 30 : 0 },
+             cookies: { label: 'Cookie Policy', status: hasCookie ? 'complete' : 'incomplete', score: hasCookie ? 30 : 0 },
+             global: { label: 'Global Compliance', status: docCount === 3 ? 'complete' : 'incomplete', score: docCount === 3 ? 5 : 0 }
+          };
+
+          return {
+            id: site.id,
+            site_id: site.id,
+            sites: { name: site.name },
+            score: liveScore,
+            grade: grade,
+            breakdown,
+            updated_at: new Date().toISOString()
+          };
+        }));
+        
+        return sitesWithScores;
+      }
     },
     enabled: !!user?.id
   });

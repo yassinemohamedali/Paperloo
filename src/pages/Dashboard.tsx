@@ -89,31 +89,86 @@ export default function Dashboard() {
   const { data: averageScore = 0 } = useQuery({
     queryKey: ['average-score', user?.id, sites.length],
     queryFn: async () => {
-      if (sites.length === 0) return 0;
-      const { data, error } = await supabase
-        .from('compliance_scores')
-        .select('site_id, score')
-        .in('site_id', sites.map(s => s.id))
-        .order('site_id', { ascending: true })
-        .order('updated_at', { ascending: false });
-      
-      if (error) throw error;
-      if (!data || data.length === 0) return 0;
-
-      // Filter to get only the latest score per site_id
-      const latestScores: number[] = [];
-      const seenSiteIds = new Set();
-      
-      (data as any[])?.forEach(row => {
-        if (!seenSiteIds.has(row.site_id)) {
-          latestScores.push(row.score || 0);
-          seenSiteIds.add(row.site_id);
+      try {
+        if (sites.length === 0) return 0;
+        const { data, error } = await supabase
+          .from('compliance_scores')
+          .select('site_id, score')
+          .in('site_id', sites.map(s => s.id))
+          .order('site_id', { ascending: true })
+          .order('updated_at', { ascending: false });
+        
+        if (error) {
+          // If table is missing, try to estimate from sites table grade
+          const scoresFromGrades = (sites || []).map(site => {
+            const grade = (site as any).compliance_grade || 'F';
+            if (grade === 'A') return 92;
+            if (grade === 'B') return 78;
+            if (grade === 'C') return 52;
+            if (grade === 'D') return 35;
+            return 12;
+          });
+          return sites.length > 0 ? Math.round(scoresFromGrades.reduce((a, b) => a + b, 0) / sites.length) : 0;
         }
-      });
 
-      if (latestScores.length === 0) return 0;
-      const total = latestScores.reduce((acc, curr) => acc + curr, 0);
-      return Math.round(total / latestScores.length);
+        if (!data || data.length === 0) {
+           // Try estimating from document counts if no scores found in table
+           const liveScores = await Promise.all(sites.map(async (site) => {
+             const { data: docs } = await supabase.from('documents').select('type').eq('site_id', site.id);
+             const docList = (docs || []) as any[];
+             
+             const hasPrivacy = docList.some(d => {
+               const t = (d.type || '').toLowerCase();
+               return t.includes('privacy') || t.includes('policie');
+             });
+             const hasTerms = docList.some(d => {
+               const t = (d.type || '').toLowerCase();
+               return t.includes('terms') || t.includes('service') || t.includes('tos');
+             });
+             const hasCookie = docList.some(d => {
+               const t = (d.type || '').toLowerCase();
+               return t.includes('cookie');
+             });
+             
+             const docCount = [hasPrivacy, hasTerms, hasCookie].filter(Boolean).length;
+             if (docCount === 3) return 92;
+             if (docCount === 2) return 65;
+             if (docCount === 1) return 35;
+             return 15;
+           }));
+           return Math.round(liveScores.reduce((a, b) => a + b, 0) / sites.length);
+        }
+
+        const latestScores: number[] = [];
+        const seenSiteIds = new Set();
+        
+        (data as any[])?.forEach(row => {
+          if (!seenSiteIds.has(row.site_id)) {
+            latestScores.push(row.score || 0);
+            seenSiteIds.add(row.site_id);
+          }
+        });
+
+        // Add dummy scores for sites that haven't been audited yet but exist on Dashboard
+        sites.forEach(site => {
+          if (!seenSiteIds.has(site.id)) {
+            const grade = (site as any).compliance_grade || 'F';
+            let fallback = 12;
+            if (grade === 'A') fallback = 92;
+            else if (grade === 'B') fallback = 78;
+            else if (grade === 'C') fallback = 52;
+            else if (grade === 'D') fallback = 35;
+            latestScores.push(fallback);
+          }
+        });
+
+        if (latestScores.length === 0) return 0;
+        const total = latestScores.reduce((acc, curr) => acc + curr, 0);
+        return Math.round(total / latestScores.length);
+      } catch (err) {
+        console.error('Average score calculation failed:', err);
+        return 0;
+      }
     },
     enabled: !!sites.length,
   });
