@@ -197,10 +197,47 @@ export default function App() {
   const { setUser, setSession, setLoading } = useAuthStore();
 
   useEffect(() => {
-    // 1. Restore session on load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setSession(!!session);
+    // 1. Restore session on load with error catching to deal with invalid or stale tokens
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.warn('Session restoration error or expired token:', error.message);
+        
+        // Self-heal: If token is revoked or invalid on the database side, flush local storage keys to clear state
+        const isRefreshTokenError = 
+          error.message?.toLowerCase().includes('refresh token') || 
+          error.message?.toLowerCase().includes('not found') || 
+          error.message?.toLowerCase().includes('invalid_grant') ||
+          error.status === 400 ||
+          error.status === 401;
+
+        if (isRefreshTokenError) {
+          // Trigger a clean sign out on the client of stale data
+          supabase.auth.signOut().catch(() => {});
+          
+          // Manually clean up any legacy supabase storage keys that might be corrupt
+          try {
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && (key.startsWith('sb-') || key.includes('supabase.auth.token'))) {
+                localStorage.removeItem(key);
+              }
+            }
+          } catch (e) {
+            console.error('Failed to clear stale auth keys:', e);
+          }
+        }
+        
+        setUser(null);
+        setSession(false);
+      } else {
+        setUser(session?.user ?? null);
+        setSession(!!session);
+      }
+      setLoading(false);
+    }).catch((err) => {
+      console.error('Unhandled getSession error:', err);
+      setUser(null);
+      setSession(false);
       setLoading(false);
     });
 

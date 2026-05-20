@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import LeadScanner from '@/src/components/LeadScanner';
+import { useAuthStore } from '@/src/store/authStore';
+import { supabase } from '@/src/lib/supabase';
 
 const SERVICES = [
   { id: '01', name: 'GLOBAL DISCLOSURE ENGINE', description: 'ENTERPRISE-GRADE AUTOMATED DRAFTING FOR INTERNATIONAL COMPLIANCE.' },
@@ -118,6 +120,33 @@ export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
 
+  const { user, signOut } = useAuthStore();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setProfile(null);
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        if (!error && data) {
+          setProfile(data);
+        }
+      } catch (err) {
+        console.error('Error fetching profile on landing page:', err);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
@@ -169,11 +198,33 @@ export default function LandingPage() {
         </div>
         
         <div className="flex items-center gap-6">
-          <Link to="/login" className="hidden sm:block text-[10px] tracking-[0.2em] font-bold text-muted hover:text-accent">LOGIN</Link>
-          <Link to="/signup" className="bracket-btn py-2 px-6 text-[10px] tracking-widest">
-            <span className="bracket-btn-inner"></span>
-            REQUEST ACCESS
-          </Link>
+          {user ? (
+            <Link to="/dashboard" className="flex items-center gap-3 group relative z-10 animate-fade-in">
+              <span className="hidden sm:inline text-[9px] tracking-[0.2em] font-bold text-muted group-hover:text-accent uppercase">
+                {profile?.agency_name || 'DASHBOARD'}
+              </span>
+              {profile?.logo_url || user.user_metadata?.avatar_url ? (
+                <img 
+                  src={profile?.logo_url || user.user_metadata?.avatar_url} 
+                  alt="User avatar" 
+                  className="w-10 h-10 rounded-full object-cover border border-accent hover:border-white transition-all hover:scale-105" 
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-accent text-black font-extrabold flex items-center justify-center text-sm tracking-widest hover:bg-white hover:text-black transition-all hover:scale-105">
+                  {(profile?.agency_name || user.email || 'U')[0].toUpperCase()}
+                </div>
+              )}
+            </Link>
+          ) : (
+            <>
+              <Link to="/login" className="hidden sm:block text-[10px] tracking-[0.2em] font-bold text-muted hover:text-accent">LOGIN</Link>
+              <Link to="/signup" className="bracket-btn py-2 px-6 text-[10px] tracking-widest">
+                <span className="bracket-btn-inner"></span>
+                REQUEST ACCESS
+              </Link>
+            </>
+          )}
           <button 
             onClick={() => setMenuOpen(true)}
             className="p-2 hover:text-accent transition-colors lg:hidden"
@@ -240,8 +291,25 @@ export default function LandingPage() {
                 <p className="text-accent text-xl">paperloo.official@gmail.com</p>
               </div>
               <div className="flex gap-8">
-                <Link to="/login" className="text-xl hover:text-accent">LOGIN</Link>
-                <Link to="/signup" className="text-xl hover:text-accent">SIGN UP</Link>
+                {user ? (
+                  <>
+                    <Link to="/dashboard" className="text-xl hover:text-accent">DASHBOARD</Link>
+                    <button 
+                      onClick={async () => {
+                        setMenuOpen(false);
+                        await signOut();
+                      }} 
+                      className="text-xl hover:text-accent text-left uppercase"
+                    >
+                      LOGOUT
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="text-xl hover:text-accent">LOGIN</Link>
+                    <Link to="/signup" className="text-xl hover:text-accent">SIGN UP</Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
@@ -280,10 +348,17 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 px-6">
-            <Link to="/signup" className="bracket-btn w-full md:w-auto group py-5 sm:py-4">
-              <span className="bracket-btn-inner"></span>
-              APPLY FOR PILOT PROGRAM
-            </Link>
+            {user ? (
+              <Link to="/dashboard" className="bracket-btn w-full md:w-auto group py-5 sm:py-4 border-accent text-accent">
+                <span className="bracket-btn-inner"></span>
+                GO TO DASHBOARD
+              </Link>
+            ) : (
+              <Link to="/signup" className="bracket-btn w-full md:w-auto group py-5 sm:py-4">
+                <span className="bracket-btn-inner"></span>
+                APPLY FOR PILOT PROGRAM
+              </Link>
+            )}
             <Link to="/trust" className="bracket-btn w-full md:w-auto border-accent text-accent group py-5 sm:py-4">
               <span className="bracket-btn-inner"></span>
               <div className="flex items-center justify-center gap-2">
@@ -537,10 +612,17 @@ export default function LandingPage() {
           <p className="text-muted text-sm md:text-lg tracking-[0.15em] mb-16 max-w-2xl mx-auto">
             WE ARE CURRENTLY ACCEPTING A LIMITED NUMBER OF ENTERPRISE PILOT PARTNERS.
           </p>
-          <Link to="/signup" className="bracket-btn inline-block">
-            <span className="bracket-btn-inner"></span>
-            APPLY FOR EARLY ACCESS
-          </Link>
+          {user ? (
+            <Link to="/dashboard" className="bracket-btn inline-block border-accent text-accent">
+              <span className="bracket-btn-inner"></span>
+              GO TO DASHBOARD
+            </Link>
+          ) : (
+            <Link to="/signup" className="bracket-btn inline-block">
+              <span className="bracket-btn-inner"></span>
+              APPLY FOR EARLY ACCESS
+            </Link>
+          )}
         </div>
       </section>
 
