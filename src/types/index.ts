@@ -75,3 +75,6 @@ export interface Subscription {
   status: string;
   current_period_end: string;
 }
+
+export * from './ai_governance';
+
