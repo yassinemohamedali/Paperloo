@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
-import { Globe, FileText, Settings, ArrowLeft, ExternalLink, RefreshCw, AlertCircle, MessageSquare, Send, ShieldCheck, Trash2, Cookie, Search, Inbox } from 'lucide-react';
+import { Globe, FileText, Settings, ArrowLeft, ExternalLink, RefreshCw, AlertCircle, MessageSquare, Send, ShieldCheck, Trash2, Cookie, Search, Inbox, Cpu } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { toast } from 'sonner';
 import { calculateComplianceScore } from '@/src/lib/compliance';
 import CookieBanner from '@/src/components/sites/CookieBanner';
 import CookieScanner from '@/src/components/sites/CookieScanner';
 import DSARInbox from '@/src/components/sites/DSARInbox';
+import GtmIntegration from '@/src/components/sites/GtmIntegration';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -19,7 +20,7 @@ export default function SiteDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'banner' | 'scanner' | 'dsar'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'banner' | 'scanner' | 'dsar' | 'gtm'>('overview');
 
   const { data: site, isLoading: siteLoading } = useQuery<Site>({
     queryKey: ['site', id],
@@ -207,12 +208,13 @@ export default function SiteDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-4 border-b border-white/10">
+      <div className="flex items-center gap-4 border-b border-white/10 overflow-x-auto">
         {[
           { id: 'overview', icon: Globe, label: 'OVERVIEW' },
           { id: 'banner', icon: Cookie, label: 'COOKIE BANNER' },
           { id: 'scanner', icon: Search, label: 'COOKIE SCANNER' },
-          { id: 'dsar', icon: Inbox, label: 'DSAR INBOX' }
+          { id: 'dsar', icon: Inbox, label: 'DSAR INBOX' },
+          { id: 'gtm', icon: Cpu, label: 'GOOGLE GTM & TAGS' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -360,6 +362,7 @@ export default function SiteDetail() {
       {activeTab === 'banner' && <CookieBanner siteId={id as string} />}
       {activeTab === 'scanner' && <CookieScanner siteId={id as string} siteUrl={site.url} />}
       {activeTab === 'dsar' && <DSARInbox siteId={id as string} />}
+      {activeTab === 'gtm' && <GtmIntegration siteId={id as string} />}
     </div>
   );
 }
