@@ -3,25 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, Lock, ExternalLink, ChevronRight } from 'lucide-react';
 import { SmartScanner } from '../services/scannerService';
-
-interface ConsentState {
-  ad_storage: 'granted' | 'denied';
-  analytics_storage: 'granted' | 'denied';
-  functionality_storage: 'granted' | 'denied';
-  personalization_storage: 'granted' | 'denied';
-  security_storage: 'granted' | 'denied';
-}
+import { useGtmConsent, GtmConsentState } from '../hooks/useGtmConsent';
 
 export default function ConsentManager() {
   const [show, setShow] = useState(false);
   const [mode, setMode] = useState<'SIMPLE' | 'ADVANCED'>('SIMPLE');
-  const [consent, setConsent] = useState<ConsentState>({
-    ad_storage: 'denied',
-    analytics_storage: 'denied',
-    functionality_storage: 'granted',
-    personalization_storage: 'denied',
-    security_storage: 'granted'
-  });
+  const { consent, acceptAll, declineAll, toggleCategory, setCustomConsent } = useGtmConsent();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,35 +19,32 @@ export default function ConsentManager() {
   }, []);
 
   const handleAction = async (type: 'ALL' | 'CUSTOM' | 'REJECT') => {
-    let finalState = { ...consent };
-    
     if (type === 'ALL') {
-      finalState = {
+      acceptAll();
+      await SmartScanner.recordConsentLog('demo-site-001', {
         ad_storage: 'granted',
         analytics_storage: 'granted',
-        functionality_storage: 'granted',
+        ad_user_data: 'granted',
+        ad_personalization: 'granted',
         personalization_storage: 'granted',
+        functionality_storage: 'granted',
         security_storage: 'granted'
-      };
+      });
     } else if (type === 'REJECT') {
-      finalState = {
+      declineAll();
+      await SmartScanner.recordConsentLog('demo-site-001', {
         ad_storage: 'denied',
         analytics_storage: 'denied',
-        functionality_storage: 'granted',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
         personalization_storage: 'denied',
+        functionality_storage: 'granted',
         security_storage: 'granted'
-      };
+      });
+    } else {
+      setCustomConsent(consent);
+      await SmartScanner.recordConsentLog('demo-site-001', consent);
     }
-
-    // SIGNAL GOOGLE CONSENT MODE V2
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('consent', 'update', finalState);
-    }
-
-    // LOG TO AUDIT DATABASE
-    await SmartScanner.recordConsentLog('demo-site-001', finalState);
-    
-    localStorage.setItem('pl_consent_v2', JSON.stringify(finalState));
     setShow(false);
   };
 
@@ -110,15 +94,15 @@ export default function ConsentManager() {
                       <p className="text-[9px] text-muted tracking-wider uppercase">{item.desc}</p>
                     </div>
                     <button 
-                      onClick={() => setConsent(prev => ({ ...prev, [item.id]: prev[item.id as keyof ConsentState] === 'granted' ? 'denied' : 'granted' }))}
+                      onClick={() => toggleCategory(item.id as keyof GtmConsentState)}
                       className={cn(
                         "w-10 h-5 rounded-full relative transition-colors duration-300",
-                        consent[item.id as keyof ConsentState] === 'granted' ? "bg-accent" : "bg-white/10"
+                        consent[item.id as keyof GtmConsentState] === 'granted' ? "bg-accent" : "bg-white/10"
                       )}
                     >
                       <div className={cn(
                         "absolute top-1 w-3 h-3 rounded-full bg-black transition-all duration-300",
-                        consent[item.id as keyof ConsentState] === 'granted' ? "left-6" : "left-1"
+                        consent[item.id as keyof GtmConsentState] === 'granted' ? "left-6" : "left-1"
                       )} />
                     </button>
                   </div>

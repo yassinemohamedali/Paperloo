@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/src/lib/supabase';
-import { Settings, Eye, Code, Save, Upload, Check, Shield, Zap } from 'lucide-react';
+import { Settings, Eye, Code, Save, Upload, Check, Shield, Zap, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 
@@ -32,7 +32,8 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
         primary_color: '#6c63ff',
         show_logo: false,
         enable_auto_blocker: false,
-        enable_gcm_v2: false
+        enable_gcm_v2: false,
+        google_tag_id: null
       };
     }
   });
@@ -212,6 +213,31 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
                     )} />
                   </button>
                 </div>
+
+                {/* Google Tag / GTM Integration */}
+                <div className="p-6 bg-white/[0.02] border border-white/10 space-y-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-accent" />
+                      <h5 className="text-xs font-black uppercase tracking-widest">GOOGLE TAGS INTEGRATION</h5>
+                    </div>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">ENTER GOOGLE ANALYTICS (G-XXXXX) OR GTM ID.</p>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="E.G. G-XXXXXXXX OR GTM-XXXXXXXX"
+                    value={config?.google_tag_id || ''}
+                    onChange={(e) => saveMutation.mutate({ ...config, google_tag_id: e.target.value.trim().toUpperCase() })}
+                    className="w-full bg-black/40 border border-white/20 px-3 py-2 text-xs font-mono focus:border-accent outline-none text-white tracking-widest uppercase placeholder:text-white/20"
+                  />
+                  {config?.google_tag_id && (
+                    <div className="p-3 bg-white/[0.02] border border-dashed border-white/10">
+                      <p className="text-[9px] text-muted uppercase tracking-wider leading-relaxed">
+                        THIS WILL BE DYNAMICALLY LOADED COMPLYING TO <strong className="text-accent">GOOGLE CONSENT MODE V2</strong> OR BLOCKED UNTIL ACCEPTED.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -287,6 +313,12 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-8 border border-white/5 bg-white/[0.01] space-y-4">
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-accent">GOOGLE TAGS & CONSENT MODE V2</h5>
+              <p className="text-[10px] text-muted leading-relaxed uppercase tracking-widest">
+                ONCE PASTED, PAPERLOO AUTOMATICALLY DECLARES THE GOOGLE CONSENT STATES (AD_STORAGE, ANALYTICS_STORAGE, ETC.) TO 'DENIED' ON INITIAL LOAD, AND GRACEFULLY UPDATES TO 'GRANTED' ON USER ACCEPTANCE. NO COMPLEX GTM CODE NEEDED!
+              </p>
+            </div>
             <div className="p-8 border border-white/5 bg-white/[0.01] space-y-4">
               <h5 className="text-[10px] font-black uppercase tracking-widest">WORDPRESS</h5>
               <p className="text-[10px] text-muted leading-relaxed uppercase tracking-widest">

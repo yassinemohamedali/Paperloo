@@ -121,6 +121,36 @@ async function startServer() {
   const config = ${JSON.stringify(config || {})};
   const apiUrl = "${process.env.APP_URL || ''}";
   
+  // Google Tag and Consent Mode V2 Setup
+  if (config.google_tag_id) {
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    window.gtag = gtag;
+    
+    const hasConsent = localStorage.getItem('paperloo_consent') === 'all';
+    
+    if (config.enable_gcm_v2) {
+      gtag('consent', 'default', {
+        'ad_storage': hasConsent ? 'granted' : 'denied',
+        'analytics_storage': hasConsent ? 'granted' : 'denied',
+        'ad_user_data': hasConsent ? 'granted' : 'denied',
+        'ad_personalization': hasConsent ? 'granted' : 'denied',
+        'personalization_storage': hasConsent ? 'granted' : 'denied',
+        'functionality_storage': hasConsent ? 'granted' : 'denied',
+        'security_storage': 'granted'
+      });
+    }
+    
+    const scriptUrl = "https://www.googletagmanager.com/gtag/js?id=" + config.google_tag_id;
+    const s = document.createElement('script');
+    s.src = scriptUrl;
+    s.async = true;
+    document.head.appendChild(s);
+    
+    gtag('js', new Date());
+    gtag('config', config.google_tag_id);
+  }
+  
   // 1. Cookie Banner Logic
   function createBanner() {
     if (document.getElementById('paperloo-banner')) return;
@@ -138,7 +168,20 @@ async function startServer() {
     const accept = document.createElement('button');
     accept.innerText = config.accept_text || "Accept All";
     accept.style.cssText = "background: " + (config.primary_color || "#7000FF") + "; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold;";
-    accept.onclick = () => { banner.remove(); localStorage.setItem('paperloo_consent', 'all'); };
+    accept.onclick = () => { 
+      banner.remove(); 
+      localStorage.setItem('paperloo_consent', 'all'); 
+      if (config.google_tag_id && config.enable_gcm_v2 && window.gtag) {
+        window.gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'analytics_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'granted',
+          'personalization_storage': 'granted',
+          'functionality_storage': 'granted'
+        });
+      }
+    };
     
     const manage = document.createElement('button');
     manage.innerText = config.manage_text || "Preferences";

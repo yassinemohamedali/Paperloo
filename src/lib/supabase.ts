@@ -370,6 +370,7 @@ export interface Database {
           show_logo: boolean
           enable_auto_blocker: boolean
           enable_gcm_v2: boolean
+          google_tag_id: string | null
           created_at: string
           updated_at: string
         }
@@ -386,6 +387,7 @@ export interface Database {
           show_logo?: boolean
           enable_auto_blocker?: boolean
           enable_gcm_v2?: boolean
+          google_tag_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -402,6 +404,7 @@ export interface Database {
           show_logo?: boolean
           enable_auto_blocker?: boolean
           enable_gcm_v2?: boolean
+          google_tag_id?: string | null
           created_at?: string
           updated_at?: string
         }
