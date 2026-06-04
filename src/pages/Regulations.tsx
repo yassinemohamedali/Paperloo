@@ -8,6 +8,23 @@ import { cn } from '@/src/lib/utils';
 type Regulation = Database['public']['Tables']['regulations']['Row'];
 type Site = Database['public']['Tables']['sites']['Row'];
 
+const JURISDICTION_MAP: Record<string, string> = {
+  'GDPR (EU)': 'GDPR',
+  'CCPA (California)': 'CCPA',
+  'PIPEDA (Canada)': 'PIPEDA',
+  'LGPD (Brazil)': 'LGPD',
+  'VCDPA (Virginia)': 'VCDPA',
+  'PDPA (Thailand)': 'PDPA_TH',
+  'PDPA (Turkey)': 'PDPA_TR',
+  'POPIA (South Africa)': 'POPIA_ZA',
+  'Privacy Act (Australia)': 'PRIVACY_ACT_AU',
+  'APPI (Japan)': 'APPI_JP',
+  'PDPB (India)': 'PDPB_IN',
+  'KVKK (Turkey)': 'KVKK_TR',
+  'PDPL (Saudi Arabia)': 'PDPL_SA',
+  'Law 25 (Quebec)': 'LAW_25_QC'
+};
+
 export default function Regulations() {
   const { user } = useAuthStore();
 
@@ -38,9 +55,13 @@ export default function Regulations() {
 
   const getAffectedSitesCount = (affectsJurisdictions: string[] | null) => {
     if (!sites || !affectsJurisdictions) return 0;
-    return sites.filter(site => 
-      site.jurisdictions.some(j => affectsJurisdictions.includes(j.split(' ')[0]))
-    ).length;
+    return sites.filter(site => {
+      if (!site.jurisdictions) return false;
+      return site.jurisdictions.some(j => {
+        const key = JURISDICTION_MAP[j] || j.split(' ')[0];
+        return affectsJurisdictions.includes(key);
+      });
+    }).length;
   };
 
   if (regsLoading) return (

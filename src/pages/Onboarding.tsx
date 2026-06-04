@@ -7,7 +7,22 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Building2, Globe, Plus, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const JURISDICTIONS = ['GDPR (EU)', 'CCPA (California)', 'PIPEDA (Canada)', 'LGPD (Brazil)', 'VCDPA (Virginia)'];
+const JURISDICTIONS = [
+  'GDPR (EU)',
+  'CCPA (California)',
+  'PIPEDA (Canada)',
+  'LGPD (Brazil)',
+  'VCDPA (Virginia)',
+  'PDPA (Thailand)',
+  'PDPA (Turkey)',
+  'POPIA (South Africa)',
+  'Privacy Act (Australia)',
+  'APPI (Japan)',
+  'PDPB (India)',
+  'KVKK (Turkey)',
+  'PDPL (Saudi Arabia)',
+  'Law 25 (Quebec)'
+];
 
 export default function Onboarding() {
   const { user } = useAuthStore();

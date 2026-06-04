@@ -46,7 +46,22 @@ const siteSchema = z.object({
 
 type SiteForm = z.infer<typeof siteSchema>;
 
-const JURISDICTIONS = ['GDPR (EU)', 'CCPA (California)', 'PIPEDA (Canada)', 'LGPD (Brazil)', 'VCDPA (Virginia)'];
+const JURISDICTIONS = [
+  'GDPR (EU)',
+  'CCPA (California)',
+  'PIPEDA (Canada)',
+  'LGPD (Brazil)',
+  'VCDPA (Virginia)',
+  'PDPA (Thailand)',
+  'PDPA (Turkey)',
+  'POPIA (South Africa)',
+  'Privacy Act (Australia)',
+  'APPI (Japan)',
+  'PDPB (India)',
+  'KVKK (Turkey)',
+  'PDPL (Saudi Arabia)',
+  'Law 25 (Quebec)'
+];
 
 export default function Sites() {
   const { user } = useAuthStore();

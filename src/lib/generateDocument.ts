@@ -25,16 +25,56 @@ export function generateDocument(type: string, siteName: string, answers: Record
     });
     content += `</ul>`;
 
-    if (jurisdictions.includes('GDPR')) {
+    if (jurisdictions.includes('GDPR') || jurisdictions.some((j: string) => j.includes('GDPR'))) {
       content += `<h2>3. GDPR Compliance (EU)</h2>`;
       content += `<p>Under the General Data Protection Regulation (GDPR), we process your data based on legitimate interest, contract fulfillment, or consent.</p>`;
       content += `<p>Your rights include: access, rectification, erasure, and data portability.</p>`;
     }
 
-    if (jurisdictions.includes('CCPA')) {
+    if (jurisdictions.includes('CCPA') || jurisdictions.some((j: string) => j.includes('CCPA'))) {
       content += `<h2>4. CCPA Compliance (California)</h2>`;
       content += `<p>California residents have the right to know what personal information is collected, used, shared, or sold.</p>`;
       content += `<p>We ${sellData ? 'do' : 'do not'} sell your personal data.</p>`;
+    }
+
+    if (jurisdictions.some((j: string) => j.includes('PDPA (Thailand)'))) {
+      content += `<h2>PDPA Compliance (Thailand)</h2>`;
+      content += `<p>Pursuant to Thailand's Personal Data Protection Act (PDPA), we process personal data only when explicit, freely given consent is provided, or other lawful processing conditions are met. Data subjects have the right to request access, rectification, deletion, and portability of their information.</p>`;
+    }
+
+    if (jurisdictions.some((j: string) => j.includes('PDPA (Turkey)') || j.includes('KVKK'))) {
+      content += `<h2>KVKK Compliance (Turkey)</h2>`;
+      content += `<p>In accordance with the Turkish Personal Data Protection Law (KVKK Law No. 6698), we process your personal data securely. Data owners maintain explicit rights to learn data processing details, request corrections, and object to adverse outcomes resulting from automated systems.</p>`;
+    }
+
+    if (jurisdictions.some((j: string) => j.includes('POPIA'))) {
+      content += `<h2>POPIA Compliance (South Africa)</h2>`;
+      content += `<p>According to South Africa's Protection of Personal Information Act (POPIA), we strictly enforce minimum conditions for lawful processing of personal information, ensuring robust access control, and honoring your rights is our absolute operational baseline.</p>`;
+    }
+
+    if (jurisdictions.some((j: string) => j.includes('Privacy Act'))) {
+      content += `<h2>Australian Privacy Compliance</h2>`;
+      content += `<p>Under the Australian Privacy Act and the Australian Privacy Principles (APPs), we manage personal information safely. You have the right to access and correct your stored personal data, and to lodge any privacy complaints with our officer.</p>`;
+    }
+
+    if (jurisdictions.some((j: string) => j.includes('APPI'))) {
+      content += `<h2>APPI Compliance (Japan)</h2>`;
+      content += `<p>In accordance with Japan's Act on the Protection of Personal Information (APPI), we safeguard personal data identifiers, strictly limit third-party provisions without prior consent, and fulfill personal data disclosure requests.</p>`;
+    }
+
+    if (jurisdictions.some((j: string) => j.includes('PDPB') || j.includes('DPDP'))) {
+      content += `<h2>DPDP Act Compliance (India)</h2>`;
+      content += `<p>Under the Digital Personal Data Protection Act of India, we act as a responsible Data Fiduciary, ensuring collection notices are transparent and individual Data Principals retain rights to request summary, correction, or erasure of their personal data.</p>`;
+    }
+
+    if (jurisdictions.some((j: string) => j.includes('PDPL'))) {
+      content += `<h2>PDPL Compliance (Saudi Arabia)</h2>`;
+      content += `<p>Pursuant to Saudi Arabia's Personal Data Protection Law (PDPL), we implement appropriate safeguarding controls to protect personal data from unauthorized access, breach, or disclosure, adhering closely to SDAIA guidelines.</p>`;
+    }
+
+    if (jurisdictions.some((j: string) => j.includes('Law 25'))) {
+      content += `<h2>Quebec Law 25 Compliance (Quebec, Canada)</h2>`;
+      content += `<p>Under Quebec's Law 25, default deactivation of all user-tracking cookies is enforced. We carry out assessments for any data transfer outside of Quebec, and respect mandatory breach notifications.</p>`;
     }
 
     if (under13) {
