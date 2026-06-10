@@ -48,10 +48,16 @@ async function startServer() {
   // GitHub OAuth URL Endpoint
   app.get("/api/auth/github/url", (req, res) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
-    const appUrl = process.env.APP_URL || `http://localhost:3000`;
     
-    // Fallback sandbox if client_id is not yet set
-    if (!clientId) {
+    // Dynamically resolve appUrl (protocol + host)
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.get("host") || "localhost:3000";
+    const appUrl = `${protocol}://${host}`;
+    
+    // Fallback sandbox if client_id is not set, or is a placeholder
+    const isSandboxMode = !clientId || clientId.trim() === "" || clientId === "your_github_client_id";
+    
+    if (isSandboxMode) {
       return res.json({ 
         url: `${appUrl}/api/auth/github/callback?sandbox=true` 
       });
@@ -59,7 +65,7 @@ async function startServer() {
 
     const redirectUri = `${appUrl}/api/auth/github/callback`;
     const params = new URLSearchParams({
-      client_id: clientId,
+      client_id: clientId || "",
       redirect_uri: redirectUri,
       scope: 'read:user,repo',
       state: 'paperloo_state_nonce',
@@ -350,11 +356,15 @@ async function startServer() {
       .eq('site_id', siteId)
       .single();
 
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.get("host") || "localhost:3000";
+    const derivedAppUrl = `${protocol}://${host}`;
+
     const script = `
 (function() {
   const siteId = "${siteId}";
   const config = ${JSON.stringify(config || {})};
-  const apiUrl = "${process.env.APP_URL || ''}";
+  const apiUrl = "${process.env.APP_URL || ''}" || "${derivedAppUrl}";
   
   // Google Tag and Consent Mode V2 Setup
   if (config.google_tag_id) {
@@ -529,6 +539,10 @@ async function startServer() {
         enterprise: 'price_enterprise_id'
       };
 
+      const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+      const host = req.get("host") || "localhost:3000";
+      const appUrl = process.env.APP_URL || `${protocol}://${host}`;
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [{
@@ -541,8 +555,8 @@ async function startServer() {
           quantity: 1,
         }],
         mode: 'subscription',
-        success_url: `${process.env.APP_URL}/billing?success=true`,
-        cancel_url: `${process.env.APP_URL}/billing?canceled=true`,
+        success_url: `${appUrl}/billing?success=true`,
+        cancel_url: `${appUrl}/billing?canceled=true`,
         client_reference_id: userId,
         metadata: { planId, userId }
       });
