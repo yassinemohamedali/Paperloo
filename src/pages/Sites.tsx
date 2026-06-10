@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase, Database } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
-import { Globe, Plus, Search, Trash2, ExternalLink, X, Upload, Copy, AlertTriangle } from 'lucide-react';
+import { Globe, Plus, Search, Trash2, ExternalLink, X, Upload, Copy, AlertTriangle, Github } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import Papa from 'papaparse';
@@ -71,6 +71,151 @@ export default function Sites() {
   const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // GitHub Integration State
+  const [githubAuth, setGithubAuth] = useState<{ token: string; username: string; isSandbox: boolean } | null>(() => {
+    try {
+      const saved = localStorage.getItem('paperloo_github_auth');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [githubRepos, setGithubRepos] = useState<Array<{ id: number; name: string; url: string; language: string }>>([]);
+  const [githubReposLoading, setGithubReposLoading] = useState(false);
+  const [selectedRepos, setSelectedRepos] = useState<Record<number, boolean>>({});
+  const [isImportingGithub, setIsImportingGithub] = useState(false);
+
+  // Listen to message for popup auth callback
+  useEffect(() => {
+    const handleOauthMessage = (event: MessageEvent) => {
+      // Security validate
+      const origin = event.origin;
+      if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+        return;
+      }
+      
+      if (event.data?.type === 'GITHUB_AUTH_SUCCESS') {
+        const authData = {
+          token: event.data.token,
+          username: event.data.username,
+          isSandbox: !!event.data.isSandbox
+        };
+        setGithubAuth(authData);
+        localStorage.setItem('paperloo_github_auth', JSON.stringify(authData));
+        toast.success(`Connected search cluster to GitHub@${authData.username.toUpperCase()}`);
+      }
+    };
+
+    window.addEventListener('message', handleOauthMessage);
+    return () => window.removeEventListener('message', handleOauthMessage);
+  }, []);
+
+  // Fetch repositories once authenticated
+  useEffect(() => {
+    if (githubAuth) {
+      fetchGithubRepos(githubAuth.token, githubAuth.isSandbox);
+    } else {
+      setGithubRepos([]);
+      setSelectedRepos({});
+    }
+  }, [githubAuth]);
+
+  const fetchGithubRepos = async (token: string, isSandbox: boolean) => {
+    setGithubReposLoading(true);
+    try {
+      const res = await fetch(`/api/github/repos?token=${token}&isSandbox=${isSandbox}`);
+      if (res.ok) {
+        const repos = await res.json();
+        setGithubRepos(repos);
+        const initial: Record<number, boolean> = {};
+        if (repos.length > 0) initial[repos[0].id] = true;
+        if (repos.length > 1) initial[repos[1].id] = true;
+        setSelectedRepos(initial);
+      } else {
+        toast.error('Failed to query design repositories');
+      }
+    } catch {
+      toast.error('Network error querying Github repos');
+    } finally {
+      setGithubReposLoading(false);
+    }
+  };
+
+  const handleGithubConnect = async () => {
+    try {
+      const res = await fetch('/api/auth/github/url');
+      if (!res.ok) throw new Error();
+      const { url } = await res.json();
+      
+      const authWindow = window.open(
+        url,
+        'github_oauth_popup',
+        'width=600,height=750,location=no,status=no,menubar=no'
+      );
+      if (!authWindow) {
+        toast.error('Popup blocked. Allow popups to sync with GitHub.');
+      }
+    } catch {
+      toast.error('Failed to initialize connector stream');
+    }
+  };
+
+  const handleGithubDisconnect = () => {
+    setGithubAuth(null);
+    localStorage.removeItem('paperloo_github_auth');
+    toast.info('Disconnected from GitHub');
+  };
+
+  const handleToggleRepo = (id: number) => {
+    setSelectedRepos(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const handleImportSelectedRepos = async () => {
+    const reposToImport = githubRepos.filter(r => selectedRepos[r.id]);
+    if (reposToImport.length === 0) return;
+
+    // Check limits
+    const plan = (profile as any)?.plan || 'starter';
+    const limit = plan === 'starter' ? 3 : plan === 'agency' ? 20 : Infinity;
+    if (sites.length + reposToImport.length > limit) {
+      toast.error(`Exceeds ${plan} plan capacity (${limit} max). Please adjust choice or upgrade.`, {
+        action: {
+          label: 'Upgrade',
+          onClick: () => navigate('/billing')
+        }
+      });
+      return;
+    }
+
+    setIsImportingGithub(true);
+    try {
+      const res = await fetch('/api/github/bulk-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id,
+          repos: reposToImport
+        })
+      });
+
+      if (res.ok) {
+        await queryClient.invalidateQueries({ queryKey: ['sites'] });
+        toast.success(`Success! Auto-imported and configured ${reposToImport.length} sites directly.`);
+        setGithubAuth(null);
+        localStorage.removeItem('paperloo_github_auth');
+      } else {
+        toast.error('Auto-import command aborted by server');
+      }
+    } catch {
+      toast.error('Failed negotiating import sequence');
+    } finally {
+      setIsImportingGithub(false);
+    }
+  };
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -267,7 +412,7 @@ export default function Sites() {
             className="bg-surface border border-white/10 pl-12 pr-4 py-4 w-full focus:border-accent outline-none transition-all text-xs uppercase tracking-widest"
           />
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -275,6 +420,14 @@ export default function Sites() {
             accept=".csv" 
             className="hidden" 
           />
+          <button 
+            onClick={handleGithubConnect}
+            className="bracket-btn flex items-center gap-2 py-3 px-6 text-[#c8f135] hover:border-[#c8f135] transition-all"
+          >
+            <span className="bracket-btn-inner"></span>
+            <Github className="h-4 w-4" />
+            CONNECT GITHUB
+          </button>
           <button 
             onClick={() => fileInputRef.current?.click()}
             className="bracket-btn flex items-center gap-2 py-3 px-6"
@@ -290,6 +443,106 @@ export default function Sites() {
           </button>
         </div>
       </div>
+
+      {githubAuth && (
+        <div className="bg-surface/90 border border-[#c8f135]/30 p-8 relative overflow-hidden space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="absolute top-0 right-0 p-2 font-mono text-[9px] bg-[#c8f135]/10 text-[#c8f135] uppercase tracking-wider border-l border-b border-[#c8f135]/30">
+            GITHUB CLUSTER Connected {githubAuth.isSandbox ? "(SANDBOX ACTIVE)" : ""}
+          </div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-[#c8f135]">
+                <Github className="h-5 w-5" />
+                <h3 className="font-sans font-extrabold text-lg uppercase tracking-wider">CONNECTED To GITHUB@{githubAuth.username.toUpperCase()}</h3>
+              </div>
+              <p className="text-[10px] text-muted uppercase tracking-widest mt-1">
+                Paperloo has discovered the following active sites. Toggle them and auto-deploy compliance banners.
+              </p>
+            </div>
+            <button 
+              onClick={handleGithubDisconnect}
+              className="text-[10px] font-black text-red-500 hover:underline uppercase tracking-widest"
+            >
+              DISCONNECT ACCOUNT
+            </button>
+          </div>
+
+          {githubReposLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#c8f135] border-t-transparent" />
+              <p className="text-[10px] text-muted uppercase tracking-widest">AUTO-DISCOVERING SITES & REPOS...</p>
+            </div>
+          ) : githubRepos.length === 0 ? (
+            <p className="text-xs text-muted py-4 uppercase tracking-widest text-center">NO DISCOVERED REPOS AVAILABLE.</p>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                {githubRepos.map(repo => {
+                  const isChecked = !!selectedRepos[repo.id];
+                  return (
+                    <div 
+                      key={repo.id} 
+                      onClick={() => handleToggleRepo(repo.id)}
+                      className={cn(
+                        "p-4 border cursor-pointer select-none transition-all duration-200 flex items-start gap-3",
+                        isChecked 
+                          ? "border-[#c8f135] bg-[#c8f135]/5" 
+                          : "border-white/10 bg-black/20 hover:border-white/25"
+                      )}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={isChecked}
+                        onChange={() => {}} 
+                        className="accent-[#c8f135] mt-1 pointer-events-none"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold uppercase tracking-wider truncate text-white">{repo.name}</p>
+                        <p className="text-[9px] text-[#c8f135] mt-0.5 tracking-wider truncate uppercase">{repo.url}</p>
+                        <span className="inline-block px-1.5 py-0.5 bg-white/5 border border-white/10 text-[8px] text-muted tracking-widest mt-2 uppercase font-black">
+                          {repo.language}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/5">
+                <div className="flex gap-4">
+                  <button 
+                    onClick={() => {
+                      const all: Record<number, boolean> = {};
+                      githubRepos.forEach(r => { all[r.id] = true; });
+                      setSelectedRepos(all);
+                    }}
+                    className="text-[10px] font-bold text-muted hover:text-white uppercase tracking-widest"
+                  >
+                    SELECT ALL
+                  </button>
+                  <button 
+                    onClick={() => setSelectedRepos({})}
+                    className="text-[10px] font-bold text-muted hover:text-white uppercase tracking-widest"
+                  >
+                    DESELECT ALL
+                  </button>
+                </div>
+                <button 
+                  onClick={handleImportSelectedRepos}
+                  disabled={isImportingGithub || Object.values(selectedRepos).filter(Boolean).length === 0}
+                  className="bracket-btn py-3 px-6 border-accent text-accent disabled:opacity-50"
+                >
+                  <span className="bracket-btn-inner"></span>
+                  {isImportingGithub 
+                    ? "AUTO-GENERATING BANNER SYSTEMS..." 
+                    : `INTEGRATE & AUTO-DEPLOY ${Object.values(selectedRepos).filter(Boolean).length} SITES`
+                  }
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
