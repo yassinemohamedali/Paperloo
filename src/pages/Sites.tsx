@@ -166,15 +166,11 @@ export default function Sites() {
 
   const handleGithubConnect = async () => {
     try {
-      const stateParam = encodeURIComponent(window.location.pathname);
-      const res = await fetch(`/api/auth/github/url?state=${stateParam}`);
-      if (!res.ok) throw new Error();
-      const { url } = await res.json();
-      
+      // Must open window synchronously to bypass popup blocker
       let authWindow: Window | null = null;
       try {
         authWindow = window.open(
-          url,
+          '',
           'github_oauth_popup',
           'width=600,height=750,location=no,status=no,menubar=no'
         );
@@ -182,12 +178,28 @@ export default function Sites() {
         console.warn("window.open blocked or threw error in sandbox:", err);
       }
 
-      if (!authWindow) {
-        // Fallback to direct redirect for sandboxed iframe
-        window.location.href = url;
+      const stateParam = encodeURIComponent(window.location.pathname);
+      const res = await fetch(`/api/auth/github/url?state=${stateParam}`);
+      if (!res.ok) {
+        if (authWindow) authWindow.close();
+        throw new Error('Server returned ' + res.status);
       }
-    } catch {
-      toast.error('Failed to initialize connector stream');
+      const { url } = await res.json();
+      
+      if (authWindow) {
+        authWindow.location.href = url;
+      } else {
+        // Try creating an anchor and clicking it (last resort)
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Failed to initialize connector stream: ' + err?.message);
     }
   };
 
