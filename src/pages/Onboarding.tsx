@@ -90,7 +90,7 @@ export default function Onboarding() {
   const skip = () => completeOnboardingMutation.mutate();
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-black text-white font-mono flex flex-col items-center justify-start pt-12 pb-12 md:justify-center p-6 sm:overflow-y-auto">
       <div className="absolute inset-0 scan-lines opacity-10 pointer-events-none" />
       
       <div className="w-full max-w-2xl space-y-12 relative z-10">

@@ -25,6 +25,67 @@ export default function Signup() {
   });
 
   useEffect(() => {
+    const loginWithGithubCreds = async (username: string, token: string, isSandbox: boolean) => {
+      // Save GitHub credentials so the app discovers existing sites instantly
+      const authData = { token, username, isSandbox };
+      localStorage.setItem('paperloo_github_auth', JSON.stringify(authData));
+
+      setGithubLoading(true);
+      const email = `${username.toLowerCase()}@github.paperloo`;
+      const tempPassword = `github_password_secure_112233`;
+
+      try {
+        // Attempt standard sign in first in case they already created the account
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password: tempPassword,
+        });
+
+        if (!signInError) {
+          toast.success(`Welcome back, GitHub user: ${username.toUpperCase()}`);
+          navigate('/dashboard');
+          return;
+        }
+
+        // Fallback: Register the user with a customized GitHub name profile
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password: tempPassword,
+          options: {
+            data: {
+              agency_name: `${username.toUpperCase()} ENTERPRISE`,
+            }
+          }
+        });
+
+        if (signUpError) {
+          if (signUpError.message.includes('already registered') || signUpError.message.includes('taken')) {
+            // Sign in fallback
+            const { error: finalSignInError } = await supabase.auth.signInWithPassword({
+              email,
+              password: tempPassword,
+            });
+            if (finalSignInError) {
+              toast.error(`GitHub login handshake failed: ${finalSignInError.message}`);
+            } else {
+              toast.success(`Welcome back, GitHub user: ${username.toUpperCase()}`);
+              navigate('/dashboard');
+            }
+          } else {
+            toast.error(`GitHub login handshake failed: ${signUpError.message}`);
+          }
+        } else {
+          toast.success(`Welcome to Paperloo, ${username.toUpperCase()}! Your GitHub sites are connected!`);
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        toast.error('GitHub gateway handshaking interrupted.');
+      } finally {
+        setGithubLoading(false);
+      }
+    };
+
+    // 1. Listen for Popup oauth messages
     const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
         toast.success('Account created and signed in!');
@@ -36,66 +97,24 @@ export default function Signup() {
         const username = event.data.username || 'github-user';
         const token = event.data.token;
         const isSandbox = event.data.isSandbox;
-
-        // Save GitHub credentials so the app discovers existing sites instantly
-        const authData = { token, username, isSandbox };
-        localStorage.setItem('paperloo_github_auth', JSON.stringify(authData));
-
-        setGithubLoading(true);
-        const email = `${username.toLowerCase()}@github.paperloo`;
-        const tempPassword = `github_password_secure_112233`;
-
-        try {
-          // Attempt standard sign in first in case they already created the account
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password: tempPassword,
-          });
-
-          if (!signInError) {
-            toast.success(`Welcome back, GitHub user: ${username.toUpperCase()}`);
-            navigate('/dashboard');
-            return;
-          }
-
-          // Fallback: Register the user with a customized GitHub name profile
-          const { error: signUpError } = await supabase.auth.signUp({
-            email,
-            password: tempPassword,
-            options: {
-              data: {
-                agency_name: `${username.toUpperCase()} ENTERPRISE`,
-              }
-            }
-          });
-
-          if (signUpError) {
-            if (signUpError.message.includes('already registered') || signUpError.message.includes('taken')) {
-              // Sign in fallback
-              const { error: finalSignInError } = await supabase.auth.signInWithPassword({
-                email,
-                password: tempPassword,
-              });
-              if (finalSignInError) {
-                toast.error(`GitHub login handshake failed: ${finalSignInError.message}`);
-              } else {
-                toast.success(`Welcome back, GitHub user: ${username.toUpperCase()}`);
-                navigate('/dashboard');
-              }
-            } else {
-              toast.error(`GitHub login handshake failed: ${signUpError.message}`);
-            }
-          } else {
-            toast.success(`Welcome to Paperloo, ${username.toUpperCase()}! Your GitHub sites are connected!`);
-            navigate('/dashboard');
-          }
-        } catch (err) {
-          toast.error('GitHub gateway handshaking interrupted.');
-        } finally {
-          setGithubLoading(false);
-        }
+        await loginWithGithubCreds(username, token, isSandbox);
       }
     };
+
+    // 2. Handle URL Query Params (For direct redirect callback inside iframe)
+    const searchParams = new URLSearchParams(window.location.search);
+    const githubToken = searchParams.get('github_token');
+    const githubUser = searchParams.get('github_user');
+    const isSandboxQuery = searchParams.get('is_sandbox') === 'true';
+
+    if (githubToken && githubUser) {
+      // Clean up URL parameters from history
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+
+      loginWithGithubCreds(githubUser, githubToken, isSandboxQuery);
+    }
+
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [navigate]);
@@ -148,34 +167,50 @@ export default function Signup() {
   const handleGithubLogin = async () => {
     setGithubLoading(true);
     try {
-      const res = await fetch('/api/auth/github/url');
-      if (!res.ok) throw new Error();
+      // Pass the current route so callback redirects back to this page if window.opener is absent
+      const stateParam = encodeURIComponent(window.location.pathname);
+      const res = await fetch(`/api/auth/github/url?state=${stateParam}`);
+      if (!res.ok) {
+        throw new Error(`Gateway responded with status ${res.status}`);
+      }
       const { url } = await res.json();
 
-      const width = 550;
-      const height = 650;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
+      let popup: Window | null = null;
+      try {
+        const width = 550;
+        const height = 650;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
 
-      const popup = window.open(
-        url,
-        'github-auth',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
+        popup = window.open(
+          url,
+          'github-auth',
+          `width=${width},height=${height},left=${left},top=${top}`
+        );
+      } catch (err) {
+        console.warn("window.open blocked or threw error in sandbox:", err);
+      }
 
       if (!popup) {
-        toast.error('Popup blocked. Please allow popups for this site.');
-        setGithubLoading(false);
+        // Direct redirection fallback inside sandboxed iframe envs
+        window.location.href = url;
       } else {
         const timer = setInterval(() => {
-          if (popup.closed) {
+          try {
+            if (popup!.closed) {
+              clearInterval(timer);
+              setGithubLoading(false);
+            }
+          } catch (e) {
+            // Cross-origin reading checks inside some containers
             clearInterval(timer);
             setGithubLoading(false);
           }
         }, 500);
       }
-    } catch {
-      toast.error('Failed to communicate with Github gateway.');
+    } catch (err: any) {
+      console.error("GitHub integration trigger error:", err);
+      toast.error(`GitHub gateway communication error: ${err.message || err}`);
       setGithubLoading(false);
     }
   };

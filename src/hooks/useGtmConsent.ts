@@ -130,25 +130,22 @@ export function useGtmConsent() {
       return;
     }
 
-    setConsentState((current) => {
-      const isGranted = current[category] === 'granted';
-      const targetState = isGranted ? 'denied' : 'granted';
+    const isGranted = consent[category] === 'granted';
+    const targetState = isGranted ? 'denied' : 'granted';
 
-      const updated: GtmConsentState = {
-        ...current,
-        [category]: targetState,
-      };
+    const updated: GtmConsentState = {
+      ...consent,
+      [category]: targetState,
+    };
 
-      // Specifically link GCM v2 extra params when marketing/ads choices shift
-      if (category === 'ad_storage') {
-        updated.ad_user_data = targetState;
-        updated.ad_personalization = targetState;
-      }
+    // Specifically link GCM v2 extra params when marketing/ads choices shift
+    if (category === 'ad_storage') {
+      updated.ad_user_data = targetState;
+      updated.ad_personalization = targetState;
+    }
 
-      saveConsent(updated);
-      return updated;
-    });
-  }, [saveConsent]);
+    saveConsent(updated);
+  }, [consent, saveConsent]);
 
   return {
     consent,

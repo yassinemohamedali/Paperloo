@@ -48,6 +48,7 @@ async function startServer() {
   // GitHub OAuth URL Endpoint
   app.get("/api/auth/github/url", (req, res) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
+    const incomingState = (req.query.state as string) || "/dashboard";
     
     // Dynamically resolve appUrl (protocol + host)
     const protocol = req.headers["x-forwarded-proto"] || req.protocol;
@@ -59,7 +60,7 @@ async function startServer() {
     
     if (isSandboxMode) {
       return res.json({ 
-        url: `${appUrl}/api/auth/github/callback?sandbox=true` 
+        url: `${appUrl}/api/auth/github/callback?sandbox=true&state=${encodeURIComponent(incomingState)}` 
       });
     }
 
@@ -68,7 +69,7 @@ async function startServer() {
       client_id: clientId || "",
       redirect_uri: redirectUri,
       scope: 'read:user,repo',
-      state: 'paperloo_state_nonce',
+      state: incomingState,
     });
 
     const url = `https://github.com/login/oauth/authorize?${params.toString()}`;
@@ -77,10 +78,13 @@ async function startServer() {
 
   // GitHub OAuth Callback Endpoint
   app.get("/api/auth/github/callback", async (req, res) => {
-    const { code, sandbox } = req.query;
+    const { code, sandbox, state } = req.query;
     
     let accessToken = "sandbox_token_12345";
     let githubUser = "github-dev-sandbox";
+    
+    const isSandbox = sandbox === "true" || accessToken.startsWith("sandbox");
+    const fallbackPath = (state as string) || "/dashboard";
 
     if (sandbox !== "true" && code) {
       try {
@@ -164,18 +168,22 @@ async function startServer() {
           <p style="font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 15px;">SYNCHRONIZING REPOSITORIES...</p>
 
           <script>
+            const isSandboxVal = ${sandbox === "true" || accessToken.startsWith("sandbox")};
             if (window.opener) {
               window.opener.postMessage({ 
                 type: 'GITHUB_AUTH_SUCCESS', 
                 token: '${accessToken}', 
                 username: '${githubUser}',
-                isSandbox: ${sandbox === "true" || accessToken.startsWith("sandbox")}
+                isSandbox: isSandboxVal
               }, '*');
               setTimeout(() => {
                 window.close();
               }, 1200);
             } else {
-              window.location.href = '/sites';
+              const redirText = "${fallbackPath}";
+              const separator = redirText.includes("?") ? "&" : "?";
+              const targetUrl = redirText + separator + 'github_token=' + encodeURIComponent('${accessToken}') + '&github_user=' + encodeURIComponent('${githubUser}') + '&is_sandbox=' + isSandboxVal;
+              window.location.href = targetUrl;
             }
           </script>
         </body>

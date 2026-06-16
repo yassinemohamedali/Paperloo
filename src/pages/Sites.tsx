@@ -86,8 +86,9 @@ export default function Sites() {
   const [selectedRepos, setSelectedRepos] = useState<Record<number, boolean>>({});
   const [isImportingGithub, setIsImportingGithub] = useState(false);
 
-  // Listen to message for popup auth callback
+  // Listen to message for popup auth callback or URL query params on mount
   useEffect(() => {
+    // 1. Popup messages
     const handleOauthMessage = (event: MessageEvent) => {
       // Security validate
       const origin = event.origin;
@@ -106,6 +107,27 @@ export default function Sites() {
         toast.success(`Connected search cluster to GitHub@${authData.username.toUpperCase()}`);
       }
     };
+
+    // 2. URL parameters fallback (for sandboxed iframe direct redirect)
+    const searchParams = new URLSearchParams(window.location.search);
+    const githubToken = searchParams.get('github_token');
+    const githubUser = searchParams.get('github_user');
+    const isSandboxQuery = searchParams.get('is_sandbox') === 'true';
+
+    if (githubToken && githubUser) {
+      // Clean up URL parameters from history
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+
+      const authData = {
+        token: githubToken,
+        username: githubUser,
+        isSandbox: isSandboxQuery
+      };
+      setGithubAuth(authData);
+      localStorage.setItem('paperloo_github_auth', JSON.stringify(authData));
+      toast.success(`Connected search cluster to GitHub@${githubUser.toUpperCase()}`);
+    }
 
     window.addEventListener('message', handleOauthMessage);
     return () => window.removeEventListener('message', handleOauthMessage);
@@ -144,17 +166,25 @@ export default function Sites() {
 
   const handleGithubConnect = async () => {
     try {
-      const res = await fetch('/api/auth/github/url');
+      const stateParam = encodeURIComponent(window.location.pathname);
+      const res = await fetch(`/api/auth/github/url?state=${stateParam}`);
       if (!res.ok) throw new Error();
       const { url } = await res.json();
       
-      const authWindow = window.open(
-        url,
-        'github_oauth_popup',
-        'width=600,height=750,location=no,status=no,menubar=no'
-      );
+      let authWindow: Window | null = null;
+      try {
+        authWindow = window.open(
+          url,
+          'github_oauth_popup',
+          'width=600,height=750,location=no,status=no,menubar=no'
+        );
+      } catch (err) {
+        console.warn("window.open blocked or threw error in sandbox:", err);
+      }
+
       if (!authWindow) {
-        toast.error('Popup blocked. Allow popups to sync with GitHub.');
+        // Fallback to direct redirect for sandboxed iframe
+        window.location.href = url;
       }
     } catch {
       toast.error('Failed to initialize connector stream');
@@ -620,7 +650,7 @@ export default function Sites() {
       {isAdding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/90 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setIsAdding(false)} />
-          <div className="relative bg-surface border border-white/10 w-full max-w-lg p-10 shadow-2xl animate-in zoom-in-95 fade-in slide-in-from-bottom-4 duration-300 space-y-8">
+          <div className="relative bg-surface border border-white/10 w-full max-w-lg p-10 max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 fade-in slide-in-from-bottom-4 duration-300 space-y-8">
             <button onClick={() => setIsAdding(false)} className="absolute right-6 top-6 text-muted hover:text-white transition-colors">
               <X className="h-5 w-5" />
             </button>
