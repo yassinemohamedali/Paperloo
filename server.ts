@@ -48,9 +48,9 @@ async function startServer() {
   });
 
   // GitHub OAuth URL Endpoint
-  app.post("/api/auth/github/url", (req, res) => {
+  app.get("/api/auth/github/url", (req, res) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
-    const incomingState = req.body.state || "/dashboard";
+    const incomingState = (req.query.state as string) || "/dashboard";
     
     // Dynamically resolve appUrl (protocol + host)
     const protocol = req.headers["x-forwarded-proto"] || req.protocol;
@@ -194,8 +194,8 @@ async function startServer() {
   });
 
   // Fetch Repos route
-  app.post("/api/github/repos", async (req, res) => {
-    const { token, isSandbox } = req.body;
+  app.get("/api/github/repos", async (req, res) => {
+    const { token, isSandbox } = req.query;
     
     if (isSandbox === "true" || !token || token === "sandbox_token_12345") {
       // Return high-quality, simulated repositories

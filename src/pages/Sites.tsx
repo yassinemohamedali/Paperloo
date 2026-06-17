@@ -146,11 +146,7 @@ export default function Sites() {
   const fetchGithubRepos = async (token: string, isSandbox: boolean) => {
     setGithubReposLoading(true);
     try {
-      const res = await fetch(`/api/github/repos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, isSandbox: String(isSandbox) })
-      });
+      const res = await fetch(`/api/github/repos?token=${token}&isSandbox=${isSandbox}`);
       if (res.ok) {
         const repos = await res.json();
         setGithubRepos(repos);
@@ -183,16 +179,19 @@ export default function Sites() {
       }
 
       const stateParam = encodeURIComponent(window.location.pathname);
-      const res = await fetch(`/api/auth/github/url`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state: stateParam })
-      });
+      const res = await fetch(`/api/auth/github/url?state=${stateParam}`);
       if (!res.ok) {
         if (authWindow) authWindow.close();
         throw new Error('Server returned ' + res.status);
       }
-      const { url } = await res.json();
+      const text = await res.text();
+      let url;
+      try {
+        url = JSON.parse(text).url;
+      } catch (e) {
+        console.error("Failed to parse JSON res:", text);
+        throw new Error("Invalid response from server: " + text.substring(0, 50));
+      }
       
       if (authWindow) {
         authWindow.location.href = url;
