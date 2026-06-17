@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -39,6 +40,7 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+  app.use(cors());
 
   // API Routes
   app.get("/api/health", (req, res) => {
@@ -46,9 +48,9 @@ async function startServer() {
   });
 
   // GitHub OAuth URL Endpoint
-  app.get("/api/auth/github/url", (req, res) => {
+  app.post("/api/auth/github/url", (req, res) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
-    const incomingState = (req.query.state as string) || "/dashboard";
+    const incomingState = req.body.state || "/dashboard";
     
     // Dynamically resolve appUrl (protocol + host)
     const protocol = req.headers["x-forwarded-proto"] || req.protocol;
@@ -192,8 +194,8 @@ async function startServer() {
   });
 
   // Fetch Repos route
-  app.get("/api/github/repos", async (req, res) => {
-    const { token, isSandbox } = req.query;
+  app.post("/api/github/repos", async (req, res) => {
+    const { token, isSandbox } = req.body;
     
     if (isSandbox === "true" || !token || token === "sandbox_token_12345") {
       // Return high-quality, simulated repositories
