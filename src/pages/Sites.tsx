@@ -92,7 +92,7 @@ export default function Sites() {
     const handleOauthMessage = (event: MessageEvent) => {
       // Security validate
       const origin = event.origin;
-      if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+      if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('127.0.0.1') && !origin.includes('vercel.app')) {
         return;
       }
       

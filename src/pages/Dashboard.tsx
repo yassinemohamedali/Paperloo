@@ -221,30 +221,37 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Activity Feed / System Logs */}
+          {/* Risk Tracker */}
           <div className="bg-surface border border-white/10 p-8 reveal-up active delay-100">
             <div className="flex items-center justify-between mb-8">
-              <h4 className="text-sm font-sans font-black tracking-widest uppercase italic">Infrastructure Activity Log</h4>
-              <div className="flex items-center gap-2 text-[9px] font-bold text-accent animate-pulse">
-                <div className="w-1.5 h-1.5 bg-accent rounded-full" />
-                LIVE SYNC ACTIVE
+              <h4 className="text-sm font-sans font-black tracking-widest uppercase italic">Live Risk Tracker</h4>
+              <div className="flex items-center gap-2 text-[9px] font-bold text-red-500 animate-pulse">
+                <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                RISK MONITOR ACTIVE
               </div>
             </div>
             
             <div className="space-y-4">
               {[
-                { time: new Date(Date.now() - 120000).toLocaleTimeString(), event: 'Consent Hashed', detail: '0x7F2A...B901 (TCF 2.2)', icon: Fingerprint },
-                { time: new Date(Date.now() - 450000).toLocaleTimeString(), event: 'Policy Update', detail: 'Privacy v2.1 -> Synced', icon: Zap },
-                { time: new Date(Date.now() - 960000).toLocaleTimeString(), event: 'Compliance Audit', detail: 'GDPR Baseline Verified', icon: ShieldCheck },
+                { time: new Date(Date.now() - 120000).toLocaleTimeString(), risk: 'High', type: 'Unclassified Cookies', detail: '3 detected on nexus.io', icon: Fingerprint, color: 'text-red-400' },
+                { time: new Date(Date.now() - 450000).toLocaleTimeString(), risk: 'Medium', type: 'Missing DPA', detail: 'Vendor: Stripe Inc.', icon: Zap, color: 'text-orange-400' },
+                { time: new Date(Date.now() - 960000).toLocaleTimeString(), risk: 'Low', type: 'Outdated Policy', detail: 'Last updated 14 mos ago', icon: ShieldCheck, color: 'text-yellow-400' },
               ].map((log, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border border-white/5 hover:bg-white/[0.02] transition-colors group">
-                  <div className="text-[10px] text-muted font-bold tracking-tighter w-16">{log.time}</div>
-                  <div className="w-8 h-8 bg-white/5 flex items-center justify-center">
-                    <log.icon className="w-4 h-4 text-accent/50 group-hover:text-accent transition-colors" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold tracking-widest uppercase">{log.event}</p>
-                    <p className="text-[9px] text-muted tracking-wider">{log.detail}</p>
+                <div key={i} className="flex flex-col gap-2 p-4 border border-white/5 hover:bg-white/[0.02] transition-colors group">
+                  <div className="flex items-center gap-4">
+                    <div className="text-[10px] text-muted font-bold tracking-tighter w-16">{log.time}</div>
+                    <div className={cn("w-8 h-8 bg-white/5 flex items-center justify-center", log.color)}>
+                      <log.icon className="w-4 h-4 transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                       <p className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-2">
+                         {log.type}
+                         <span className={cn("text-[9px] px-1.5 py-0.5 rounded-sm bg-white/5 border border-white/10", log.color)}>
+                           {log.risk}
+                         </span>
+                       </p>
+                       <p className="text-[9px] text-muted tracking-wider truncate">{log.detail}</p>
+                    </div>
                   </div>
                 </div>
               ))}
