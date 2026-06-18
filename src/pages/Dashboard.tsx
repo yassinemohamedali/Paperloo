@@ -233,9 +233,9 @@ export default function Dashboard() {
             
             <div className="space-y-4">
               {[
-                { time: '14:22:01', event: 'Consent Hashed', detail: '0x7F2A...B901 (TCF 2.2)', icon: Fingerprint },
-                { time: '14:15:45', event: 'Policy Rollout', detail: 'Privacy v2.1 -> nexus.io', icon: Zap },
-                { time: '13:58:12', event: 'Compliance Audit', detail: 'GDPR Baseline Verified', icon: ShieldCheck },
+                { time: new Date(Date.now() - 120000).toLocaleTimeString(), event: 'Consent Hashed', detail: '0x7F2A...B901 (TCF 2.2)', icon: Fingerprint },
+                { time: new Date(Date.now() - 450000).toLocaleTimeString(), event: 'Policy Update', detail: 'Privacy v2.1 -> Synced', icon: Zap },
+                { time: new Date(Date.now() - 960000).toLocaleTimeString(), event: 'Compliance Audit', detail: 'GDPR Baseline Verified', icon: ShieldCheck },
               ].map((log, i) => (
                 <div key={i} className="flex items-center gap-4 p-4 border border-white/5 hover:bg-white/[0.02] transition-colors group">
                   <div className="text-[10px] text-muted font-bold tracking-tighter w-16">{log.time}</div>

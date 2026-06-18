@@ -1,16 +1,11 @@
 import express from "express";
 import cors from "cors";
-import { createServer as createViteServer } from "vite";
 import path from "path";
-import { fileURLToPath } from "url";
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 import Stripe from "stripe";
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Supabase Setup
 let supabaseClient: any = null;
@@ -35,19 +30,18 @@ function getStripe() {
   return stripeClient;
 }
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
+const PORT = 3000;
 
-  app.use(express.json());
-  app.use(cors());
+app.use(express.json());
+app.use(cors());
 
-  // API Routes
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
-  });
+// API Routes
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 
-  // GitHub OAuth URL Endpoint
+// GitHub OAuth URL Endpoint
   app.get("/api/auth/github/url", (req, res) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
     const incomingState = (req.query.state as string) || "/dashboard";
@@ -603,24 +597,34 @@ async function startServer() {
     res.json({ received: true });
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
+// Vite middleware for development
+if (process.env.NODE_ENV !== "production") {
+  import("vite").then(async (vite) => {
+    const viteServer = await vite.createServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.use(viteServer.middlewares);
+    
+    // Only listen if not on Vercel
+    if (!process.env.VERCEL) {
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(`Development Server running on http://localhost:${PORT}`);
+      });
+    }
+  });
+} else {
+  const distPath = path.join(process.cwd(), 'dist');
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Production Server running on http://localhost:${PORT}`);
     });
   }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
 }
 
-startServer();
+export default app;

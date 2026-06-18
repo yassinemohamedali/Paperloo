@@ -56,7 +56,12 @@ export default function Settings() {
         .from('agency-assets')
         .upload(filePath, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        if (uploadError.message.includes('Bucket not found')) {
+          throw new Error("Storage bucket 'agency-assets' not found. Please create it in your Supabase dashboard and set it to Public.");
+        }
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('agency-assets')
