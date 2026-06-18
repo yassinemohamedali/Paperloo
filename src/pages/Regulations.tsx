@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
@@ -27,6 +27,7 @@ const JURISDICTION_MAP: Record<string, string> = {
 
 export default function Regulations() {
   const { user } = useAuthStore();
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'amended' | 'pending'>('all');
 
   const { data: regulations, isLoading: regsLoading } = useQuery<Regulation[]>({
     queryKey: ['regulations'],
@@ -83,7 +84,7 @@ export default function Regulations() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {regulations?.map((reg) => {
+        {regulations?.filter(r => statusFilter === 'all' || r.status === statusFilter).map((reg) => {
           const affectedCount = getAffectedSitesCount(reg.affects_jurisdictions);
           
           return (
@@ -158,20 +159,35 @@ export default function Regulations() {
         })}
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-8 p-8 border border-white/5 bg-white/[0.01]">
-        <div className="flex items-center gap-3">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 p-6 border border-white/5 bg-white/[0.01]">
+        <button 
+          onClick={() => setStatusFilter('all')}
+          className={cn("flex items-center gap-3 px-4 py-2 border transition-colors", statusFilter === 'all' ? 'border-accent text-accent' : 'border-transparent text-muted hover:text-white')}
+        >
+          <span className="text-[10px] font-bold uppercase tracking-widest">ALL LAWS</span>
+        </button>
+        <button 
+          onClick={() => setStatusFilter('active')}
+          className={cn("flex items-center gap-3 px-4 py-2 border transition-colors", statusFilter === 'active' ? 'border-green-500/50 bg-green-500/5' : 'border-transparent hover:bg-white/5')}
+        >
           <div className="w-3 h-3 bg-green-500" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted">STABLE / ACTIVE</span>
-        </div>
-        <div className="flex items-center gap-3">
+        </button>
+        <button 
+          onClick={() => setStatusFilter('amended')}
+          className={cn("flex items-center gap-3 px-4 py-2 border transition-colors", statusFilter === 'amended' ? 'border-yellow-500/50 bg-yellow-500/5' : 'border-transparent hover:bg-white/5')}
+        >
           <div className="w-3 h-3 bg-yellow-500" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted">RECENTLY AMENDED</span>
-        </div>
-        <div className="flex items-center gap-3">
+        </button>
+        <button 
+          onClick={() => setStatusFilter('pending')}
+          className={cn("flex items-center gap-3 px-4 py-2 border transition-colors", statusFilter === 'pending' ? 'border-red-500/50 bg-red-500/5' : 'border-transparent hover:bg-white/5')}
+        >
           <div className="w-3 h-3 bg-red-500" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted">MAJOR CHANGES PENDING</span>
-        </div>
+        </button>
       </div>
     </div>
   );

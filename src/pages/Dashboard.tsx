@@ -232,29 +232,37 @@ export default function Dashboard() {
             </div>
             
             <div className="space-y-4">
-              {[
-                { time: new Date(Date.now() - 120000).toLocaleTimeString(), risk: 'High', type: 'Unclassified Cookies', detail: '3 detected on nexus.io', icon: Fingerprint, color: 'text-red-400' },
-                { time: new Date(Date.now() - 450000).toLocaleTimeString(), risk: 'Medium', type: 'Missing DPA', detail: 'Vendor: Stripe Inc.', icon: Zap, color: 'text-orange-400' },
-                { time: new Date(Date.now() - 960000).toLocaleTimeString(), risk: 'Low', type: 'Outdated Policy', detail: 'Last updated 14 mos ago', icon: ShieldCheck, color: 'text-yellow-400' },
-              ].map((log, i) => (
-                <div key={i} className="flex flex-col gap-2 p-4 border border-white/5 hover:bg-white/[0.02] transition-colors group">
-                  <div className="flex items-center gap-4">
-                    <div className="text-[10px] text-muted font-bold tracking-tighter w-16">{log.time}</div>
-                    <div className={cn("w-8 h-8 bg-white/5 flex items-center justify-center", log.color)}>
-                      <log.icon className="w-4 h-4 transition-colors" />
+              {alerts.length === 0 ? (
+                 <p className="text-[10px] text-muted tracking-widest uppercase">No pending risk alerts.</p>
+              ) : (
+                alerts.slice(0, 5).map((log, i) => {
+                  const logSite = sites.find(s => s.id === log.site_id);
+                  const isHighRisk = log.type === 'review_needed';
+                  return (
+                    <div key={log.id || i} className="flex flex-col gap-2 p-4 border border-white/5 hover:bg-white/[0.02] transition-colors group">
+                      <div className="flex items-center gap-4">
+                        <div className="text-[10px] text-muted font-bold tracking-tighter w-16">
+                           {new Date(log.created_at).toLocaleDateString()}
+                        </div>
+                        <div className={cn("w-8 h-8 bg-white/5 flex items-center justify-center", isHighRisk ? "text-red-400" : "text-yellow-400")}>
+                          {isHighRisk ? <Fingerprint className="w-4 h-4 transition-colors" /> : <Zap className="w-4 h-4 transition-colors" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-2">
+                             {log.type.replace('_', ' ')}
+                             <span className={cn("text-[9px] px-1.5 py-0.5 rounded-sm bg-white/5 border border-white/10", isHighRisk ? "text-red-400" : "text-yellow-400")}>
+                               {isHighRisk ? 'HIGH' : 'MEDIUM'}
+                             </span>
+                           </p>
+                           <p className="text-[9px] text-muted tracking-wider truncate">
+                             {logSite?.domain || 'Global'} - {log.message}
+                           </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                       <p className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-2">
-                         {log.type}
-                         <span className={cn("text-[9px] px-1.5 py-0.5 rounded-sm bg-white/5 border border-white/10", log.color)}>
-                           {log.risk}
-                         </span>
-                       </p>
-                       <p className="text-[9px] text-muted tracking-wider truncate">{log.detail}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
