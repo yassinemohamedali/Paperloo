@@ -179,7 +179,7 @@ export default function Sites() {
       }
 
       const stateParam = encodeURIComponent(window.location.pathname);
-      const res = await fetch(`/api/auth/github/url?state=${stateParam}`);
+      const res = await fetch(`/api/auth/github/url?state=${stateParam}&origin=${encodeURIComponent(window.location.origin)}`);
       if (!res.ok) {
         if (authWindow) authWindow.close();
         throw new Error('Server returned ' + res.status);

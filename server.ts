@@ -33,6 +33,7 @@ function getStripe() {
 const app = express();
 const PORT = 3000;
 
+app.set("trust proxy", true);
 app.use(express.json());
 app.use(cors());
 
@@ -46,10 +47,17 @@ app.get("/api/health", (req, res) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
     const incomingState = (req.query.state as string) || "/dashboard";
     
-    // Dynamically resolve appUrl (protocol + host)
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-    const host = req.get("host") || "localhost:3000";
-    const appUrl = `${protocol}://${host}`;
+    // Dynamically resolve appUrl (protocol + host) with support for query origin for precision
+    const clientOrigin = req.query.origin as string;
+    let appUrl = "";
+    if (clientOrigin && (clientOrigin.startsWith("http://") || clientOrigin.startsWith("https://"))) {
+      appUrl = clientOrigin.replace(/\/$/, "");
+    } else {
+      const rawProto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+      const protocol = (typeof rawProto === "string" ? rawProto.split(",")[0].trim() : "http");
+      const host = req.get("host") || "localhost:3000";
+      appUrl = `${protocol}://${host}`;
+    }
     
     // Fallback sandbox if client_id is not set, or is a placeholder
     const isSandboxMode = !clientId || clientId.trim() === "" || clientId === "your_github_client_id";
@@ -598,33 +606,29 @@ app.get("/api/health", (req, res) => {
   });
 
 // Vite middleware for development
-if (process.env.NODE_ENV !== "production") {
-  import("vite").then(async (vite) => {
+if (!process.env.VERCEL && process.env.NODE_ENV !== "production") {
+  const dynamicImport = new Function('modulePath', 'return import(modulePath)');
+  dynamicImport("vite").then(async (vite: any) => {
     const viteServer = await vite.createServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(viteServer.middlewares);
     
-    // Only listen if not on Vercel
-    if (!process.env.VERCEL) {
-      app.listen(PORT, "0.0.0.0", () => {
-        console.log(`Development Server running on http://localhost:${PORT}`);
-      });
-    }
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Development Server running on http://localhost:${PORT}`);
+    });
   });
-} else {
+} else if (!process.env.VERCEL) {
   const distPath = path.join(process.cwd(), 'dist');
   app.use(express.static(distPath));
   app.get('*', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 
-  if (!process.env.VERCEL) {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Production Server running on http://localhost:${PORT}`);
-    });
-  }
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Production Server running on http://localhost:${PORT}`);
+  });
 }
 
 export default app;

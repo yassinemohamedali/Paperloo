@@ -191,7 +191,7 @@ export default function Login() {
     try {
       // Pass the current route so callback redirects back to this page if window.opener is absent
       const stateParam = encodeURIComponent(window.location.pathname);
-      const res = await fetch(`/api/auth/github/url?state=${stateParam}`);
+      const res = await fetch(`/api/auth/github/url?state=${stateParam}&origin=${encodeURIComponent(window.location.origin)}`);
       if (!res.ok) {
         throw new Error(`Gateway responded with status ${res.status}`);
       }

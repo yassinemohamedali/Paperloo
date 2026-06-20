@@ -255,7 +255,7 @@ export default function Dashboard() {
                              </span>
                            </p>
                            <p className="text-[9px] text-muted tracking-wider truncate">
-                             {logSite?.domain || 'Global'} - {log.message}
+                             {logSite?.url || 'Global'} - {log.message}
                            </p>
                         </div>
                       </div>
