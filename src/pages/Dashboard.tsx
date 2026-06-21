@@ -192,14 +192,14 @@ export default function Dashboard() {
   }
 
   const stats = [
-    { label: 'Global Deployments', value: sites?.length || 0, icon: Globe },
-    { label: 'Governance Nodes', value: docsCount || 0, icon: DbIcon },
-    { label: 'Risk Indices', value: alerts?.length || 0, icon: Bell, color: 'text-red-400' },
+    { label: 'Monitored Sites', value: sites?.length || 0, icon: Globe },
+    { label: 'Active Documents', value: docsCount || 0, icon: DbIcon },
+    { label: 'Unresolved Alerts', value: alerts?.length || 0, icon: Bell, color: 'text-red-400' },
   ];
 
   return (
     <div className="space-y-12 font-mono">
-      {/* Infrastructure Overview */}
+      {/* Overview */}
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         <div className="w-full lg:w-2/3 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -221,13 +221,13 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Risk Tracker */}
+          {/* Compliance Alerts */}
           <div className="bg-surface border border-white/10 p-8 reveal-up active delay-100">
             <div className="flex items-center justify-between mb-8">
-              <h4 className="text-sm font-sans font-black tracking-widest uppercase italic">Live Risk Tracker</h4>
+              <h4 className="text-sm font-sans font-black tracking-widest uppercase italic">Compliance Alerts</h4>
               <div className="flex items-center gap-2 text-[9px] font-bold text-red-500 animate-pulse">
                 <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-                RISK MONITOR ACTIVE
+                MONITOR ACTIVE
               </div>
             </div>
             
@@ -267,11 +267,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Global Health Map / Meta-Metrics */}
+        {/* Global Compliance Health / Meta-Metrics */}
         <div className="w-full lg:w-1/3 bg-black border border-white/10 p-8 relative overflow-hidden group min-h-[400px]">
           <div className="absolute inset-0 grid-dots opacity-20" />
           <div className="relative z-10">
-            <h4 className="text-sm font-sans font-black tracking-widest uppercase italic mb-8">Governance Integrity</h4>
+            <h4 className="text-sm font-sans font-black tracking-widest uppercase italic mb-8">Compliance Health</h4>
             <div className="flex flex-col items-center justify-center p-8 text-center space-y-8">
               <div className="relative w-48 h-48">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -291,14 +291,14 @@ export default function Dashboard() {
                   <span className="text-5xl font-sans font-black tracking-tighter italic">
                     <CountUp value={averageScore} />%
                   </span>
-                  <span className="text-[9px] font-bold text-muted tracking-widest uppercase">INFRASTRUCTURE HEALTH</span>
+                  <span className="text-[9px] font-bold text-muted tracking-widest uppercase">AVERAGE COMPLIANCE</span>
                 </div>
               </div>
               <div className="space-y-4">
                 <p className="text-[10px] text-muted tracking-widest leading-relaxed uppercase">
-                  {averageScore >= 90 ? 'Your infrastructure is currently performing within optimal compliance parameters.' : 
-                   averageScore >= 70 ? 'Your infrastructure health is stable, but several governance nodes require attention.' :
-                   'Critical compliance vulnerabilities detected. Immediate infrastructure review recommended.'}
+                  {averageScore >= 90 ? 'Your websites are currently performing within optimal compliance parameters.' : 
+                   averageScore >= 70 ? 'Your compliance health is stable, but several areas require attention.' :
+                   'Critical compliance vulnerabilities detected. Immediate review recommended.'}
                 </p>
                 <Link to="/audit-report" className="text-[9px] font-black tracking-widest text-accent hover:underline uppercase inline-block">
                   View Full Audit Report →
@@ -313,10 +313,10 @@ export default function Dashboard() {
         {/* Sites Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-sans font-black tracking-widest uppercase italic mb-4">Active Deployment Hub</h4>
+            <h4 className="text-sm font-sans font-black tracking-widest uppercase italic mb-4">Monitored Websites</h4>
             <Link to="/sites" className="bracket-btn py-2 px-4 text-[9px] font-black">
               <span className="bracket-btn-inner"></span>
-              ALL DEPLOYMENTS
+              ALL WEBSITES
             </Link>
           </div>
 
@@ -378,7 +378,7 @@ export default function Dashboard() {
               <p className="text-muted text-[10px] font-bold tracking-[0.3em] uppercase">No active sites monitoried</p>
               <Link to="/sites" className="bracket-btn px-6 py-3 text-xs">
                 <span className="bracket-btn-inner"></span>
-                DEPLOY FIRST SITE
+                MONITOR FIRST SITE
               </Link>
             </div>
           )}

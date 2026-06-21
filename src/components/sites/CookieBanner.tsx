@@ -4,6 +4,7 @@ import { supabase } from '@/src/lib/supabase';
 import { Settings, Eye, Code, Save, Upload, Check, Shield, Zap, Globe, LayoutGrid, Sparkles, AlertCircle, Info, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
+import { calculateComplianceScore } from '@/src/lib/compliance';
 
 interface CookieBannerProps {
   siteId: string;
@@ -106,12 +107,24 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
         console.warn('Supabase service unavailable, local state has been preserved:', err);
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try {
+        await calculateComplianceScore(siteId);
+      } catch (err) {
+        console.error('Failed to update compliance score:', err);
+      }
       queryClient.invalidateQueries({ queryKey: ['banner_config', siteId] });
+      queryClient.invalidateQueries({ queryKey: ['site', siteId] });
+      queryClient.invalidateQueries({ queryKey: ['compliance-score', siteId] });
       toast.success('Configuration successfully locked & written to compliance server');
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
+      try {
+        await calculateComplianceScore(siteId);
+      } catch (err) {}
       queryClient.invalidateQueries({ queryKey: ['banner_config', siteId] });
+      queryClient.invalidateQueries({ queryKey: ['site', siteId] });
+      queryClient.invalidateQueries({ queryKey: ['compliance-score', siteId] });
       toast.success('Configuration saved successfully (local offline cache secured)');
     }
   });

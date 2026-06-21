@@ -268,12 +268,12 @@ export default function AuditReport() {
           <div className="py-32 border border-white/10 bg-surface flex flex-col items-center justify-center space-y-8">
             <Shield className="h-16 w-16 text-white/10" />
             <div className="space-y-4 text-center">
-              <h3 className="text-2xl font-black italic tracking-tight uppercase">No Infrastructure Data Found</h3>
-              <p className="text-muted text-xs tracking-widest max-w-md uppercase leading-relaxed">You haven't added any sites or generated any documents yet. Start by adding a site to your deployment hub.</p>
+              <h3 className="text-2xl font-black italic tracking-tight uppercase">No Websites Found</h3>
+              <p className="text-muted text-xs tracking-widest max-w-md uppercase leading-relaxed">You haven't added any sites or generated any documents yet. Start by adding a site to your portal.</p>
             </div>
             <Link to="/sites" className="bracket-btn py-4 px-10 text-xs font-black uppercase">
               <span className="bracket-btn-inner"></span>
-              Enter Deployment Hub
+              Enter Sites Portal
             </Link>
           </div>
         )}
@@ -283,7 +283,7 @@ export default function AuditReport() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="bg-surface border border-white/10 p-8 space-y-4">
-                <p className="text-[10px] text-muted font-bold tracking-widest">AGGREGATE INTEGRITY</p>
+                <p className="text-[10px] text-muted font-bold tracking-widest">AVERAGE SCORE</p>
                 <div className="flex items-center gap-4">
                   <span className="text-5xl font-sans font-black tracking-tighter italic text-accent">{averageScore}%</span>
                   <div className="h-10 w-px bg-white/10" />

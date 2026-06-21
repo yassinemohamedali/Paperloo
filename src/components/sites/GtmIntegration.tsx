@@ -4,6 +4,7 @@ import { supabase } from '@/src/lib/supabase';
 import { Settings, Check, Terminal, ExternalLink, RefreshCw, AlertCircle, ShieldAlert, Cpu, HelpCircle, Code, Copy, Info, Download, Search, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
+import { calculateComplianceScore } from '@/src/lib/compliance';
 
 interface GtmIntegrationProps {
   siteId: string;
@@ -212,15 +213,27 @@ export default function GtmIntegration({ siteId }: GtmIntegrationProps) {
         console.warn('Supabase service is currently offline or schema cache is stale, saved changes locally:', err);
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try {
+        await calculateComplianceScore(siteId);
+      } catch (err) {
+        console.error('Compliance score auto-recalculation failed:', err);
+      }
       queryClient.invalidateQueries({ queryKey: ['banner_config', siteId] });
+      queryClient.invalidateQueries({ queryKey: ['site', siteId] });
+      queryClient.invalidateQueries({ queryKey: ['compliance-score', siteId] });
       toast.success('GTM Tag & Consent configurations updated successfully!');
-      addLog('success', `SETTINGS SAVED: GTM-ID OR GOOGLE TAG SET TO "${tagInput.toUpperCase()}". CONSENT MODE V2 IS ${enableGcmV2 ? 'ENABLED' : 'DISABLED'}.`);
+      addLog('success', `SETTINGS SAVED: GTM-ID OR GOOGLE TAG SET TO "${tagInput.toUpperCase()}". CONSENT MODE V2 IS ${enableGcmV2 ? 'ENABLED' : 'DISABLED'}. compliance audit refreshed.`);
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
+      try {
+        await calculateComplianceScore(siteId);
+      } catch (err) {}
       queryClient.invalidateQueries({ queryKey: ['banner_config', siteId] });
+      queryClient.invalidateQueries({ queryKey: ['site', siteId] });
+      queryClient.invalidateQueries({ queryKey: ['compliance-score', siteId] });
       toast.success('GTM Tag & Consent configurations saved locally');
-      addLog('success', `SETTINGS SAVED LOCALLY: GTM-ID OR GOOGLE TAG SET TO "${tagInput.toUpperCase()}".`);
+      addLog('success', `SETTINGS SAVED LOCALLY: GTM-ID OR GOOGLE TAG SET TO "${tagInput.toUpperCase()}". compliance audit refreshed.`);
     }
   });
 

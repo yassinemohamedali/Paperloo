@@ -18,12 +18,12 @@ import { useAuthStore } from '@/src/store/authStore';
 import { cn } from '@/src/lib/utils';
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'System Overview', path: '/dashboard' },
-  { icon: Globe, label: 'Deployment Hub', path: '/sites' },
-  { icon: Bell, label: 'Risk Monitor', path: '/alerts' },
-  { icon: Shield, label: 'Governance Library', path: '/regulations' },
-  { icon: CreditCard, label: 'Revenue Governance', path: '/billing' },
-  { icon: Settings, label: 'System Config', path: '/settings' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Globe, label: 'Sites', path: '/sites' },
+  { icon: Bell, label: 'Alerts', path: '/alerts' },
+  { icon: Shield, label: 'Regulations', path: '/regulations' },
+  { icon: CreditCard, label: 'Billing', path: '/billing' },
+  { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 export default function DashboardLayout() {

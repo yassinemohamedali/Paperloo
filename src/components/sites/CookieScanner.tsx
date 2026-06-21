@@ -5,6 +5,7 @@ import { Search, RefreshCw, Shield, AlertTriangle, CheckCircle2, Clock, Trash2 }
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import Groq from "groq-sdk";
+import { calculateComplianceScore } from '@/src/lib/compliance';
 
 interface CookieScannerProps {
   siteId: string;
@@ -129,9 +130,16 @@ export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
         setIsScanning(false);
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try {
+        await calculateComplianceScore(siteId);
+      } catch (err) {
+        console.error('Error auto-updating compliance score:', err);
+      }
       queryClient.invalidateQueries({ queryKey: ['cookie_scans', siteId] });
-      toast.success('Governance scan report generated');
+      queryClient.invalidateQueries({ queryKey: ['site', siteId] });
+      queryClient.invalidateQueries({ queryKey: ['compliance-score', siteId] });
+      toast.success('Governance scan report generated and audit score updated');
     },
     onError: (error: any) => {
       toast.error(error.message);

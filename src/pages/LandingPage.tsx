@@ -369,11 +369,11 @@ export default function LandingPage() {
 
           {/* Client Logos */}
           <div className="mt-24 flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-30 grayscale">
-            <span className="text-xs tracking-[0.3em] font-bold uppercase">Sensiba lLP</span>
+            <span className="text-xs tracking-[0.3em] font-bold uppercase">Aether Analytics</span>
             <div className="w-px h-4 bg-white/20"></div>
-            <span className="text-xs tracking-[0.3em] font-bold uppercase">Core Systems</span>
+            <span className="text-xs tracking-[0.3em] font-bold uppercase">Quantum Platforms</span>
             <div className="w-px h-4 bg-white/20"></div>
-            <span className="text-xs tracking-[0.3em] font-bold uppercase">Nexus Infrastructure</span>
+            <span className="text-xs tracking-[0.3em] font-bold uppercase">Apex Infrastructure</span>
           </div>
         </div>
       </section>
