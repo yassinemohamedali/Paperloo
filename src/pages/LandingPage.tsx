@@ -5,6 +5,7 @@ import { cn } from '@/src/lib/utils';
 import LeadScanner from '@/src/components/LeadScanner';
 import { useAuthStore } from '@/src/store/authStore';
 import { supabase } from '@/src/lib/supabase';
+import MapGlobe from '@/src/components/MapGlobe';
 
 const SERVICES = [
   { id: '01', name: 'GLOBAL DISCLOSURE ENGINE', description: 'ENTERPRISE-GRADE AUTOMATED DRAFTING FOR INTERNATIONAL COMPLIANCE.' },
@@ -728,7 +729,10 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-            <p className="text-[10px] tracking-[0.2em] text-muted">BUILT FOR GLOBAL ENTERPRISE.</p>
+            <div className="flex flex-col items-end gap-4">
+              <p className="text-[10px] tracking-[0.2em] text-muted">BUILT FOR GLOBAL ENTERPRISE.</p>
+              <MapGlobe />
+            </div>
           </div>
         </div>
       </footer>
