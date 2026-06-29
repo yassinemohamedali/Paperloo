@@ -38,6 +38,7 @@ const DataPrivacy = lazy(() => import('./pages/DataPrivacy'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Contact = lazy(() => import('./pages/Contact'));
 
 // Layout
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -169,6 +170,7 @@ const AnimatedRoutes = () => {
         <Route path="/solutions/agencies" element={<PageTransition><SolutionsAgencies /></PageTransition>} />
         <Route path="/solutions/ecommerce" element={<PageTransition><SolutionsEcommerce /></PageTransition>} />
         <Route path="/solutions/enterprise" element={<PageTransition><SolutionsEnterprise /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
 
         {/* Protected Routes */}
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingGuard><PageTransition><Onboarding /></PageTransition></OnboardingGuard></ProtectedRoute>} />

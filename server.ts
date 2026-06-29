@@ -327,9 +327,7 @@ app.post("/api/scan-external-site", async (req, res) => {
       }
     });
   }
-});
-
-// GitHub OAuth URL Endpoint
+})// GitHub OAuth URL Endpoint
   app.get("/api/auth/github/url", (req, res) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
     const incomingState = (req.query.state as string) || "/dashboard";
@@ -345,14 +343,9 @@ app.post("/api/scan-external-site", async (req, res) => {
       const host = req.get("host") || "localhost:3000";
       appUrl = `${protocol}://${host}`;
     }
-    
-    // Fallback sandbox if client_id is not set, or is a placeholder
-    const isSandboxMode = !clientId || clientId.trim() === "" || clientId === "your_github_client_id";
-    
-    if (isSandboxMode) {
-      return res.json({ 
-        url: `${appUrl}/api/auth/github/callback?sandbox=true&state=${encodeURIComponent(incomingState)}` 
-      });
+
+    if (!clientId || clientId.trim() === "" || clientId === "your_github_client_id") {
+       return res.status(400).json({ error: "GITHUB_CLIENT_ID is missing" });
     }
 
     const redirectUri = `${appUrl}/api/auth/github/callback`;
@@ -369,15 +362,13 @@ app.post("/api/scan-external-site", async (req, res) => {
 
   // GitHub OAuth Callback Endpoint
   app.get("/api/auth/github/callback", async (req, res) => {
-    const { code, sandbox, state } = req.query;
-    
-    let accessToken = "sandbox_token_12345";
-    let githubUser = "github-dev-sandbox";
-    
-    const isSandbox = sandbox === "true" || accessToken.startsWith("sandbox");
+    const { code, state } = req.query;
     const fallbackPath = (state as string) || "/dashboard";
 
-    if (sandbox !== "true" && code) {
+    let accessToken = "";
+    let githubUser = "";
+
+    if (code) {
       try {
         const clientId = process.env.GITHUB_CLIENT_ID;
         const clientSecret = process.env.GITHUB_CLIENT_SECRET;
@@ -414,7 +405,7 @@ app.post("/api/scan-external-site", async (req, res) => {
           }
         }
       } catch (err) {
-        console.error("GitHub Token exchange failed, falling back to sandbox mode:", err);
+        console.error("GitHub Token exchange failed:", err);
       }
     }
 
@@ -459,13 +450,12 @@ app.post("/api/scan-external-site", async (req, res) => {
           <p style="font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 15px;">SYNCHRONIZING REPOSITORIES...</p>
 
           <script>
-            const isSandboxVal = ${sandbox === "true" || accessToken.startsWith("sandbox")};
             if (window.opener) {
               window.opener.postMessage({ 
                 type: 'GITHUB_AUTH_SUCCESS', 
                 token: '${accessToken}', 
                 username: '${githubUser}',
-                isSandbox: isSandboxVal
+                isSandbox: false
               }, '*');
               setTimeout(() => {
                 window.close();
@@ -473,7 +463,7 @@ app.post("/api/scan-external-site", async (req, res) => {
             } else {
               const redirText = "${fallbackPath}";
               const separator = redirText.includes("?") ? "&" : "?";
-              const targetUrl = redirText + separator + 'github_token=' + encodeURIComponent('${accessToken}') + '&github_user=' + encodeURIComponent('${githubUser}') + '&is_sandbox=' + isSandboxVal;
+              const targetUrl = redirText + separator + 'github_token=' + encodeURIComponent('${accessToken}') + '&github_user=' + encodeURIComponent('${githubUser}') + '&is_sandbox=false';
               window.location.href = targetUrl;
             }
           </script>
@@ -484,17 +474,10 @@ app.post("/api/scan-external-site", async (req, res) => {
 
   // Fetch Repos route
   app.get("/api/github/repos", async (req, res) => {
-    const { token, isSandbox } = req.query;
+    const { token } = req.query;
     
-    if (isSandbox === "true" || !token || token === "sandbox_token_12345") {
-      // Return high-quality, simulated repositories
-      return res.json([
-        { id: 101, name: "cosmic-slate-blog", language: "TypeScript", url: "https://cosmic-slate.github.io/blog" },
-        { id: 102, name: "retro-nexus-ecom", language: "JavaScript", url: "https://retro-nexus-ecom.pages.dev" },
-        { id: 103, name: "gravity-synthesizer-api", language: "TypeScript", url: "https://gravity-synth-app.vercel.app" },
-        { id: 104, name: "brutalist-portfolio-2026", language: "CSS", url: "https://portfolio-2026.github.io" },
-        { id: 105, name: "swift-delivery-tracker", language: "HTML", url: "https://swift-delivery.net" }
-      ]);
+    if (!token) {
+      return res.status(401).json({ error: "Missing GitHub token" });
     }
 
     try {

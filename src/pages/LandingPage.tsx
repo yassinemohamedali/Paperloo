@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
-import LeadScanner from '@/src/components/LeadScanner';
+
 import { useAuthStore } from '@/src/store/authStore';
 import { supabase } from '@/src/lib/supabase';
-import MapGlobe from '@/src/components/MapGlobe';
 
 const SERVICES = [
   { id: '01', name: 'GLOBAL DISCLOSURE ENGINE', description: 'ENTERPRISE-GRADE AUTOMATED DRAFTING FOR INTERNATIONAL COMPLIANCE.' },
@@ -423,22 +422,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Scanner Section */}
-      <section className="py-32 px-6 bg-black relative">
-        <div className="absolute inset-0 radial-fade-top opacity-50" />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="mb-20 text-center reveal-up">
-            <div className="section-label mb-8 inline-block">SYSTEM AUDIT</div>
-            <h2 className="text-5xl md:text-7xl font-sans font-black tracking-tighter italic uppercase">
-              DEEPLY ANALYZE <span className="text-accent">RISK EXPOSURE.</span>
-            </h2>
-          </div>
-          
-          <div className="reveal-up">
-            <LeadScanner />
-          </div>
-        </div>
-      </section>
+
 
       {/* Services Section */}
       <section id="solutions" className="py-32 px-6 relative overflow-hidden">
@@ -662,6 +646,33 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="py-32 px-6 bg-black relative">
+        <div className="absolute inset-0 radial-fade-top opacity-30" />
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="mb-20 text-center reveal-up">
+            <div className="section-label mb-8 inline-block">KNOWLEDGE BASE</div>
+            <h2 className="text-4xl md:text-6xl font-sans font-black tracking-tighter italic uppercase">
+              FREQUENTLY ASKED <span className="text-accent">QUESTIONS</span>
+            </h2>
+          </div>
+
+          <div className="space-y-6 reveal-up">
+            {[
+              { q: 'What is Paperloo?', a: 'Paperloo is a comprehensive compliance infrastructure platform designed to automate the generation of legal documents, cookie scanners, and governance policies for global agencies.' },
+              { q: 'Is the compliance score accurate?', a: 'Yes, our high-fidelity auditing engine relies strictly on actual generated documents and deployed mechanisms across your domains, ensuring a 100% authentic compliance grade.' },
+              { q: 'Do you provide legal advice?', a: 'No. Paperloo is an automated infrastructure platform. All generated documents should be reviewed by qualified legal counsel prior to use.' },
+              { q: 'Can I connect multiple Github repositories?', a: 'Yes, our GitHub integration allows you to instantly import multiple live web properties and automatically inject compliance structures into them.' }
+            ].map((faq, i) => (
+              <div key={i} className="border border-white/10 p-6 bg-zinc-950 hover:border-accent/30 transition-colors">
+                <h3 className="text-xl font-sans font-black italic tracking-tighter text-white uppercase mb-2">Q. {faq.q}</h3>
+                <p className="text-sm font-mono text-muted leading-relaxed uppercase tracking-widest">{faq.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-black py-24 px-6 border-t border-white/10">
         <div className="max-w-7xl mx-auto">
@@ -695,6 +706,7 @@ export default function LandingPage() {
                 <li><Link to="/docs" className="hover:text-accent transition-colors">DOCUMENTATION</Link></li>
                 <li><Link to="/docs/api" className="hover:text-accent transition-colors">API REFERENCE</Link></li>
                 <li><Link to="/status" className="hover:text-accent transition-colors">SYSTEM STATUS</Link></li>
+                <li><Link to="/contact" className="hover:text-accent transition-colors">CONTACT US</Link></li>
               </ul>
             </div>
 
@@ -731,7 +743,6 @@ export default function LandingPage() {
             </div>
             <div className="flex flex-col items-end gap-4">
               <p className="text-[10px] tracking-[0.2em] text-muted">BUILT FOR GLOBAL ENTERPRISE.</p>
-              <MapGlobe />
             </div>
           </div>
         </div>

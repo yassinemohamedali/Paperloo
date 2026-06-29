@@ -49,27 +49,18 @@ export default function Settings() {
       if (!event.target.files || event.target.files.length === 0) return;
       
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${user?.id}/logo.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('agency-assets')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        if (uploadError.message.includes('Bucket not found')) {
-          throw new Error("Storage bucket 'agency-assets' not found. Please create it in your Supabase dashboard and set it to Public.");
-        }
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('agency-assets')
-        .getPublicUrl(filePath);
+      
+      // Convert file to base64 to bypass missing bucket issue
+      const base64String = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+      });
 
       const { error: updateError } = await (supabase
         .from('profiles') as any)
-        .update({ logo_url: publicUrl })
+        .update({ logo_url: base64String })
         .eq('id', user?.id as string);
 
       if (updateError) throw updateError;
@@ -77,7 +68,7 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       toast.success('Logo uploaded successfully');
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || 'Failed to upload logo');
     } finally {
       setUploading(false);
     }
