@@ -25,9 +25,9 @@ export default function Signup() {
   });
 
   useEffect(() => {
-    const loginWithGithubCreds = async (username: string, token: string, isSandbox: boolean) => {
+    const loginWithGithubCreds = async (username: string, token: string) => {
       // Save GitHub credentials so the app discovers existing sites instantly
-      const authData = { token, username, isSandbox };
+      const authData = { token, username };
       localStorage.setItem('paperloo_github_auth', JSON.stringify(authData));
 
       setGithubLoading(true);
@@ -96,8 +96,7 @@ export default function Signup() {
       if (event.data?.type === 'GITHUB_AUTH_SUCCESS') {
         const username = event.data.username || 'github-user';
         const token = event.data.token;
-        const isSandbox = event.data.isSandbox;
-        await loginWithGithubCreds(username, token, isSandbox);
+        await loginWithGithubCreds(username, token);
       }
     };
 
@@ -105,14 +104,13 @@ export default function Signup() {
     const searchParams = new URLSearchParams(window.location.search);
     const githubToken = searchParams.get('github_token');
     const githubUser = searchParams.get('github_user');
-    const isSandboxQuery = searchParams.get('is_sandbox') === 'true';
 
     if (githubToken && githubUser) {
       // Clean up URL parameters from history
       const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
 
-      loginWithGithubCreds(githubUser, githubToken, isSandboxQuery);
+      loginWithGithubCreds(githubUser, githubToken);
     }
 
     window.addEventListener('message', handleMessage);

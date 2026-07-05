@@ -73,7 +73,7 @@ export default function Sites() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // GitHub Integration State
-  const [githubAuth, setGithubAuth] = useState<{ token: string; username: string; isSandbox: boolean } | null>(() => {
+  const [githubAuth, setGithubAuth] = useState<{ token: string; username: string } | null>(() => {
     try {
       const saved = localStorage.getItem('paperloo_github_auth');
       return saved ? JSON.parse(saved) : null;
@@ -99,8 +99,7 @@ export default function Sites() {
       if (event.data?.type === 'GITHUB_AUTH_SUCCESS') {
         const authData = {
           token: event.data.token,
-          username: event.data.username,
-          isSandbox: !!event.data.isSandbox
+          username: event.data.username
         };
         setGithubAuth(authData);
         localStorage.setItem('paperloo_github_auth', JSON.stringify(authData));
@@ -112,7 +111,6 @@ export default function Sites() {
     const searchParams = new URLSearchParams(window.location.search);
     const githubToken = searchParams.get('github_token');
     const githubUser = searchParams.get('github_user');
-    const isSandboxQuery = searchParams.get('is_sandbox') === 'true';
 
     if (githubToken && githubUser) {
       // Clean up URL parameters from history
@@ -121,8 +119,7 @@ export default function Sites() {
 
       const authData = {
         token: githubToken,
-        username: githubUser,
-        isSandbox: isSandboxQuery
+        username: githubUser
       };
       setGithubAuth(authData);
       localStorage.setItem('paperloo_github_auth', JSON.stringify(authData));
@@ -136,17 +133,17 @@ export default function Sites() {
   // Fetch repositories once authenticated
   useEffect(() => {
     if (githubAuth) {
-      fetchGithubRepos(githubAuth.token, githubAuth.isSandbox);
+      fetchGithubRepos(githubAuth.token);
     } else {
       setGithubRepos([]);
       setSelectedRepos({});
     }
   }, [githubAuth]);
 
-  const fetchGithubRepos = async (token: string, isSandbox: boolean) => {
+  const fetchGithubRepos = async (token: string) => {
     setGithubReposLoading(true);
     try {
-      const res = await fetch(`/api/github/repos?token=${token}&isSandbox=${isSandbox}`);
+      const res = await fetch(`/api/github/repos?token=${token}`);
       if (res.ok) {
         const repos = await res.json();
         setGithubRepos(repos);
@@ -496,7 +493,7 @@ export default function Sites() {
       {githubAuth && (
         <div className="bg-surface/90 border border-[#c8f135]/30 p-8 relative overflow-hidden space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="absolute top-0 right-0 p-2 font-mono text-[9px] bg-[#c8f135]/10 text-[#c8f135] uppercase tracking-wider border-l border-b border-[#c8f135]/30">
-            GITHUB CLUSTER Connected {githubAuth.isSandbox ? "(SANDBOX ACTIVE)" : ""}
+            GITHUB CLUSTER Connected
           </div>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
