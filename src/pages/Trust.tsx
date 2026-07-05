@@ -42,8 +42,11 @@ export default function Trust() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 py-24 space-y-32">
-        {/* Header */}
         <section className="text-center space-y-8">
+          <div className="bg-accent/10 border border-accent/20 p-6 inline-block mx-auto max-w-4xl text-left">
+            <h3 className="text-accent font-black italic text-xl mb-2 flex items-center gap-2"><Scale className="h-5 w-5" /> NOT LEGAL ADVICE</h3>
+            <p className="text-sm text-muted uppercase tracking-widest leading-relaxed">Paperloo is an automated compliance infrastructure tool, not a law firm. The "Compliance Score" provided by Paperloo constitutes a "Compliance Health Status" based on technical evidence collection, and does NOT constitute a Legal Guarantee. Always consult with qualified legal counsel regarding your specific compliance requirements and obligations.</p>
+          </div>
           <h1 className="text-6xl md:text-8xl font-sans font-black tracking-tighter leading-[0.9]">
             TRUST CENTER &<br />DATA INTEGRITY
           </h1>

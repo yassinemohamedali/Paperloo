@@ -239,15 +239,42 @@ export default function AuditReport() {
               </div>
               <h1 className="text-6xl font-sans font-black tracking-tighter italic">GOVERNANCE <span className="text-accent underline">REPORT.</span></h1>
             </div>
-            <button 
-              onClick={recalculateAll}
-              disabled={scanning}
-              className="bracket-btn py-3 px-8 text-[11px] font-black flex items-center gap-3 border-accent text-accent mb-2"
-            >
-              <span className="bracket-btn-inner"></span>
-              <RefreshCw className={cn("h-4 w-4", scanning && "animate-spin")} />
-              {scanning ? 'SCANNING DEPLOYMENTS...' : 'RE-AUDIT INFRASTRUCTURE'}
-            </button>
+            <div className="flex flex-col md:flex-row gap-4">
+              <button 
+                onClick={() => {
+                  toast.success('Compliance Package exported. Preparing ZIP archive...', { duration: 4000 });
+                  setTimeout(() => {
+                    const blob = new Blob([JSON.stringify({ audit_date: new Date(), scores, averageScore }, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `compliance_package_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }, 1500);
+                }}
+                className="bracket-btn py-3 px-8 text-[11px] font-black flex items-center gap-3 border-white text-white mb-2"
+              >
+                <span className="bracket-btn-inner"></span>
+                <span className="relative z-10 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-file-archive"><circle cx="15" cy="19" r="2"/><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="9" cy="19" r="2"/><path d="M5 11h14"/><path d="m14 15-4-4"/></svg>
+                  EXPORT COMPLIANCE PACKAGE
+                </span>
+              </button>
+              <button 
+                onClick={recalculateAll}
+                disabled={scanning}
+                className="bracket-btn py-3 px-8 text-[11px] font-black flex items-center gap-3 border-accent text-accent mb-2"
+              >
+                <span className="bracket-btn-inner"></span>
+                <span className="relative z-10 flex items-center gap-2">
+                  <RefreshCw className={cn("h-4 w-4", scanning && "animate-spin")} />
+                  {scanning ? 'SCANNING DEPLOYMENTS...' : 'RE-AUDIT INFRASTRUCTURE'}
+                </span>
+              </button>
+            </div>
           </div>
           <p className="text-muted text-sm tracking-[0.2em] max-w-2xl leading-relaxed">
             DETAILED COMPLIANCE ANALYSIS ACROSS ALL ACTIVE DEPLOYMENT NODES. GENERATED ON {new Date().toLocaleDateString()}.

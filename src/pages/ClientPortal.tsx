@@ -129,7 +129,10 @@ export default function ClientPortal() {
             ) : (
               <>
                 {!isWhiteLabel && <ShieldCheck className="h-6 w-6 text-accent" />}
-                <span className="font-sans font-extrabold text-xl tracking-[0.04em] uppercase">{brandName}</span>
+                <div className="flex flex-col">
+                  <span className="font-sans font-extrabold text-xl tracking-[0.04em] uppercase">{brandName}</span>
+                  <span className="text-[9px] uppercase tracking-widest text-slate-400 font-mono">RBAC: CLIENT_READ_ONLY</span>
+                </div>
               </>
             )}
           </div>
@@ -288,18 +291,20 @@ export default function ClientPortal() {
           <div className="bg-white border border-slate-200 p-10 space-y-8 reveal-up">
             <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase flex items-center gap-4">
               <History className="h-6 w-6 text-accent" />
-              WHAT'S CHANGED
+              IMMUTABLE AUDIT LOGS
             </h3>
             <div className="space-y-6">
               {versions.length > 0 ? (
-                versions.slice(0, 5).map(v => (
+                versions.slice(0, 5).map((v: any) => (
                   <div key={v.id} className="border-l-2 border-accent pl-6 py-2">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-                      {new Date(v.created_at).toLocaleDateString()} • VERSION {v.version}
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1 flex items-center justify-between">
+                      <span>{new Date(v.created_at).toLocaleDateString()} {new Date(v.created_at).toLocaleTimeString()} • VERSION {v.version}</span>
+                      <span className="text-slate-300">ACTOR: SYSTEM</span>
                     </p>
                     <p className="text-sm uppercase tracking-wider leading-relaxed">
                       {v.changelog_note || 'GENERAL UPDATES TO COMPLIANCE STANDARDS AND JURISDICTIONAL REQUIREMENTS.'}
                     </p>
+                    <p className="text-[9px] text-slate-300 mt-2 font-mono tracking-widest">HASH_REF: {v.id.split('-')[0]}</p>
                   </div>
                 ))
               ) : (

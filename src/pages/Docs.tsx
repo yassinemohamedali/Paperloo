@@ -18,6 +18,12 @@ const ENDPOINTS = [
   },
   {
     method: 'POST',
+    path: '/v1/sites/push',
+    desc: 'Inject site context & tracking data directly (Shopify, Wix, Custom).',
+    params: ['url', 'platform', 'trackers[]', 'metadata']
+  },
+  {
+    method: 'POST',
     path: '/v1/consent/audit',
     desc: 'Verify a hashed consent log against the Paperloo ledger.',
     params: ['hash', 'timestamp']

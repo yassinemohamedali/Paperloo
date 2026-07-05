@@ -19,6 +19,13 @@ const ENDPOINTS = [
     ]
   },
   {
+    category: 'External Injection (Non-GitHub)',
+    items: [
+      { method: 'POST', path: '/v1/sites/push', desc: 'Push site context and architecture data directly from Shopify, Wix, or custom backends.' },
+      { method: 'POST', path: '/v1/sites/sync-state', desc: 'Sync live application state for real-time compliance grading without GitHub.' }
+    ]
+  },
+  {
     category: 'Consent Management',
     items: [
       { method: 'POST', path: '/v1/consent/log', desc: 'Securely log a user consent event.' },
