@@ -121,72 +121,29 @@ export default function Billing() {
         </div>
       </div>
 
-      {/* Pricing Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {PLANS.map((plan) => (
-          <div 
-            key={plan.id}
-            className={cn(
-              "bg-surface border p-10 flex flex-col relative overflow-hidden transition-all duration-300 group",
-              plan.popular ? "border-accent shadow-[0_0_40px_rgba(200,241,53,0.1)]" : "border-white/10 hover:border-white/30",
-              currentPlan === plan.id && "ring-2 ring-accent ring-offset-4 ring-offset-bg"
-            )}
-          >
-            <div className="absolute inset-0 scan-lines opacity-5 pointer-events-none" />
-            
-            {plan.popular && (
-              <div className="absolute top-0 right-0 bg-accent text-black text-[10px] font-black px-4 py-1 uppercase tracking-widest">
-                MOST POPULAR
-              </div>
-            )}
+      {/* Exclusive Enterprise Aura */}
+      <div className="bg-surface border border-accent/20 p-12 text-center space-y-8 relative overflow-hidden group">
+        <div className="absolute inset-0 scan-lines opacity-10 pointer-events-none" />
+        
+        <div className="mx-auto h-16 w-16 bg-accent/10 flex items-center justify-center border border-accent/30 relative z-10">
+          <Crown className="h-8 w-8 text-accent" />
+        </div>
 
-            <div className="space-y-6 relative z-10 flex-1">
-              <div className="h-12 w-12 rounded-none bg-white/5 flex items-center justify-center mb-8">
-                <plan.icon className={cn("h-6 w-6", plan.popular ? "text-accent" : "text-white")} />
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase">{plan.name}</h4>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-sans font-extrabold tracking-[0.04em]">{plan.price}</span>
-                  <span className="text-muted text-xs uppercase tracking-widest">{plan.period}</span>
-                </div>
-                <p className="text-muted text-xs leading-relaxed uppercase tracking-wider">{plan.description}</p>
-              </div>
+        <div className="space-y-4 relative z-10 max-w-2xl mx-auto">
+          <h3 className="text-3xl font-sans font-extrabold tracking-[0.04em] uppercase text-white">EARLY ACCESS PROGRAM</h3>
+          <p className="text-muted text-xs leading-relaxed uppercase tracking-wider">
+            AUTOMATED CHECKOUT SESSIONS ARE TEMPORARILY PAUSED. PAPERLOO IS CURRENTLY OPERATING AS AN EXCLUSIVE, INVITE-ONLY ENTERPRISE ENGINE.
+            <br/><br/>
+            YOUR CURRENT ACCOUNT HAS BEEN GRANTED PROVISIONAL INFRASTRUCTURE ACCESS DURING THIS PRE-RELEASE PHASE.
+          </p>
+        </div>
 
-              <ul className="space-y-4 py-8 border-t border-white/5">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3 text-[10px] font-bold uppercase tracking-widest text-muted group-hover:text-white transition-colors">
-                    <Check className="h-3 w-3 text-accent mt-0.5" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <button 
-              onClick={() => updatePlanMutation.mutate(plan.id)}
-              disabled={currentPlan === plan.id || updatePlanMutation.isPending}
-              className={cn(
-                "bracket-btn w-full py-4 mt-8 relative z-10",
-                currentPlan === plan.id ? "opacity-50 cursor-not-allowed" : ""
-              )}
-            >
+        <div className="relative z-10 pt-8 border-t border-white/5">
+           <button className="bracket-btn py-4 px-12 text-xs font-black text-accent border-accent">
               <span className="bracket-btn-inner"></span>
-              {currentPlan === plan.id ? 'CURRENT PLAN' : `UPGRADE TO ${plan.name}`}
+              REQUEST ENTERPRISE UPGRADE
             </button>
-          </div>
-        ))}
-      </div>
-
-      {/* FAQ / Info */}
-      <div className="p-12 border border-white/5 bg-white/[0.01] text-center space-y-4">
-        <p className="text-muted text-xs tracking-[0.15em] uppercase leading-relaxed max-w-2xl mx-auto">
-          NEED A CUSTOM PLAN FOR A LARGE ENTERPRISE? CONTACT OUR SALES TEAM FOR TAILORED SOLUTIONS AND VOLUME DISCOUNTS.
-        </p>
-        <button className="text-accent text-[10px] font-black uppercase tracking-[0.2em] hover:underline">
-          CONTACT SALES →
-        </button>
+        </div>
       </div>
     </div>
   );

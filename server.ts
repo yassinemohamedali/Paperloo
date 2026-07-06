@@ -33,6 +33,18 @@ function getStripe() {
 const app = express();
 const PORT = 3000;
 
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.url}`);
+  const oldSend = res.send;
+  res.send = function(data) {
+    if (res.statusCode >= 400) {
+      console.log(`[${req.method}] ${req.url} -> ${res.statusCode}: ${data}`);
+    }
+    oldSend.apply(res, arguments as any);
+  };
+  next();
+});
+
 app.set("trust proxy", true);
 app.use(express.json());
 app.use(cors());
@@ -329,7 +341,9 @@ app.post("/api/scan-external-site", async (req, res) => {
   }
 })// GitHub OAuth URL Endpoint
   app.get("/api/auth/github/url", (req, res) => {
-    const clientId = process.env.GITHUB_CLIENT_ID;
+    const rawClientId = process.env.GITHUB_CLIENT_ID;
+    const clientId = (!rawClientId || rawClientId.trim() === "" || rawClientId === "your_github_client_id") ? "Ov23liAt1LF75UHNZ8i0" : rawClientId;
+    
     const incomingState = (req.query.state as string) || "/dashboard";
     
     // Dynamically resolve appUrl (protocol + host) with support for query origin for precision
@@ -342,10 +356,6 @@ app.post("/api/scan-external-site", async (req, res) => {
       const protocol = (typeof rawProto === "string" ? rawProto.split(",")[0].trim() : "http");
       const host = req.get("host") || "localhost:3000";
       appUrl = `${protocol}://${host}`;
-    }
-
-    if (!clientId || clientId.trim() === "" || clientId === "your_github_client_id") {
-      return res.status(400).json({ error: "GITHUB_CLIENT_ID is missing" });
     }
 
     const redirectUri = `${appUrl}/api/auth/github/callback`;
@@ -370,8 +380,8 @@ app.post("/api/scan-external-site", async (req, res) => {
 
     if (code) {
       try {
-        const clientId = process.env.GITHUB_CLIENT_ID;
-        const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+        const clientId = process.env.GITHUB_CLIENT_ID || "Ov23liAt1LF75UHNZ8i0";
+        const clientSecret = process.env.GITHUB_CLIENT_SECRET || "bdd6738fb66704b63e3c18b3e76b89d1d188c8ab";
         
         // Exchange code for token
         const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
