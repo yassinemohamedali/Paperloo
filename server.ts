@@ -40,7 +40,7 @@ app.use((req, res, next) => {
     if (res.statusCode >= 400) {
       console.log(`[${req.method}] ${req.url} -> ${res.statusCode}: ${data}`);
     }
-    oldSend.apply(res, arguments as any);
+    return oldSend.apply(res, arguments as any);
   };
   next();
 });
@@ -380,8 +380,11 @@ app.post("/api/scan-external-site", async (req, res) => {
 
     if (code) {
       try {
-        const clientId = process.env.GITHUB_CLIENT_ID || "Ov23liAt1LF75UHNZ8i0";
-        const clientSecret = process.env.GITHUB_CLIENT_SECRET || "bdd6738fb66704b63e3c18b3e76b89d1d188c8ab";
+        const rawClientId = process.env.GITHUB_CLIENT_ID;
+        const clientId = (!rawClientId || rawClientId.trim() === "" || rawClientId === "your_github_client_id") ? "Ov23liAt1LF75UHNZ8i0" : rawClientId;
+        
+        const rawClientSecret = process.env.GITHUB_CLIENT_SECRET;
+        const clientSecret = (!rawClientSecret || rawClientSecret.trim() === "" || rawClientSecret === "your_github_client_secret") ? "bdd6738fb66704b63e3c18b3e76b89d1d188c8ab" : rawClientSecret;
         
         // Exchange code for token
         const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
@@ -535,8 +538,8 @@ app.post("/api/scan-external-site", async (req, res) => {
           .from('sites')
           .insert({
             agency_id: userId,
-            name: repo.name.toUpperCase().replace(/-/g, ' '),
-            url: repo.url,
+            name: repo.name ? repo.name.toUpperCase().replace(/-/g, ' ') : 'UNKNOWN REPO',
+            url: repo.url || 'https://unknown.com',
             jurisdictions: ['GDPR (EU)', 'CCPA (California)'],
             industry_type: 'Software & Technology',
             status: 'active',
@@ -546,7 +549,7 @@ app.post("/api/scan-external-site", async (req, res) => {
           .single();
 
         if (siteErr) {
-          console.error("Failed importing repo as site:", siteErr);
+          console.error("Failed importing repo as site:", JSON.stringify(siteErr));
           lastError = siteErr;
           continue;
         }
@@ -826,42 +829,7 @@ app.post("/api/scan-external-site", async (req, res) => {
 
   // Stripe: Create Checkout Session
   app.post("/api/create-checkout-session", async (req, res) => {
-    try {
-      const { planId, userId } = req.body;
-      const stripe = getStripe();
-      
-      const prices: Record<string, string> = {
-        starter: 'price_starter_id',
-        agency: 'price_agency_id',
-        enterprise: 'price_enterprise_id'
-      };
-
-      const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-      const host = req.get("host") || "localhost:3000";
-      const appUrl = process.env.APP_URL || `${protocol}://${host}`;
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [{
-          price_data: {
-            currency: 'usd',
-            product_data: { name: `Paperloo ${planId} Plan` },
-            unit_amount: planId === 'starter' ? 4900 : planId === 'agency' ? 14900 : 49900,
-            recurring: { interval: 'month' }
-          },
-          quantity: 1,
-        }],
-        mode: 'subscription',
-        success_url: `${appUrl}/billing?success=true`,
-        cancel_url: `${appUrl}/billing?canceled=true`,
-        client_reference_id: userId,
-        metadata: { planId, userId }
-      });
-
-      res.json({ url: session.url });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
+    return res.status(503).json({ error: "Checkout operations are temporarily paused for the exclusive early access period." });
   });
 
   // Stripe: Webhook

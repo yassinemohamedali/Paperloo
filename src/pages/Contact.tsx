@@ -15,7 +15,7 @@ export default function Contact() {
     const message = formData.get('message') as string;
 
     try {
-      const { error } = await supabase.from('contact_messages').insert([{ email, message }]);
+      const { error } = await (supabase as any).from('contact_messages').insert([{ email, message }]);
       
       if (error) {
         console.warn("Table may not exist, mocking success", error);

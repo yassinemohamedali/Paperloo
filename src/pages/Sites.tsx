@@ -254,7 +254,8 @@ export default function Sites() {
         setGithubAuth(null);
         localStorage.removeItem('paperloo_github_auth');
       } else {
-        toast.error('Auto-import command aborted by server');
+        const errData = await res.json().catch(() => null);
+        toast.error(`Auto-import command aborted: ${errData?.error || 'Unknown server error'}`);
       }
     } catch {
       toast.error('Failed negotiating import sequence');
