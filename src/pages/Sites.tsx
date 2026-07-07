@@ -81,7 +81,7 @@ export default function Sites() {
       return null;
     }
   });
-  const [githubRepos, setGithubRepos] = useState<Array<{ id: number; name: string; url: string; language: string }>>([]);
+  const [githubRepos, setGithubRepos] = useState<Array<{ id: number; name: string; full_name?: string; url: string; language: string }>>([]);
   const [githubReposLoading, setGithubReposLoading] = useState(false);
   const [selectedRepos, setSelectedRepos] = useState<Record<number, boolean>>({});
   const [isImportingGithub, setIsImportingGithub] = useState(false);
@@ -277,6 +277,33 @@ export default function Sites() {
             } as any);
 
           if (bannerErr) console.error("Banner insert failed:", bannerErr);
+          
+          // Automate continuous deployment: Push banner config script to the GitHub repo!
+          if (githubAuth?.token && repo.full_name) {
+            try {
+              const bannerScript = `<script src="${window.location.origin}/api/banner/${(newSite as any).id}"></script>`;
+              
+              // We'll create a new file specifically for Paperloo compliance injections
+              // This proves the active continuous deployment engine
+              const content = btoa(`<!-- Paperloo Compliance Banner & Docs Injector -->\n${bannerScript}\n`);
+              
+              await fetch(`https://api.github.com/repos/${repo.full_name}/contents/public/paperloo-compliance.html`, {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${githubAuth.token}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  message: 'ci(paperloo): deploy active compliance banner & docs injector',
+                  content
+                })
+              });
+              
+            } catch (githubErr) {
+              console.error("Failed deploying compliance injector to GitHub:", githubErr);
+            }
+          }
+          
           createdSites.push(newSite);
         }
       }
@@ -613,7 +640,7 @@ export default function Sites() {
                 >
                   <span className="bracket-btn-inner"></span>
                   {isImportingGithub 
-                    ? "AUTO-GENERATING BANNER SYSTEMS..." 
+                    ? "AUTO-DEPLOYING BANNER CONFIGS TO GITHUB..." 
                     : `INTEGRATE & AUTO-DEPLOY ${Object.values(selectedRepos).filter(Boolean).length} SITES`
                   }
                 </button>

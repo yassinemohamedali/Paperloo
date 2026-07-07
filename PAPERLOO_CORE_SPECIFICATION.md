@@ -47,6 +47,10 @@
     - 10.1 Active Scan Endpoints & POST Payloads
     - 10.2 Synchronous & Webhook Event Signals
     - 10.3 Error Vectors & Failure Recovery Handlers
+11. ACTIVE CONTINUOUS DEPLOYMENT ENGINE (GITHUB INTEGRATION)
+    - 11.1 GitHub OAuth Authentication Loop
+    - 11.2 Automated Banner & Documentation Injection
+    - 11.3 CI/CD Integration Strategy
 
 ---
 
@@ -552,6 +556,24 @@ The API incorporates error handling for edge cases:
 - **`401 Unauthorized`**: Expired token credentials.
 - **`429 Rate Limit Exceeded`**: Exceeding concurrent background crawls. Rate limits are handled using Redis-backed token bucket algorithms to protect crawling infrastructure.
 - **`503 Scraper Timeout Service Failures`**: Safely returns fallback profiling algorithms to maintain uninterrupted system integration.
+
+---
+
+## 11. ACTIVE CONTINUOUS DEPLOYMENT ENGINE (GITHUB INTEGRATION)
+
+Paperloo has evolved beyond a passive scanning and monitoring tool into an active, automated continuous deployment engine. By directly integrating with the GitHub API, Paperloo can push compliance configurations directly to client codebases.
+
+### 11.1 GitHub OAuth Authentication Loop
+Users authenticate via the GitHub OAuth protocol in a secure popup environment. Once authorized, Paperloo negotiates access tokens capable of scanning available user repositories and issuing automated pull requests or direct commits.
+
+### 11.2 Automated Banner & Documentation Injection
+When a user selects target repositories for compliance integration, Paperloo bypasses manual integration steps entirely:
+- **Repository Provisioning**: Connects to selected GitHub repositories in real-time.
+- **Dynamic Configuration Injection**: Commits active compliance resources directly to the target architecture (e.g., creating a `public/paperloo-compliance.html` injection script containing the dynamically generated banner IDs).
+- **Continuous State Synchronization**: Any updates made to the compliance configuration inside the Paperloo dashboard are immediately reflected on the target infrastructure, creating a zero-touch compliance update loop.
+
+### 11.3 CI/CD Integration Strategy
+This continuous deployment approach allows developers to maintain compliance simply by letting Paperloo merge updates natively into their existing Git-backed infrastructure, bridging the gap between legal monitoring and raw infrastructure-as-code deployments.
 
 ---
 

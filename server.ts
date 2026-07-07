@@ -509,6 +509,7 @@ app.post("/api/scan-external-site", async (req, res) => {
       const formatted = repos.map((repo: any) => ({
         id: repo.id,
         name: repo.name,
+        full_name: repo.full_name,
         language: repo.language || "TypeScript",
         url: repo.homepage || `https://${repo.owner?.login || 'user'}.github.io/${repo.name}`
       }));
