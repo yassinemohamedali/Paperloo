@@ -875,11 +875,28 @@ app.post("/api/scan-external-site", async (req, res) => {
         .eq('id', userId)
         .maybeSingle();
 
-      // 2. Fetch sites with banners
-      const { data: sites } = await supabase
+      // 2. Fetch sites with banners (in-memory pairing to prevent join cache issues)
+      const { data: sitesData } = await supabase
         .from('sites')
-        .select('*, banner_configs(*)')
+        .select('*')
         .eq('agency_id', userId);
+      
+      let sites: any[] = [];
+      if (sitesData && sitesData.length > 0) {
+        const siteIds = sitesData.map((s: any) => s.id);
+        const { data: bannersData } = await supabase
+          .from('banner_configs')
+          .select('*')
+          .in('site_id', siteIds);
+          
+        sites = sitesData.map((site: any) => {
+          const config = bannersData?.filter((b: any) => b.site_id === site.id) || [];
+          return {
+            ...site,
+            banner_configs: config
+          };
+        });
+      }
 
       // 3. Construct system prompt
       const systemPrompt = `You are the Paperloo AI Support Assistant, a continuous compliance and security intelligence agent.
@@ -917,6 +934,275 @@ Instructions:
         }))
       ];
 
+      // Define secure, powerful database tools for the AI Support Assistant
+      const executeTool = async (name: string, args: any) => {
+        console.log(`[SUPPORT AI TOOL EXECUTION] Executing database action: ${name}`, args);
+        try {
+          if (name === "list_sites") {
+            const { data: sitesData, error: sitesErr } = await supabase
+              .from('sites')
+              .select('*')
+              .eq('agency_id', userId);
+            if (sitesErr) throw sitesErr;
+            
+            let completedSites: any[] = [];
+            if (sitesData && sitesData.length > 0) {
+              const siteIds = sitesData.map((s: any) => s.id);
+              const { data: bannersData, error: bannersErr } = await supabase
+                .from('banner_configs')
+                .select('*')
+                .in('site_id', siteIds);
+              if (bannersErr) throw bannersErr;
+                
+              completedSites = sitesData.map((site: any) => {
+                const config = bannersData?.filter((b: any) => b.site_id === site.id) || [];
+                return {
+                  ...site,
+                  banner_configs: config
+                };
+              });
+            }
+            return { success: true, sites: completedSites };
+          }
+          
+          if (name === "add_site") {
+            const { data: newSite, error: siteErr } = await supabase
+              .from('sites')
+              .insert({
+                agency_id: userId,
+                name: args.name ? args.name.toUpperCase().replace(/-/g, ' ') : 'NEW SITE',
+                url: args.url || 'https://unknown.com',
+                jurisdictions: args.jurisdictions || ['GDPR (EU)', 'CCPA (California)'],
+                industry_type: args.industry_type || 'Software & Technology',
+                status: args.status || 'active',
+                compliance_grade: args.compliance_grade || 'C'
+              } as any)
+              .select()
+              .single();
+
+            if (siteErr) throw siteErr;
+
+            if (newSite) {
+              const { error: bannerErr } = await supabase
+                .from('banner_configs')
+                .insert({
+                  site_id: newSite.id,
+                  theme: 'dark',
+                  primary_color: '#c8f135',
+                  accept_text: 'ACCEPT COMPLIANCE',
+                  manage_text: 'PREFERENCES',
+                  enable_gcm_v2: true,
+                  google_tag_id: 'G-' + Math.floor(100000 + Math.random() * 900000)
+                } as any);
+              if (bannerErr) {
+                console.error("Failed creating default banner config for new site:", bannerErr);
+              }
+            }
+            return { success: true, site: newSite };
+          }
+
+          if (name === "update_site") {
+            const updatePayload: any = {};
+            if (args.name !== undefined) updatePayload.name = args.name;
+            if (args.url !== undefined) updatePayload.url = args.url;
+            if (args.jurisdictions !== undefined) updatePayload.jurisdictions = args.jurisdictions;
+            if (args.industry_type !== undefined) updatePayload.industry_type = args.industry_type;
+            if (args.status !== undefined) updatePayload.status = args.status;
+            if (args.compliance_grade !== undefined) updatePayload.compliance_grade = args.compliance_grade;
+
+            const { data, error } = await supabase
+              .from('sites')
+              .update(updatePayload)
+              .eq('id', args.siteId)
+              .eq('agency_id', userId) // Security boundary
+              .select()
+              .single();
+            if (error) throw error;
+            return { success: true, site: data };
+          }
+
+          if (name === "update_banner_config") {
+            // Verify ownership first
+            const { data: siteCheck, error: checkError } = await supabase
+              .from('sites')
+              .select('id')
+              .eq('id', args.siteId)
+              .eq('agency_id', userId)
+              .maybeSingle();
+            if (checkError) throw checkError;
+            if (!siteCheck) throw new Error("Unauthorized or invalid site ID specified.");
+
+            const updatePayload: any = {};
+            if (args.theme !== undefined) updatePayload.theme = args.theme;
+            if (args.primary_color !== undefined) updatePayload.primary_color = args.primary_color;
+            if (args.accept_text !== undefined) updatePayload.accept_text = args.accept_text;
+            if (args.manage_text !== undefined) updatePayload.manage_text = args.manage_text;
+            if (args.enable_gcm_v2 !== undefined) updatePayload.enable_gcm_v2 = args.enable_gcm_v2;
+            if (args.google_tag_id !== undefined) updatePayload.google_tag_id = args.google_tag_id;
+
+            // Check if banner config exists
+            const { data: existingConfig } = await supabase
+              .from('banner_configs')
+              .select('id')
+              .eq('site_id', args.siteId)
+              .maybeSingle();
+
+            let resultError;
+            let resultData;
+            if (existingConfig) {
+              const { data, error } = await supabase
+                .from('banner_configs')
+                .update(updatePayload)
+                .eq('site_id', args.siteId)
+                .select()
+                .single();
+              resultError = error;
+              resultData = data;
+            } else {
+              const { data, error } = await supabase
+                .from('banner_configs')
+                .insert({
+                  site_id: args.siteId,
+                  theme: args.theme || 'dark',
+                  primary_color: args.primary_color || '#c8f135',
+                  accept_text: args.accept_text || 'ACCEPT COMPLIANCE',
+                  manage_text: args.manage_text || 'PREFERENCES',
+                  enable_gcm_v2: args.enable_gcm_v2 !== undefined ? args.enable_gcm_v2 : true,
+                  google_tag_id: args.google_tag_id || 'G-' + Math.floor(100000 + Math.random() * 900000)
+                } as any)
+                .select()
+                .single();
+              resultError = error;
+              resultData = data;
+            }
+
+            if (resultError) throw resultError;
+            return { success: true, banner_config: resultData };
+          }
+
+          if (name === "delete_site") {
+            // Verify ownership first
+            const { data: siteCheck, error: checkError } = await supabase
+              .from('sites')
+              .select('id')
+              .eq('id', args.siteId)
+              .eq('agency_id', userId)
+              .maybeSingle();
+            if (checkError) throw checkError;
+            if (!siteCheck) throw new Error("Unauthorized or invalid site ID specified.");
+
+            // Cascade delete config first
+            await supabase.from('banner_configs').delete().eq('site_id', args.siteId);
+
+            const { error: deleteError } = await supabase
+              .from('sites')
+              .delete()
+              .eq('id', args.siteId)
+              .eq('agency_id', userId);
+            if (deleteError) throw deleteError;
+
+            return { success: true, message: `Site ${args.siteId} and its compliance settings deleted successfully.` };
+          }
+
+          throw new Error(`Unknown action: ${name}`);
+        } catch (err: any) {
+          console.error(`[SUPPORT AI DATABASE TOOL ERROR] Failed ${name}:`, err);
+          return { success: false, error: err.message || String(err) };
+        }
+      };
+
+      // Groq OpenAI Tool definitions
+      const groqTools = [
+        {
+          type: "function",
+          function: {
+            name: "list_sites",
+            description: "Lists all monitored sites and their configurations for the current agency/user.",
+            parameters: {
+              type: "object",
+              properties: {}
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "add_site",
+            description: "Adds a new site to monitor and automatically provisions a default cookie banner config.",
+            parameters: {
+              type: "object",
+              properties: {
+                name: { type: "string", description: "The name of the site (e.g. 'PAPERLOO LLC')" },
+                url: { type: "string", description: "The URL of the site (e.g. 'https://paperloo.com')" },
+                jurisdictions: { 
+                  type: "array", 
+                  items: { type: "string" },
+                  description: "The regional privacy regulations to enforce, e.g. ['GDPR (EU)', 'CCPA (California)']" 
+                },
+                industry_type: { type: "string", description: "The industry sector, e.g. 'Software & Technology', 'E-commerce'" },
+                status: { type: "string", enum: ["active", "paused"], description: "Initial state of monitoring" },
+                compliance_grade: { type: "string", enum: ["A", "B", "C", "D", "F"], description: "Initial audit grade, defaults to 'C'" }
+              },
+              required: ["name", "url"]
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "update_site",
+            description: "Updates properties of an existing site, such as jurisdictions, status, compliance grade, and other fields.",
+            parameters: {
+              type: "object",
+              properties: {
+                siteId: { type: "string", description: "The unique UUID of the site to update" },
+                name: { type: "string" },
+                url: { type: "string" },
+                jurisdictions: { type: "array", items: { type: "string" } },
+                industry_type: { type: "string" },
+                status: { type: "string", enum: ["active", "paused"] },
+                compliance_grade: { type: "string", enum: ["A", "B", "C", "D", "F"] }
+              },
+              required: ["siteId"]
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "update_banner_config",
+            description: "Updates or customizes the cookie consent banner theme, colors, button texts, or Google Consent Mode v2 integrations for a site.",
+            parameters: {
+              type: "object",
+              properties: {
+                siteId: { type: "string", description: "The unique UUID of the site whose banner configuration to update" },
+                theme: { type: "string", enum: ["light", "dark"], description: "Visual style theme of the banner" },
+                primary_color: { type: "string", description: "The brand primary color in hex format (e.g. '#c8f135')" },
+                accept_text: { type: "string", description: "The text for the main consent button (e.g. 'ACCEPT COMPLIANCE')" },
+                manage_text: { type: "string", description: "The text for the preferences configuration link (e.g. 'PREFERENCES')" },
+                enable_gcm_v2: { type: "boolean", description: "Toggle Google Consent Mode v2 protection layer" },
+                google_tag_id: { type: "string", description: "The associated Google Tag/Analytics identifier (e.g. 'G-123456')" }
+              },
+              required: ["siteId"]
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "delete_site",
+            description: "Deletes a site and all associated compliance configurations from the system.",
+            parameters: {
+              type: "object",
+              properties: {
+                siteId: { type: "string", description: "The unique UUID of the site to delete" }
+              },
+              required: ["siteId"]
+            }
+          }
+        }
+      ];
+
       let assistantMessage = "";
 
       // 5. Try calling Groq API if key is present
@@ -931,8 +1217,10 @@ Instructions:
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              model: "llama3-8b-8192",
+              model: "llama-3.3-70b-versatile",
               messages: fullMessages,
+              tools: groqTools,
+              tool_choice: "auto",
               temperature: 0.3,
               max_tokens: 1024
             })
@@ -940,7 +1228,51 @@ Instructions:
 
           if (groqRes.ok) {
             const groqData = await groqRes.json();
-            assistantMessage = groqData.choices?.[0]?.message?.content || "";
+            const choice = groqData.choices?.[0];
+            const msg = choice?.message;
+
+            if (msg && msg.tool_calls && msg.tool_calls.length > 0) {
+              console.log(`[GROQ AI] Executing ${msg.tool_calls.length} database actions...`);
+              const chatWithTools = [...fullMessages, msg];
+
+              for (const toolCall of msg.tool_calls) {
+                const args = JSON.parse(toolCall.function.arguments || "{}");
+                const result = await executeTool(toolCall.function.name, args);
+                chatWithTools.push({
+                  role: "tool",
+                  tool_call_id: toolCall.id,
+                  name: toolCall.function.name,
+                  content: JSON.stringify(result)
+                });
+              }
+
+              // Ask Groq to summarize its actions conversationally
+              console.log(`[GROQ AI] Asking Groq to summarize database modifications conversationally...`);
+              const secondRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${apiKey}`,
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  model: "llama-3.3-70b-versatile",
+                  messages: chatWithTools,
+                  temperature: 0.3,
+                  max_tokens: 1024
+                })
+              });
+
+              if (secondRes.ok) {
+                const secondData = await secondRes.json();
+                assistantMessage = secondData.choices?.[0]?.message?.content || "";
+              } else {
+                const errText = await secondRes.text();
+                console.error("Groq secondary summary call failed:", errText);
+                assistantMessage = "I have successfully performed the requested updates in the database, but failed to summarize them. Please refresh the page to see your updated sites!";
+              }
+            } else {
+              assistantMessage = msg?.content || "";
+            }
           } else {
             const errText = await groqRes.text();
             console.warn(`Groq API returned status ${groqRes.status}: ${errText}. Falling back to Gemini...`);
@@ -955,7 +1287,7 @@ Instructions:
         const geminiApiKey = process.env.GEMINI_API_KEY;
         if (geminiApiKey) {
           try {
-            console.log(`[GEMINI AI] Utilizing secure Gemini compliance model fallback for user ${userId}`);
+            console.log(`[GEMINI AI] Utilizing secure Gemini compliance model fallback with functions for user ${userId}`);
             const ai = new GoogleGenAI({
               apiKey: geminiApiKey,
               httpOptions: {
@@ -981,16 +1313,136 @@ Instructions:
               });
             }
 
+            // Gemini specific tool schema
+            const geminiTools = [
+              {
+                functionDeclarations: [
+                  {
+                    name: "list_sites",
+                    description: "Lists all monitored sites and their configurations for the current agency/user.",
+                    parameters: {
+                      type: "OBJECT",
+                      properties: {}
+                    }
+                  },
+                  {
+                    name: "add_site",
+                    description: "Adds a new site to monitor and automatically provisions a default cookie banner config.",
+                    parameters: {
+                      type: "OBJECT",
+                      properties: {
+                        name: { type: "STRING", description: "The name of the site (e.g. 'PAPERLOO LLC')" },
+                        url: { type: "STRING", description: "The URL of the site (e.g. 'https://paperloo.com')" },
+                        jurisdictions: { 
+                          type: "ARRAY", 
+                          items: { type: "STRING" },
+                          description: "The regional privacy regulations to enforce, e.g. ['GDPR (EU)', 'CCPA (California)']" 
+                        },
+                        industry_type: { type: "STRING", description: "The industry sector, e.g. 'Software & Technology', 'E-commerce'" },
+                        status: { type: "STRING", description: "Initial state of monitoring (active or paused)" },
+                        compliance_grade: { type: "STRING", description: "Initial audit grade, defaults to 'C' (A, B, C, D, or F)" }
+                      },
+                      required: ["name", "url"]
+                    }
+                  },
+                  {
+                    name: "update_site",
+                    description: "Updates properties of an existing site, such as jurisdictions, status, compliance grade, and other fields.",
+                    parameters: {
+                      type: "OBJECT",
+                      properties: {
+                        siteId: { type: "STRING", description: "The unique UUID of the site to update" },
+                        name: { type: "STRING" },
+                        url: { type: "STRING" },
+                        jurisdictions: { type: "ARRAY", items: { type: "STRING" } },
+                        industry_type: { type: "STRING" },
+                        status: { type: "STRING", description: "Status: 'active' or 'paused'" },
+                        compliance_grade: { type: "STRING", description: "Compliance grade: 'A', 'B', 'C', 'D', 'F'" }
+                      },
+                      required: ["siteId"]
+                    }
+                  },
+                  {
+                    name: "update_banner_config",
+                    description: "Updates or customizes the cookie consent banner theme, colors, button texts, or Google Consent Mode v2 integrations for a site.",
+                    parameters: {
+                      type: "OBJECT",
+                      properties: {
+                        siteId: { type: "STRING", description: "The unique UUID of the site whose banner configuration to update" },
+                        theme: { type: "STRING", description: "Visual style theme of the banner ('light' or 'dark')" },
+                        primary_color: { type: "STRING", description: "The brand primary color in hex format (e.g. '#c8f135')" },
+                        accept_text: { type: "STRING", description: "The text for the main consent button (e.g. 'ACCEPT COMPLIANCE')" },
+                        manage_text: { type: "STRING", description: "The text for the preferences configuration link (e.g. 'PREFERENCES')" },
+                        enable_gcm_v2: { type: "BOOLEAN", description: "Toggle Google Consent Mode v2 protection layer" },
+                        google_tag_id: { type: "STRING", description: "The associated Google Tag/Analytics identifier (e.g. 'G-123456')" }
+                      },
+                      required: ["siteId"]
+                    }
+                  },
+                  {
+                    name: "delete_site",
+                    description: "Deletes a site and all associated compliance configurations from the system.",
+                    parameters: {
+                      type: "OBJECT",
+                      properties: {
+                        siteId: { type: "STRING", description: "The unique UUID of the site to delete" }
+                      },
+                      required: ["siteId"]
+                    }
+                  }
+                ]
+              }
+            ];
+
             const response = await ai.models.generateContent({
               model: "gemini-3.5-flash",
               contents: chatContents,
               config: {
                 systemInstruction: systemPrompt,
+                tools: geminiTools as any,
                 temperature: 0.3,
               }
             });
 
-            assistantMessage = response.text || "";
+            if (response.functionCalls && response.functionCalls.length > 0) {
+              console.log(`[GEMINI AI] Received ${response.functionCalls.length} function call(s) from Gemini.`);
+              const chatContentsWithCalls = [...chatContents];
+              
+              chatContentsWithCalls.push({
+                role: "model",
+                parts: response.functionCalls.map(call => ({ functionCall: call }))
+              });
+
+              const toolParts: any[] = [];
+              for (const call of response.functionCalls) {
+                const args = call.args as any;
+                const result = await executeTool(call.name, args);
+                toolParts.push({
+                  functionResponse: {
+                    name: call.name,
+                    response: result
+                  }
+                });
+              }
+
+              chatContentsWithCalls.push({
+                role: "tool",
+                parts: toolParts
+              });
+
+              const finalGeminiRes = await ai.models.generateContent({
+                model: "gemini-3.5-flash",
+                contents: chatContentsWithCalls,
+                config: {
+                  systemInstruction: systemPrompt,
+                  temperature: 0.3,
+                }
+              });
+
+              assistantMessage = finalGeminiRes.text || "Database updates were successfully synchronized.";
+            } else {
+              assistantMessage = response.text || "";
+            }
           } catch (geminiErr) {
             console.warn("Gemini call failed, falling back to Paperloo Heuristics...", geminiErr);
           }
