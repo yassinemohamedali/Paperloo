@@ -859,6 +859,102 @@ app.post("/api/scan-external-site", async (req, res) => {
     res.json({ received: true });
   });
 
+  // Groq AI: Customer Support Chat with Sites Context
+  app.post("/api/support/chat", async (req, res) => {
+    try {
+      const { userId, messages } = req.body;
+      if (!userId) {
+        return res.status(400).json({ error: "userId is required for secure authentication context" });
+      }
+
+      const supabase = getSupabase();
+      
+      // 1. Fetch profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      // 2. Fetch sites with banners
+      const { data: sites } = await supabase
+        .from('sites')
+        .select('*, banner_configs(*)')
+        .eq('agency_id', userId);
+
+      // 3. Construct system prompt
+      const systemPrompt = `You are the Paperloo AI Support Assistant, a continuous compliance and security intelligence agent.
+You have real-time access to the user's active configurations and monitored sites in Paperloo.
+
+User Profile Context:
+- Email: ${profile?.email || 'N/A'}
+- Agency Name: ${profile?.agency_name || 'N/A'}
+- Plan: ${profile?.plan || 'Starter'}
+
+Currently Monitored Sites:
+${sites && sites.length > 0 ? sites.map((s: any) => `
+- Site Name: ${s.name}
+  URL: ${s.url}
+  Status: ${s.status}
+  Compliance Grade: ${s.compliance_grade || 'Pending'}
+  Jurisdictions: ${s.jurisdictions ? (Array.isArray(s.jurisdictions) ? s.jurisdictions.join(', ') : s.jurisdictions) : 'N/A'}
+  Industry Type: ${s.industry_type || 'N/A'}
+  Banner Configuration: ${s.banner_configs && s.banner_configs.length > 0 ? JSON.stringify(s.banner_configs[0]) : 'None configured'}
+`).join('\n') : 'No sites monitored yet.'}
+
+Instructions:
+1. Help the user answer questions about their monitored sites, how to configure compliance banners, active scanners, and continuous deployment features (such as GitHub auto-deployment).
+2. Answer queries related to global privacy compliance (such as GDPR, CCPA, COPPA) and how Paperloo helps them shield trackers like Google Analytics, Facebook Pixels, etc.
+3. Be professional, direct, elegant, and technically precise. Match Paperloo's clean, high-contrast, security-oriented aesthetic in your tone.
+4. If a site has a low compliance grade (C or D), help the user understand why (e.g. missing cookie banners, unshielded trackers) and suggest actions to fix it.
+5. Emphasize that Paperloo is an active, automated continuous deployment engine that can deploy compliance banner injection scripts directly to their GitHub codebases.`;
+
+      // 4. Combine with user messages
+      const fullMessages = [
+        { role: "system", content: systemPrompt },
+        ...(messages || []).map((m: any) => ({
+          role: m.role === "user" ? "user" : "assistant",
+          content: m.content
+        }))
+      ];
+
+      // 5. Call Groq API
+      const apiKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: "Groq API key not configured on host environment" });
+      }
+
+      console.log(`[GROQ AI] Forwarding chat request to Groq model for user ${userId}`);
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama3-8b-8192",
+          messages: fullMessages,
+          temperature: 0.3,
+          max_tokens: 1024
+        })
+      });
+
+      if (!groqRes.ok) {
+        const errText = await groqRes.text();
+        console.error("Groq API error:", errText);
+        throw new Error(`Groq API returned status ${groqRes.status}`);
+      }
+
+      const groqData = await groqRes.json();
+      const assistantMessage = groqData.choices?.[0]?.message?.content || "No response received.";
+
+      res.json({ message: assistantMessage });
+    } catch (error: any) {
+      console.error("Support chat handler failure:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
 // Vite middleware for development
 if (!process.env.VERCEL && process.env.NODE_ENV !== "production") {
   const dynamicImport = new Function('modulePath', 'return import(modulePath)');

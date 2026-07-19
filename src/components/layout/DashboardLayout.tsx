@@ -12,7 +12,8 @@ import {
   Shield,
   AlertCircle,
   Menu,
-  X
+  X,
+  LifeBuoy
 } from 'lucide-react';
 import { useAuthStore } from '@/src/store/authStore';
 import { cn } from '@/src/lib/utils';
@@ -24,6 +25,7 @@ const navItems = [
   { icon: Shield, label: 'Regulations', path: '/regulations' },
   { icon: CreditCard, label: 'Billing', path: '/billing' },
   { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: LifeBuoy, label: 'Support', path: '/support' },
 ];
 
 export default function DashboardLayout() {

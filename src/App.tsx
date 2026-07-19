@@ -39,6 +39,7 @@ const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Support = lazy(() => import('./pages/Support'));
 
 // Layout
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -186,6 +187,7 @@ const AnimatedRoutes = () => {
           <Route path="/regulations" element={<PageTransition><Regulations /></PageTransition>} />
           <Route path="/billing" element={<PageTransition><Billing /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+          <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
         </Route>
 
         {/* Redirects */}
