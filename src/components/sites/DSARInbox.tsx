@@ -1,3 +1,4 @@
+import { config } from '@/src/config/env';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
@@ -57,7 +58,7 @@ export default function DSARInbox({ siteId }: DSARInboxProps) {
 
   const embedCode = `<!-- Paperloo DSAR Form -->
 <div id="paperloo-dsar-form"></div>
-<script src="${window.location.origin}/api/paperloo.js?siteId=${siteId}" async></script>`.trim();
+<script src="${config.appUrl}/api/paperloo.js?siteId=${siteId}" async></script>`.trim();
 
   const filteredRequests = requests?.filter(r => {
     if (filter === 'all') return true;

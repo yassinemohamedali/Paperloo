@@ -4,7 +4,7 @@ import { supabase, Database } from '@/src/lib/supabase';
 import { Search, RefreshCw, Shield, AlertTriangle, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
-import Groq from "groq-sdk";
+import { GoogleGenAI } from "@google/genai";
 import { calculateComplianceScore } from '@/src/lib/compliance';
 
 interface CookieScannerProps {
@@ -14,17 +14,17 @@ interface CookieScannerProps {
 
 type CookieScan = Database['public']['Tables']['cookie_scans']['Row'];
 
-// Initialize Groq lazily
-let groq: any = null;
-const getGroq = () => {
-  if (!groq) {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+// Initialize Gemini lazily
+let genAI: GoogleGenAI | null = null;
+const getAIClient = () => {
+  if (!genAI) {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error("GROQ API Key missing. Please set VITE_GROQ_API_KEY.");
+      throw new Error("GEMINI API Key missing. Please set VITE_GEMINI_API_KEY.");
     }
-    groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+    genAI = new GoogleGenAI({ apiKey });
   }
-  return groq;
+  return genAI;
 };
 
 export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
@@ -72,13 +72,15 @@ export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
           Return ONLY a valid JSON array of objects with fields: name, domain, duration, category (Essential, Analytics, Marketing, Functional), status (Detected). 
           Do NOT include markdown code blocks or any text other than the JSON array.`;
 
-          const completion = await getGroq().chat.completions.create({
-            messages: [{ role: 'user', content: prompt }],
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.2,
+          const completion = await getAIClient().models.generateContent({
+            contents: prompt,
+            model: 'gemini-2.5-flash',
+            config: {
+              temperature: 0.2
+            }
           });
 
-          const text = completion.choices[0]?.message?.content;
+          const text = completion.text;
           if (!text) throw new Error("No response from AI");
 
           let jsonStr = text;

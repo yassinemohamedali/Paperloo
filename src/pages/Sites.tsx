@@ -1,3 +1,4 @@
+import { config } from '@/src/config/env';
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
@@ -176,7 +177,7 @@ export default function Sites() {
       }
 
       const stateParam = encodeURIComponent(window.location.pathname);
-      const res = await fetch(`/api/auth/github/url?state=${stateParam}&origin=${encodeURIComponent(window.location.origin)}`);
+      const res = await fetch(`/api/auth/github/url?state=${stateParam}&origin=${encodeURIComponent(config.appUrl)}`);
       if (!res.ok) {
         if (authWindow) authWindow.close();
         throw new Error('Server returned ' + res.status);
@@ -281,7 +282,7 @@ export default function Sites() {
           // Automate continuous deployment: Push banner config script to the GitHub repo!
           if (githubAuth?.token && repo.full_name) {
             try {
-              const bannerScript = `<script src="${window.location.origin}/api/banner/${(newSite as any).id}"></script>`;
+              const bannerScript = `<script src="${config.appUrl}/api/banner/${(newSite as any).id}"></script>`;
               
               // We'll create a new file specifically for Paperloo compliance injections
               // This proves the active continuous deployment engine

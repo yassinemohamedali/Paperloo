@@ -1,3 +1,4 @@
+import { config } from '@/src/config/env';
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/src/lib/supabase';
@@ -24,7 +25,7 @@ export default function AuthCallback() {
       if (session) {
         // Send message to parent window if we're in a popup
         if (window.opener) {
-          window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS' }, window.location.origin);
+          window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS' }, config.appUrl);
           window.close();
         } else {
           // Direct login or fallback

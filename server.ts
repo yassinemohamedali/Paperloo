@@ -909,7 +909,8 @@ User Profile Context:
 
 Currently Monitored Sites:
 ${sites && sites.length > 0 ? sites.map((s: any) => `
-- Site Name: ${s.name}
+- Site ID (UUID): ${s.id}
+  Site Name: ${s.name}
   URL: ${s.url}
   Status: ${s.status}
   Compliance Grade: ${s.compliance_grade || 'Pending'}
@@ -921,9 +922,11 @@ ${sites && sites.length > 0 ? sites.map((s: any) => `
 Instructions:
 1. Help the user answer questions about their monitored sites, how to configure compliance banners, active scanners, and continuous deployment features (such as GitHub auto-deployment).
 2. Answer queries related to global privacy compliance (such as GDPR, CCPA, COPPA) and how Paperloo helps them shield trackers like Google Analytics, Facebook Pixels, etc.
-3. Be professional, direct, elegant, and technically precise. Match Paperloo's clean, high-contrast, security-oriented aesthetic in your tone.
-4. If a site has a low compliance grade (C or D), help the user understand why (e.g. missing cookie banners, unshielded trackers) and suggest actions to fix it.
-5. Emphasize that Paperloo is an active, automated continuous deployment engine that can deploy compliance banner injection scripts directly to their GitHub codebases.`;
+3. IMPORTANT: YOU HAVE FULL READ/WRITE PERMISSIONS AND ACCESS TO POWERFUL DATABASE TOOLS! You can list sites, add new sites, update existing sites, delete sites, and customize banner configurations (theme, colors, button texts, enabling Google Consent Mode v2, Google Tag ID, etc.) directly on behalf of the user. Whenever a user asks to add, edit, customize, update, or delete a site or a cookie banner, you MUST immediately call the appropriate function/tool to execute the change. Do NOT tell the user you lack permission or that you are only a support agent; execute the changes instantly using your tools.
+4. Always inform the user clearly when you have executed database updates, listing exactly what was added or changed.
+5. Be professional, direct, elegant, and technically precise. Match Paperloo's clean, high-contrast, security-oriented aesthetic in your tone.
+6. If a site has a low compliance grade (C or D), help the user understand why (e.g. missing cookie banners, unshielded trackers) and suggest actions to fix it.
+7. Emphasize that Paperloo is an active, automated continuous deployment engine that can deploy compliance banner injection scripts directly to their GitHub codebases.`;
 
       // 4. Combine with user messages
       const fullMessages = [
@@ -1395,7 +1398,7 @@ Instructions:
             ];
 
             const response = await ai.models.generateContent({
-              model: "gemini-3.5-flash",
+              model: "gemini-2.5-flash",
               contents: chatContents,
               config: {
                 systemInstruction: systemPrompt,
@@ -1431,7 +1434,7 @@ Instructions:
               });
 
               const finalGeminiRes = await ai.models.generateContent({
-                model: "gemini-3.5-flash",
+                model: "gemini-2.5-flash",
                 contents: chatContentsWithCalls,
                 config: {
                   systemInstruction: systemPrompt,

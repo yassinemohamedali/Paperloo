@@ -36,7 +36,7 @@ export default function Support() {
   const [ticketMessage, setTicketMessage] = useState('');
   const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
   
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch sites to display "Groq Active Access" to user
   const { data: sites, isLoading: sitesLoading } = useQuery({
@@ -52,9 +52,13 @@ export default function Support() {
     enabled: !!user?.id
   });
 
-  // Auto-scroll chat
+  // Auto-scroll chat inside its local container to prevent global page scroll hijacking
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      requestAnimationFrame(() => {
+        chatContainerRef.current!.scrollTop = chatContainerRef.current!.scrollHeight;
+      });
+    }
   }, [messages, isSending]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -99,12 +103,14 @@ export default function Support() {
 
     setIsSubmittingTicket(true);
     try {
-      const { error } = await (supabase as any).from('contact_messages').insert([
-        { 
-          email: user?.email, 
-          message: `[SUPPORT TICKET] Subject: ${ticketSubject}\n\n${ticketMessage}` 
-        }
-      ]);
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([
+          { 
+            email: user?.email ?? 'anonymous@paperloo.io', 
+            message: `[SUPPORT TICKET] Subject: ${ticketSubject}\n\n${ticketMessage}` 
+          }
+        ]);
       
       if (error) console.warn("Fallback database insert used", error);
       
@@ -196,8 +202,9 @@ export default function Support() {
             
             <form onSubmit={handleTicketSubmit} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-muted-custom tracking-widest uppercase block">Subject</label>
+                <label htmlFor="ticket-subject" className="text-[10px] font-black text-muted-custom tracking-widest uppercase block">Subject</label>
                 <input 
+                  id="ticket-subject"
                   type="text"
                   required
                   value={ticketSubject}
@@ -207,8 +214,9 @@ export default function Support() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-muted-custom tracking-widest uppercase block">Message Transmission</label>
+                <label htmlFor="ticket-message" className="text-[10px] font-black text-muted-custom tracking-widest uppercase block">Message Transmission</label>
                 <textarea 
+                  id="ticket-message"
                   required
                   rows={4}
                   value={ticketMessage}
@@ -252,7 +260,7 @@ export default function Support() {
           </div>
 
           {/* Message Stream */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-black/20">
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-black/20">
             <AnimatePresence initial={false}>
               {messages.map((msg, index) => {
                 const isAssistant = msg.role === 'assistant';
@@ -296,7 +304,6 @@ export default function Support() {
                 </div>
               </motion.div>
             )}
-            <div ref={chatEndRef} />
           </div>
 
           {/* Form */}

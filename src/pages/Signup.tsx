@@ -1,3 +1,4 @@
+import { config } from '@/src/config/env';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -122,7 +123,7 @@ export default function Signup() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${config.appUrl}/auth/callback`,
         skipBrowserRedirect: true,
         queryParams: {
           prompt: 'select_account',
@@ -167,7 +168,7 @@ export default function Signup() {
     try {
       // Pass the current route so callback redirects back to this page if window.opener is absent
       const stateParam = encodeURIComponent(window.location.pathname);
-      const res = await fetch(`/api/auth/github/url?state=${stateParam}&origin=${encodeURIComponent(window.location.origin)}`);
+      const res = await fetch(`/api/auth/github/url?state=${stateParam}&origin=${encodeURIComponent(config.appUrl)}`);
       if (!res.ok) {
         throw new Error(`Gateway responded with status ${res.status}`);
       }
@@ -219,7 +220,7 @@ export default function Signup() {
       email: formData.email,
       password: formData.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${config.appUrl}/auth/callback`,
         data: {
           agency_name: formData.agencyName,
         }

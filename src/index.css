@@ -11,7 +11,9 @@
   --color-surface-2: #1a1a1a;
   --color-accent: #c8f135;
   --color-muted: #888888;
+  --color-muted-custom: #888888;
   --color-border-custom: rgba(255, 255, 255, 0.1);
+  --color-text-custom: #ffffff;
 }
 
 @layer base {

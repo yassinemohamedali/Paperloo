@@ -1,3 +1,4 @@
+import { config } from '@/src/config/env';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/src/lib/supabase';
@@ -129,7 +130,7 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
     }
   });
 
-  const embedCode = `<script src="${window.location.origin}/api/paperloo.js?siteId=${siteId}" async></script>`;
+  const embedCode = `<script src="${config.appUrl}/api/paperloo.js?siteId=${siteId}" async></script>`;
 
   if (isLoading) return <div className="animate-pulse h-64 bg-surface rounded" />;
 

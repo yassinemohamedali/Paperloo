@@ -1,3 +1,4 @@
+import { config } from '@/src/config/env';
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -162,7 +163,7 @@ export default function Documents() {
   });
 
   const copyEmbedCode = (type: string) => {
-    const code = `<div id="paperloo-badge" data-site="${id}"></div>\n<script src="${window.location.origin}/badge.js"></script>`;
+    const code = `<div id="paperloo-badge" data-site="${id}"></div>\n<script src="${config.appUrl}/badge.js"></script>`;
     navigator.clipboard.writeText(code);
     toast.success('Embed code copied to clipboard');
   };
@@ -416,7 +417,7 @@ export default function Documents() {
             <p className="text-muted text-xs tracking-[0.15em] uppercase">COPY THIS SNIPPET TO SHOW THE COMPLIANCE BADGE ON THE CLIENT'S SITE.</p>
             
             <div className="bg-black p-6 border border-white/10 font-mono text-[10px] text-accent break-all relative group">
-              <code>{`<div id="paperloo-badge" data-site="${id}"></div>\n<script src="${window.location.origin}/badge.js"></script>`}</code>
+              <code>{`<div id="paperloo-badge" data-site="${id}"></div>\n<script src="${config.appUrl}/badge.js"></script>`}</code>
               <button 
                 onClick={() => copyEmbedCode(showEmbed)}
                 className="absolute right-4 top-4 p-2 bg-surface border border-white/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"

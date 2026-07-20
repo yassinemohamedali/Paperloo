@@ -11,6 +11,51 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      contact_messages: {
+        Row: {
+          id: string
+          email: string
+          message: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          message: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          message?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          id: string
+          url: string
+          email: string | null
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          url: string
+          email?: string | null
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          url?: string
+          email?: string | null
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           id: string
@@ -45,6 +90,7 @@ export interface Database {
           review_interval_days?: number
           created_at?: string
         }
+        Relationships: []
       }
       sites: {
         Row: {
@@ -89,6 +135,7 @@ export interface Database {
           white_label_logo?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       client_users: {
         Row: {
@@ -112,6 +159,7 @@ export interface Database {
           access_token?: string
           created_at?: string
         }
+        Relationships: []
       }
       compliance_scores: {
         Row: {
@@ -138,6 +186,7 @@ export interface Database {
           breakdown?: Json
           updated_at?: string
         }
+        Relationships: []
       }
       questionnaire_responses: {
         Row: {
@@ -158,6 +207,7 @@ export interface Database {
           answers?: Json
           updated_at?: string
         }
+        Relationships: []
       }
       custom_clauses: {
         Row: {
@@ -190,6 +240,7 @@ export interface Database {
           order_index?: number
           created_at?: string
         }
+        Relationships: []
       }
       document_versions: {
         Row: {
@@ -219,6 +270,7 @@ export interface Database {
           changelog_note?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       site_comments: {
         Row: {
@@ -239,6 +291,7 @@ export interface Database {
           content?: string
           created_at?: string
         }
+        Relationships: []
       }
       certificates: {
         Row: {
@@ -265,6 +318,7 @@ export interface Database {
           regulations_covered?: string[]
           created_at?: string
         }
+        Relationships: []
       }
       alerts: {
         Row: {
@@ -294,6 +348,7 @@ export interface Database {
           resolved?: boolean
           created_at?: string
         }
+        Relationships: []
       }
       documents: {
         Row: {
@@ -326,6 +381,7 @@ export interface Database {
           is_active?: boolean
           created_at?: string
         }
+        Relationships: []
       }
       subscriptions: {
         Row: {
@@ -355,6 +411,7 @@ export interface Database {
           status?: string | null
           current_period_end?: string | null
         }
+        Relationships: []
       }
       banner_configs: {
         Row: {
@@ -408,6 +465,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       cookie_scans: {
         Row: {
@@ -431,6 +489,7 @@ export interface Database {
           cookies?: Json
           status?: string
         }
+        Relationships: []
       }
       dsar_requests: {
         Row: {
@@ -463,6 +522,7 @@ export interface Database {
           status?: string
           submitted_at?: string
         }
+        Relationships: []
       }
       regulations: {
         Row: {
@@ -495,7 +555,23 @@ export interface Database {
           summary?: string | null
           affects_jurisdictions?: string[] | null
         }
+        Relationships: []
       }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      delete_user_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }

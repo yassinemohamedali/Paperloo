@@ -1,23 +1,22 @@
-import Groq from "groq-sdk";
+import { GoogleGenAI } from "@google/genai";
 import { supabase } from "@/src/lib/supabase";
 
-let groq: Groq | null = null;
+let genAI: GoogleGenAI | null = null;
 
-export const getGroqClient = () => {
-  if (!groq) {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-    console.log('Checking for VITE_GROQ_API_KEY...');
+export const getAIClient = () => {
+  if (!genAI) {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    console.log('Checking for VITE_GEMINI_API_KEY...');
     if (!apiKey) {
-      console.error("VITE_GROQ_API_KEY is missing!");
-      throw new Error("GROQ API Key (VITE_GROQ_API_KEY) is missing. Please set it in your environment variables and restart the dev server.");
+      console.error("VITE_GEMINI_API_KEY is missing!");
+      throw new Error("GEMINI API Key (VITE_GEMINI_API_KEY) is missing. Please set it in your environment variables and restart the dev server.");
     }
-    console.log('Groq client initializing...');
-    groq = new Groq({
-      apiKey,
-      dangerouslyAllowBrowser: true
+    console.log('Gemini client initializing...');
+    genAI = new GoogleGenAI({
+      apiKey
     });
   }
-  return groq;
+  return genAI;
 };
 
 export const generateDocuments = async (siteId: string, language: string = 'en') => {
@@ -66,8 +65,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
   const answers = response?.answers || {};
   const jurisdictions = site.jurisdictions || [];
   
-  const client = getGroqClient();
-
+  const client = getAIClient();
   const docTypes = [
     'privacy_policy',
     'terms_of_service',
@@ -83,6 +81,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
 
   for (const type of docTypes) {
     console.log(`Generating ${type}...`);
+
     const prompt = `Generate a professional ${type.replace(/_/g, ' ')} in HTML format for:
     Website Name: ${site.name}
     Website URL: ${site.url}
@@ -93,20 +92,20 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     CRITICAL: Return ONLY the HTML content inside the body (excluding <html>, <head>, or <body> tags). Use standard HTML formatting.`;
 
     try {
-      const completion = await client.chat.completions.create({
-        messages: [
-          { role: 'system', content: 'You are a legal specialist. Return ONLY HTML.' },
-          { role: 'user', content: prompt }
-        ],
-        model: 'llama-3.3-70b-versatile',
-        temperature: 0.2
+      const completion = await client.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: 'You are a legal specialist. Return ONLY HTML.',
+          temperature: 0.2
+        }
       });
-
-      const aiContent = completion.choices[0]?.message?.content || '';
+      const aiContent = completion.text || '';
       
       // Inject custom clauses
       const beginningClauses = clauses?.filter(c => c.document_type === type && c.position === 'beginning')
         .map(c => `<h2>${c.title}</h2><p>${c.content}</p>`).join('') || '';
+
       const endClauses = clauses?.filter(c => c.document_type === type && c.position === 'end')
         .map(c => `<h2>${c.title}</h2><p>${c.content}</p>`).join('') || '';
 
@@ -124,7 +123,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
         .from('documents')
         .select('*')
         .eq('site_id', siteId)
-        .eq('type', type)
+        .eq('type', type as any)
         .order('created_at', { ascending: false })
         .limit(1) as any);
       
@@ -172,6 +171,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
           results.push(newDoc);
         }
       }
+
     } catch (docErr) {
       console.error(`Failed to generate ${type}:`, docErr);
     }
