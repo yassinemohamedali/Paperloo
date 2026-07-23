@@ -5,11 +5,11 @@ let genAI: GoogleGenAI | null = null;
 
 export const getAIClient = () => {
   if (!genAI) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    console.log('Checking for VITE_GEMINI_API_KEY...');
+    const apiKey = process.env.GEMINI_API_KEY;
+    console.log('Checking for GEMINI_API_KEY...');
     if (!apiKey) {
-      console.error("VITE_GEMINI_API_KEY is missing!");
-      throw new Error("GEMINI API Key (VITE_GEMINI_API_KEY) is missing. Please set it in your environment variables and restart the dev server.");
+      console.error("GEMINI_API_KEY is missing!");
+      throw new Error("GEMINI API Key (GEMINI_API_KEY) is missing. Please set it in your environment variables and restart the dev server.");
     }
     console.log('Gemini client initializing...');
     genAI = new GoogleGenAI({
