@@ -1,31 +1,7 @@
 import { supabase } from "@/src/lib/supabase";
 import { config } from "@/src/config/env";
 
-export const generateDocuments = async (siteId: string, language: string = 'en') => {
-  try {
-    // 1. Try invoking the Supabase Edge Function first
-    console.log('Attempting to invoke edge function for site:', siteId);
-    const { data, error } = await supabase.functions.invoke('generate-documents', {
-      body: { site_id: siteId, language }
-    });
-
-    if (!error && data?.success) {
-      console.log('Edge function success:', data.documents?.length, 'docs');
-      return data.documents;
-    }
-
-    if (error) {
-       console.warn('Edge function error:', error.message || error);
-    } else if (data && !data.success) {
-       console.warn('Edge function returned failure:', data.error);
-    }
-    
-    console.warn('Edge function not optimal, falling back to client-side generation.');
-  } catch (err) {
-    console.warn('Edge function invocation failed, falling back:', err);
-  }
-
-  // 2. Fallback to client-side generation if Edge Function is unavailable
+export const generateDocuments = async (siteId: string, language: string = "en") => {
   return fallbackClientSideGeneration(siteId, language);
 };
 
@@ -60,17 +36,60 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
 
   const results = [];
 
+  const collectedData = [];
+  if (answers.collects_email) collectedData.push("Email Addresses");
+  if (answers.collects_names) collectedData.push("Full Names");
+  if (answers.collects_payment) collectedData.push("Payment Information");
+  if (answers.collects_location) collectedData.push("Location Data");
+
+  const thirdPartyTrackers = [];
+  if (answers.uses_analytics) thirdPartyTrackers.push("Analytics Providers (e.g. Google Analytics)");
+  if (answers.uses_social_login) thirdPartyTrackers.push("Social Login Providers");
+
+  const domain = site.url ? new URL(site.url.startsWith('http') ? site.url : `https://${site.url}`).hostname.replace('www.', '') : 'example.com';
+
+  const retention = answers.data_retention_period || 12;
+  const dataList = collectedData.length > 0 
+    ? collectedData.join(", ") 
+    : "Names, Emails, Location Data";
+
+  const thirdPartiesList = thirdPartyTrackers.length > 0 
+    ? thirdPartyTrackers.join(", ") 
+    : "Google Analytics";
+
+  const dpoContact = answers.has_data_officer !== false 
+    ? "privacy@" + domain 
+    : "privacy@example.com";
+
+  const userContext = JSON.stringify({
+    personalData: dataList.split(", "),
+    thirdParties: thirdPartiesList.split(", "),
+    displaysAds: answers.uses_ads !== false ? true : false,
+    retentionPeriodMonths: retention,
+    hasDPO: answers.has_data_officer !== false,
+    dpoEmail: dpoContact
+  }, null, 2);
+
   for (const type of docTypes) {
     console.log(`Generating ${type}...`);
 
-    const prompt = `Generate a professional ${type.replace(/_/g, ' ')} in HTML format for:
-    Website Name: ${site.name}
-    Website URL: ${site.url}
-    Jurisdictions: ${jurisdictions.join(', ')}
-    Company Context: ${JSON.stringify(answers)}
-    Target Language: ${language}
-    
-    CRITICAL: Return ONLY the HTML content inside the body (excluding <html>, <head>, or <body> tags). Use standard HTML formatting.`;
+    const prompt = `Generate a legally robust ${type.replace(/_/g, ' ')} in HTML format tailored to the selected jurisdictions (${jurisdictions.join(', ')}) based strictly on these verified properties:
+    - Company: ${site.name}
+    - Collected Data Types: ${dataList}
+    - Retention Period: ${retention} months
+    - Analytics & Trackers: ${thirdPartiesList}
+    - DPO Contact: ${dpoContact}
+
+    CRITICAL FORMATTING RULES:
+    1. Populate every row in the Data Collection table using the collected data types listed above. The table MUST include a 3rd column mapping each item to its explicit legal ground (Legal Basis (GDPR Art. 6)) such as Consent, Legitimate Interest, or Performance of a Contract.
+    2. Hardcode the retention period as exactly "${retention} months". Do not use fallback words like "Standard".
+    3. Include an ePrivacy Cookie & Tracking section detailing opt-out mechanisms for the Analytics & Trackers listed above.
+    4. Clearly list all user rights applicable to the selected jurisdictions. Include the right to lodge a complaint with the relevant authority.
+    5. If applicable, explicitly state the transfer mechanisms used (e.g., Standard Contractual Clauses (SCCs)).
+
+    STRICT RULE: Never output phrases like "Since no specific data was provided...", "As no retention period was given...", or "No DPO was specified." Every statement in the generated policy must be written as a definitive, legally binding commitment from the company to the user.
+
+    FORMATTING: Return ONLY valid HTML content inside the body (excluding <html>, <head>, or <body> tags). Use headings (<h2>, <h3>), paragraphs (<p>), and unordered lists (<ul>).`;
 
     try {
       const response = await fetch("/api/generate-content", {

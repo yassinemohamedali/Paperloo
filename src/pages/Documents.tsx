@@ -126,7 +126,7 @@ export default function Documents() {
           }
         }
       } else {
-        toast.error('Regeneration failed to save any documents. Check your Groq API key.');
+        toast.error('Regeneration failed to save any documents. Check your API keys (Groq or Gemini) and ensure no blockers prevented the AI from completing the request.');
       }
     },
     onError: (error: any) => toast.error(error.message),
