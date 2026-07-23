@@ -4,7 +4,7 @@ import { supabase, Database } from '@/src/lib/supabase';
 import { Search, RefreshCw, Shield, AlertTriangle, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
-import { GoogleGenAI } from "@google/genai";
+import { config } from "@/src/config/env";
 import { calculateComplianceScore } from '@/src/lib/compliance';
 
 interface CookieScannerProps {
@@ -13,19 +13,6 @@ interface CookieScannerProps {
 }
 
 type CookieScan = Database['public']['Tables']['cookie_scans']['Row'];
-
-// Initialize Gemini lazily
-let genAI: GoogleGenAI | null = null;
-const getAIClient = () => {
-  if (!genAI) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI API Key missing. Please set GEMINI_API_KEY.");
-    }
-    genAI = new GoogleGenAI({ apiKey });
-  }
-  return genAI;
-};
 
 export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
   const queryClient = useQueryClient();
@@ -72,14 +59,22 @@ export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
           Return ONLY a valid JSON array of objects with fields: name, domain, duration, category (Essential, Analytics, Marketing, Functional), status (Detected). 
           Do NOT include markdown code blocks or any text other than the JSON array.`;
 
-          const completion = await getAIClient().models.generateContent({
-            contents: prompt,
-            model: 'gemini-2.5-flash',
-            config: {
+          const response = await fetch(`${config.appUrl}/api/generate-content`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'gemini-2.5-flash',
+              prompt,
               temperature: 0.2
-            }
+            })
           });
 
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || "Failed to generate content via proxy");
+          }
+
+          const completion = await response.json();
           const text = completion.text;
           if (!text) throw new Error("No response from AI");
 

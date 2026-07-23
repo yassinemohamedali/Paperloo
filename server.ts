@@ -55,6 +55,30 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.post("/api/generate-content", async (req, res) => {
+  const { prompt, model, systemInstruction, temperature } = req.body;
+  try {
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      console.error("GEMINI_API_KEY is missing on the server.");
+      return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server." });
+    }
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+    const completion = await ai.models.generateContent({
+      model: model || 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: temperature || 0.2
+      }
+    });
+    res.json({ text: completion.text });
+  } catch (error: any) {
+    console.error("Error generating content:", error);
+    res.status(500).json({ error: error.message || "Failed to generate content" });
+  }
+});
+
 // Real-Time Compliance Scanner for lead generation & landing page
 app.post("/api/scan-external-site", async (req, res) => {
   const { url } = req.body;

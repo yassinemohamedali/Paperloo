@@ -1,23 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
 import { supabase } from "@/src/lib/supabase";
-
-let genAI: GoogleGenAI | null = null;
-
-export const getAIClient = () => {
-  if (!genAI) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    console.log('Checking for GEMINI_API_KEY...');
-    if (!apiKey) {
-      console.error("GEMINI_API_KEY is missing!");
-      throw new Error("GEMINI API Key (GEMINI_API_KEY) is missing. Please set it in your environment variables and restart the dev server.");
-    }
-    console.log('Gemini client initializing...');
-    genAI = new GoogleGenAI({
-      apiKey
-    });
-  }
-  return genAI;
-};
+import { config } from "@/src/config/env";
 
 export const generateDocuments = async (siteId: string, language: string = 'en') => {
   try {
@@ -65,7 +47,6 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
   const answers = response?.answers || {};
   const jurisdictions = site.jurisdictions || [];
   
-  const client = getAIClient();
   const docTypes = [
     'privacy_policy',
     'terms_of_service',
@@ -92,14 +73,23 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     CRITICAL: Return ONLY the HTML content inside the body (excluding <html>, <head>, or <body> tags). Use standard HTML formatting.`;
 
     try {
-      const completion = await client.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
+      const response = await fetch(`${config.appUrl}/api/generate-content`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gemini-2.5-flash',
+          prompt,
           systemInstruction: 'You are a legal specialist. Return ONLY HTML.',
           temperature: 0.2
-        }
+        })
       });
+      
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to generate content via proxy");
+      }
+
+      const completion = await response.json();
       const aiContent = completion.text || '';
       
       // Inject custom clauses
