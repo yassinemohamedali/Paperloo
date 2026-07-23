@@ -58,10 +58,26 @@ app.get("/api/health", (req, res) => {
 app.post("/api/generate-content", async (req, res) => {
   const { prompt, model, systemInstruction, temperature } = req.body;
   try {
+    const groqApiKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
+    if (groqApiKey) {
+      const GroqModule = await import('groq-sdk');
+      const Groq = GroqModule.default || GroqModule;
+      const groq = new (Groq as any)({ apiKey: groqApiKey });
+      const completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemInstruction || 'You are a helpful assistant.' },
+          { role: 'user', content: prompt }
+        ],
+        model: 'llama-3.3-70b-versatile',
+        temperature: temperature || 0.2
+      });
+      return res.json({ text: completion.choices[0]?.message?.content || '' });
+    }
+
     const geminiApiKey = process.env.GEMINI_API_KEY;
     if (!geminiApiKey) {
-      console.error("GEMINI_API_KEY is missing on the server.");
-      return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server." });
+      console.error("No API keys found. Please set VITE_GROQ_API_KEY or GEMINI_API_KEY.");
+      return res.status(500).json({ error: "No API keys found. Please set VITE_GROQ_API_KEY or GEMINI_API_KEY in the environment variables." });
     }
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     const completion = await ai.models.generateContent({

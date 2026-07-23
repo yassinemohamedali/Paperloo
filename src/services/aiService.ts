@@ -73,7 +73,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     CRITICAL: Return ONLY the HTML content inside the body (excluding <html>, <head>, or <body> tags). Use standard HTML formatting.`;
 
     try {
-      const response = await fetch(`${config.appUrl}/api/generate-content`, {
+      const response = await fetch("/api/generate-content", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

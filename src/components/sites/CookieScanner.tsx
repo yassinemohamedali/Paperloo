@@ -59,7 +59,7 @@ export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
           Return ONLY a valid JSON array of objects with fields: name, domain, duration, category (Essential, Analytics, Marketing, Functional), status (Detected). 
           Do NOT include markdown code blocks or any text other than the JSON array.`;
 
-          const response = await fetch(`${config.appUrl}/api/generate-content`, {
+          const response = await fetch("/api/generate-content", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
