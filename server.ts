@@ -55,6 +55,52 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.post("/api/sites/:id/clauses", async (req, res) => {
+  const { id } = req.params;
+  const clause = req.body;
+  
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: "Missing or invalid authorization token" });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const supabase = getSupabase();
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // Verify ownership of the site
+  const { data: siteCheck, error: siteCheckError } = await supabase
+    .from('sites')
+    .select('id')
+    .eq('id', id)
+    .eq('agency_id', user.id)
+    .maybeSingle();
+    
+  if (siteCheckError || !siteCheck) {
+    return res.status(403).json({ error: "Forbidden: You do not own this site" });
+  }
+
+  // Insert the clause overriding RLS
+  const { data, error } = await supabase.from('custom_clauses').insert({
+    site_id: id,
+    document_type: clause.document_type,
+    title: clause.title || user.id,
+    content: clause.content,
+    position: clause.position || 'end',
+    order_index: clause.order_index || 0
+  }).select();
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(data);
+});
+
 app.post("/api/generate-content", async (req, res) => {
   const { prompt, model, systemInstruction, temperature, siteId } = req.body;
   
@@ -968,34 +1014,34 @@ app.post("/api/scan-external-site", async (req, res) => {
       }
 
       // 3. Construct system prompt
-      const systemPrompt = `You are the Paperloo AI Support Assistant, a continuous compliance and security intelligence agent.
-You have real-time access to the user's active configurations and monitored sites in Paperloo.
+      const systemPrompt = `You are the Paperloo AI Support Intelligence Node, an omnipresent continuous compliance, governance, and security intelligence agent.
+You possess real-time telemetry access to the user's active jurisprudential configurations and monitored digital assets within the Paperloo Ecosystem.
 
 User Profile Context:
 - Email: ${profile?.email || 'N/A'}
-- Agency Name: ${profile?.agency_name || 'N/A'}
-- Plan: ${profile?.plan || 'Starter'}
+- Agency Designation: ${profile?.agency_name || 'N/A'}
+- Subscription Tier: ${profile?.plan || 'Starter'}
 
-Currently Monitored Sites:
+Currently Monitored Digital Properties:
 ${sites && sites.length > 0 ? sites.map((s: any) => `
-- Site ID (UUID): ${s.id}
-  Site Name: ${s.name}
-  URL: ${s.url}
-  Status: ${s.status}
+- Property ID (UUID): ${s.id}
+  Property Designation: ${s.name}
+  URL Domain: ${s.url}
+  Operational Status: ${s.status}
   Compliance Grade: ${s.compliance_grade || 'Pending'}
-  Jurisdictions: ${s.jurisdictions ? (Array.isArray(s.jurisdictions) ? s.jurisdictions.join(', ') : s.jurisdictions) : 'N/A'}
-  Industry Type: ${s.industry_type || 'N/A'}
-  Banner Configuration: ${s.banner_configs && s.banner_configs.length > 0 ? JSON.stringify(s.banner_configs[0]) : 'None configured'}
-`).join('\n') : 'No sites monitored yet.'}
+  Jurisdictional Scope: ${s.jurisdictions ? (Array.isArray(s.jurisdictions) ? s.jurisdictions.join(', ') : s.jurisdictions) : 'N/A'}
+  Industry Categorization: ${s.industry_type || 'N/A'}
+  Consent Infrastructure Matrix: ${s.banner_configs && s.banner_configs.length > 0 ? JSON.stringify(s.banner_configs[0]) : 'None configured'}
+`).join('\n') : 'No properties monitored currently.'}
 
 Instructions:
-1. Help the user answer questions about their monitored sites, how to configure compliance banners, active scanners, and continuous deployment features (such as GitHub auto-deployment).
-2. Answer queries related to global privacy compliance (such as GDPR, CCPA, COPPA) and how Paperloo helps them shield trackers like Google Analytics, Facebook Pixels, etc.
-3. IMPORTANT: YOU HAVE FULL READ/WRITE PERMISSIONS AND ACCESS TO POWERFUL DATABASE TOOLS! You can list sites, add new sites, update existing sites, delete sites, and customize banner configurations (theme, colors, button texts, enabling Google Consent Mode v2, Google Tag ID, etc.) directly on behalf of the user. Whenever a user asks to add, edit, customize, update, or delete a site or a cookie banner, you MUST immediately call the appropriate function/tool to execute the change. Do NOT tell the user you lack permission or that you are only a support agent; execute the changes instantly using your tools.
-4. Always inform the user clearly when you have executed database updates, listing exactly what was added or changed.
-5. Be professional, direct, elegant, and technically precise. Match Paperloo's clean, high-contrast, security-oriented aesthetic in your tone.
-6. If a site has a low compliance grade (C or D), help the user understand why (e.g. missing cookie banners, unshielded trackers) and suggest actions to fix it.
-7. Emphasize that Paperloo is an active, automated continuous deployment engine that can deploy compliance banner injection scripts directly to their GitHub codebases.`;
+1. Assist the user in navigating their monitored digital properties, configuring dynamic consent banners, deploying active tracking shields, and executing continuous delivery protocols (such as automated GitHub repository injection).
+2. Address queries regarding global privacy frameworks (GDPR, CCPA/CPRA, APPs, PIPEDA, LGPD, KVKK, PDPA, COPPA) and articulate how Paperloo shields unverified telemetry trackers (e.g., Google Analytics, Meta Pixels).
+3. IMPORTANT: YOU POSSESS FULL SYSTEMIC PERMISSIONS AND UNRESTRICTED ACCESS TO DATABASE ORCHESTRATION TOOLS! You can query properties, provision new properties, update existing records, deprecate obsolete properties, and fine-tune consent architecture (thematic schemes, color palettes, button taxonomy, Google Consent Mode v2, Google Tag ID, etc.) directly on behalf of the user. Whenever a user requests an alteration, customization, or deletion of a site or consent banner, execute the modification immediately using your function tools.
+4. Inform the user with absolute clarity once database modifications are successfully executed, explicitly detailing all mutated parameters.
+5. Maintain an erudite, authoritative, precise, and sophisticated tone, matching Paperloo's clean, high-contrast, security-oriented aesthetic.
+6. If a property exhibits a sub-optimal compliance grade (Grade C or D), elucidate the underlying vulnerabilities (e.g., unshielded telemetry scripts, missing statutory disclosures) and propose actionable mitigation steps.
+7. Emphasize that Paperloo functions as an autonomous continuous deployment engine capable of committing compliance injection scripts directly to their GitHub codebases.`;
 
       // 4. Combine with user messages
       const fullMessages = [
@@ -1530,88 +1576,88 @@ Instructions:
         let reply = "";
         
         if (query.includes("github") || query.includes("deploy") || query.includes("git")) {
-          reply = `### Paperloo Continuous Deployment Protocol
+          reply = `### Paperloo Continuous Deployment & Jurisprudential Integration Protocol
 
-Your GitHub repositories can be integrated directly with Paperloo for automated, zero-touch compliance updates.
+Your GitHub repositories can be seamlessly orchestrated with Paperloo for autonomous, zero-friction statutory compliance updates.
 
-**Current Deployment Configuration:**
-- Continuous Deployment Hook: **ENABLED**
-- Target Injector Path: \`public/paperloo-compliance.html\`
-- Trigger Event: On site integration & configuration updates.
+**Active Telemetry Configuration:**
+- Continuous Deployment Protocol: **OPERATIONAL & ACTIVE**
+- Injection Script Vector: \`public/paperloo-compliance.html\`
+- Trigger Threshold: Real-time property integration & governance matrix mutations.
 
-**How to verify your active continuous deployment:**
-1. Navigate to the **Sites** panel.
-2. Select your target repository from your connected GitHub list.
-3. Click the **"INTEGRATE & AUTO-DEPLOY"** action.
-4. Paperloo will automatically create a commit in your repository containing the compliance script. This ensures the banner is active instantly!`;
+**Execution Vector:**
+1. Navigate to the **Sites** portal.
+2. Select your target repository from your authenticated GitHub workspace.
+3. Trigger the **"INTEGRATE & AUTO-DEPLOY"** orchestration mechanism.
+4. The Paperloo Autonomous Synthesizer will automatically execute a commit containing the statutory script, guaranteeing instantaneous compliance shield activation.`;
         } else if (query.includes("grade") || query.includes("score") || query.includes("compliance")) {
           const gradedSites = sites && sites.length > 0 
-            ? sites.map((s: any) => `• **${s.name}** (${s.url}) has an active Compliance Grade of **${s.compliance_grade || 'C'}** (Status: *${s.status}*).`).join('\n')
-            : "No active sites are currently being monitored.";
+            ? sites.map((s: any) => `• **${s.name}** (${s.url}) exhibits an active Compliance Metric of **${s.compliance_grade || 'C'}** (Status: *${s.status}*).`).join('\n')
+            : "No digital properties are currently undergoing continuous telemetry monitoring.";
             
-          reply = `### Compliance Audit Analysis
-
-Here is the status of your connected digital properties under management:
+          reply = `### Comprehensive Compliance & Governance Audit
+Relative status of your monitored digital properties within the enterprise governance matrix:
 
 ${gradedSites}
 
-**Action Plan to upgrade your Compliance Grades:**
-1. **Enable Google Consent Mode v2 (GCM v2)** inside the banner configurations. This ensures Google Tags are properly shielded until explicit user consent is negotiated.
-2. **Deploy the active Paperloo Consent Banner** directly to your codebase. If you use GitHub, you can automate this deployment instantly in the Sites module.
-3. **Draft a valid Privacy Policy / Terms of Service** within the Document Generator and link them to your client's compliance banner settings.`;
+**Strategic Optimization Roadmap:**
+1. **Activate Google Consent Mode v2 (GCM v2)** within your property's consent matrix, enforcing pre-consent telemetry shielding.
+2. **Deploy the Paperloo Autonomous Consent Shield** directly to your target repository via automated GitHub pipeline integration.
+3. **Synthesize comprehensive Statutory Policies** (Privacy Policy, Terms of Service, Cookie Governance) utilizing the Paperloo Document Synthesizer.`;
         } else if (query.includes("gdpr") || query.includes("ccpa") || query.includes("coppa") || query.includes("regulation") || query.includes("law")) {
-          reply = `### International Privacy Frameworks
+          reply = `### Trans-Jurisprudential Legislative Frameworks
 
-Paperloo monitors and generates real-time compliance configurations for multiple regional legislations:
+Paperloo continuously monitors and synthesizes real-time compliance matrices for multi-national statutory mandates:
 
-1. **GDPR (European Union)**: Requires strict opt-in consent prior to non-essential cookie injection. All trackers (Google Analytics, Facebook Pixel) must be verifiably shielded.
-2. **CCPA / CPRA (California)**: Requires an explicit "Do Not Sell My Personal Information" action and standard opt-out consent mechanisms.
-3. **COPPA (USA Children's Protection)**: Imposes strict limitations on tracking individuals under the age of 13.
+1. **GDPR (European Union Directive)**: Mandates explicit, unambiguous opt-in consent prior to non-essential telemetry initialization.
+2. **CCPA / CPRA (California Statutory Framework)**: Enforces "Do Not Sell or Share My Personal Information" mechanisms and opt-out disclosures.
+3. **APPs / Privacy Act 1988 (Australia)**: Mandates adherence to the 13 Australian Privacy Principles, APP 8 overseas disclosures, and OAIC complaint rights.
+4. **PIPEDA / Law 25 (Canada & Quebec)**: Enforces default deactivation of user-tracking scripts and mandatory privacy impact evaluations.
 
-**Current Protected Status:**
-Your agency dashboard is currently configured for global interoperability across **GDPR (EU)** and **CCPA (California)** jurisdictions. All compliance banners will dynamically adapt based on visitor geo-location.`;
+**Current Jurisprudential Status:**
+Your enterprise infrastructure dynamically synthesizes geo-location-aware consent matrices tailored precisely to visitor origin.`;
         } else if (query.includes("banner") || query.includes("cookie") || query.includes("consent")) {
-          reply = `### Consent Banner & UI Customization
+          reply = `### Dynamic Consent Architecture & Aesthetic Customization
 
-The Paperloo active consent banner is fully modular and supports high-contrast customization to match your platform's design theme.
+The Paperloo active consent matrix features a modular, high-authority UI architecture designed for seamless brand integration.
 
-**Active Defaults:**
-- Banner Theme: **Dark/High-Contrast**
-- Accent Color: \`#c8f135\` (Neo-Lime)
-- Reject Protocol: Verifiable cookie shield
+**Current Telemetry Matrix:**
+- UI Theme Architecture: **High-Contrast Dark Aesthetic**
+- Primary Accent: \`#c8f135\` (Neo-Lime)
+- Telemetry Shielding: Inviolable client-side script interception
 
-**To update your banner configurations:**
-1. Navigate to your **Sites** dashboard.
-2. Select your site and modify the banner theme, primary colors, or accept text under preferences.
-3. Your live script (\`/api/banner/[site_id]\`) will dynamically receive these configurations instantly, with no redeployment required.`;
+**Configuration Vectors:**
+1. Access the **Sites** governance module.
+2. Select your property to modify color parameters, typography pairings, or accept button taxonomy.
+3. Your live script (\`/api/banner/[site_id]\`) dynamically updates across the global CDN instantaneously without manual redeployment.`;
         } else if (query.includes("hello") || query.includes("hi") || query.includes("hey") || query.includes("start")) {
-          reply = `Greetings! I am the Paperloo Support AI. 
+          reply = `Greetings! I am the Paperloo Support Intelligence Node. 
 
-As your active compliance assistant, I have full system-level context of your agency (**${profile?.agency_name || 'Personal Account'}**) on the **${profile?.plan || 'Starter'}** plan.
+As your enterprise compliance architecture assistant, I possess full system-level context for **${profile?.agency_name || 'Personal Account'}** on the **${profile?.plan || 'Starter'}** infrastructure tier.
 
-I can assist you with:
-- **Active Cookie Shielding & Banner Customization**
-- **Continuous GitHub Deployment & Script Injection**
-- **GDPR / CCPA Regulatory Interoperability**
-- **Analyzing Compliance Grades for your Monitored Sites**
+I stand ready to assist you with:
+- **Autonomous Telemetry Shielding & Consent Architecture**
+- **Continuous GitHub Codebase Integration**
+- **Trans-Jurisprudential Harmonization (GDPR, CCPA, APPs, PIPEDA)**
+- **Continuous Compliance Metric Auditing & Vulnerability Remediation**
 
-What aspect of your compliance architecture would you like to explore?`;
+Which aspect of your enterprise compliance infrastructure shall we orchestrate?`;
         } else {
           // General comprehensive helpful response
-          reply = `### Paperloo Compliance Intelligence Node
+          reply = `### Paperloo Enterprise Governance Intelligence Node
 
-I am active and monitoring your account configurations. Based on your user profile and connected assets, here is your compliance posture summary:
+Systemic telemetry monitoring is active. Current account operational status:
 
-- **Agency Email Context**: \`${profile?.email || 'N/A'}\`
-- **Active Monitored Properties**: **${sites ? sites.length : 0} sites**
-- **Compliance Engine Status**: **OPERATIONAL**
+- **Entity Email Designation**: \`${profile?.email || 'N/A'}\`
+- **Monitored Digital Properties**: **${sites ? sites.length : 0} properties**
+- **Jurisprudential Engine Status**: **OPTIMAL & OPERATIONAL**
 
-**Frequently Asked Questions:**
-- **How do I deploy?** Use our GitHub continuous deployment feature in the **Sites** panel to inject our tracking shield seamlessly.
-- **Why is my compliance grade low?** Verify that cookie consent mechanisms are activated, Google Tag ID is set, and trackers are verifiably blocked before consent is granted.
-- **How do I log support tickets?** Use the **Operations Ticket** panel on the left to submit a technical file directly to our review team.
+**Platform Capabilities:**
+- **Autonomous Deployment**: Execute zero-touch GitHub script integration via the **Sites** portal.
+- **Compliance Metric Remediation**: Activate Google Consent Mode v2 and link synthesized statutory disclosures.
+- **Operations Support**: File technical tickets in the **Operations** module for review by compliance specialists.
 
-If you have a specific question about GDPR, CCPA, or banner customization, ask away!`;
+How may I assist your enterprise compliance operations today?`;
         }
         
         assistantMessage = reply;

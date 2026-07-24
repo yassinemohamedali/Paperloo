@@ -20,7 +20,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
 
   if (!site) throw new Error("Site not found in database");
   
-  const answers = response?.answers || {};
+  const answers = response?.answers || response || {};
   const jurisdictions = site.jurisdictions || [];
   
   const docTypes = [
@@ -37,28 +37,55 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
   const results = [];
 
   const collectedData = [];
-  if (answers.collects_email) collectedData.push("Email Addresses");
-  if (answers.collects_names) collectedData.push("Full Names");
-  if (answers.collects_payment) collectedData.push("Payment Information");
-  if (answers.collects_location) collectedData.push("Location Data");
+  if (answers.collects_email || answers.email || answers.collect_email || answers.email_address || answers.email_addresses) {
+    collectedData.push("Email Addresses");
+  }
+  if (answers.collects_names || answers.full_names || answers.collect_names || answers.names || answers.name) {
+    collectedData.push("Full Names");
+  }
+  if (answers.collects_payment || answers.payment || answers.collect_payment || answers.payment_info || answers.payment_information) {
+    collectedData.push("Payment Information");
+  }
+  if (answers.collects_location || answers.location || answers.collect_location || answers.location_data || answers.geolocation) {
+    collectedData.push("Location Data");
+  }
+  if (Array.isArray(answers.collected_data)) {
+    answers.collected_data.forEach((item: string) => {
+      if (!collectedData.includes(item)) collectedData.push(item);
+    });
+  }
 
   const thirdPartyTrackers = [];
-  if (answers.uses_analytics) thirdPartyTrackers.push("Analytics Providers (e.g. Google Analytics)");
-  if (answers.uses_social_login) thirdPartyTrackers.push("Social Login Providers");
+  if (answers.uses_analytics || answers.analytics) thirdPartyTrackers.push("Analytics Providers (e.g. Google Analytics)");
+  if (answers.uses_social_login || answers.social_login) thirdPartyTrackers.push("Social Login Providers");
+  if (answers.uses_ads || answers.ads) thirdPartyTrackers.push("Advertising & Marketing Networks");
 
   const domain = site.url ? new URL(site.url.startsWith('http') ? site.url : `https://${site.url}`).hostname.replace('www.', '') : 'example.com';
 
-  const retention = answers.data_retention_period || 12;
+  const retention = answers.data_retention_period ?? answers.retention_period ?? answers.retention ?? answers.data_retention ?? 12;
   const dataList = collectedData.length > 0 
     ? collectedData.join(", ") 
-    : "No automated personal data collected via primary forms";
+    : "Email Addresses, Full Names, Payment Information, Location Data";
 
   const thirdPartiesList = thirdPartyTrackers.length > 0 
     ? thirdPartyTrackers.join(", ") 
     : "Google Analytics";
 
+  const includesAustralia = jurisdictions.some(j => {
+    const lj = String(j).toLowerCase();
+    return lj.includes('australia') || lj.includes('privacy_act') || lj.includes('app') || lj.includes('oaic');
+  });
+
+  const isAustraliaOnly = jurisdictions.length > 0 && jurisdictions.every(j => {
+    const lj = String(j).toLowerCase();
+    return lj.includes('australia') || lj.includes('privacy_act') || lj.includes('app') || lj.includes('oaic');
+  });
+
+  const officerTitle = includesAustralia ? "Privacy Officer" : "Data Protection Officer";
+  const cookieSectionTitle = includesAustralia ? "Cookies and Online Tracking" : "ePrivacy Cookie & Tracking";
+
   const dpoContact = answers.has_data_officer !== false 
-    ? "privacy@" + domain 
+    ? (includesAustralia ? "privacy@" + domain : "privacy@" + domain)
     : "privacy@example.com";
 
   const isOnlyUS = jurisdictions.length > 0 && jurisdictions.every(j => ['CCPA', 'CPRA', 'VCDPA'].includes(j));
@@ -67,6 +94,8 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
   let tableHeader = "Legal Basis / Purpose";
   if (isOnlyUS) {
     tableHeader = "Business or Commercial Purpose";
+  } else if (isAustraliaOnly) {
+    tableHeader = "Australian Privacy Principle (APP) Purpose";
   } else if (jurisdictions.includes("GDPR") || jurisdictions.includes("UK GDPR")) {
     tableHeader = "Legal Basis (GDPR Art. 6)";
     if (jurisdictions.includes("LGPD")) tableHeader = "Legal Basis (GDPR Art. 6 / LGPD Art. 7)";
@@ -91,11 +120,11 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     let docSpecificInstructions = "";
     if (type === 'privacy_policy' || type === 'cookie_policy') {
       docSpecificInstructions = `
-    1. Populate every row in the Data Collection table using the collected data types listed above. The table MUST include a 3rd column mapping each item to its explicit legal ground or purpose, titled "${tableHeader}".
+    1. Populate every row in the Data Collection table using the collected data types listed above (${dataList}). The table MUST include a 3rd column mapping each item to its explicit legal ground or purpose, titled "${tableHeader}".
     2. Hardcode the retention period as exactly "${retention} months". Do not use fallback words like "Standard".
-    3. Include an ePrivacy Cookie & Tracking section detailing opt-out mechanisms for the Analytics & Trackers listed above.
-    4. Clearly list all user rights applicable to the selected jurisdictions. Include the right to lodge a complaint with the relevant authority.
-    5. If applicable, explicitly state the transfer mechanisms used (e.g., Standard Contractual Clauses (SCCs)).`;
+    3. Include a "${cookieSectionTitle}" section detailing opt-out mechanisms for the Analytics & Trackers listed above. Do NOT use "ePrivacy" terminology if Australia is selected.
+    4. Clearly list all user rights applicable to the selected jurisdictions. Include the right to lodge a complaint with the relevant authority (for Australia, direct reference to the Office of the Australian Information Commissioner / OAIC).
+    5. If applicable, explicitly state the transfer mechanisms used.`;
     } else if (type === 'terms_of_service') {
       docSpecificInstructions = `
     1. Focus on user accounts, acceptable use, intellectual property, limitation of liability, and governing law based on selected jurisdictions (${jurisdictions.join(', ')}).
@@ -114,7 +143,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     - Collected Data Types: ${dataList}
     - Retention Period: ${retention} months
     - Analytics & Trackers: ${thirdPartiesList}
-    - DPO Contact: ${dpoContact}
+    - Designated Privacy Lead/Officer Contact: ${dpoContact}
 
     CRITICAL FORMATTING RULES:${docSpecificInstructions}
 
@@ -126,7 +155,13 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     - If PIPEDA only: Mandate a plain-language explanation of "meaningful consent" and specific disclosures for service provider transfers.
     - If KVKK or PDPL only: State local cross-border data transfer restrictions. Do not cite EU SCCs alone without explicit approval mention.
     - If APPI only: Distinguish between "Personal Information" and "Retained Personal Data," along with specific disclosures when providing data to third parties in foreign countries.
-    - If Australia (Privacy Act) only: Reference the 13 Australian Privacy Principles (APPs) and state whether data is likely to be disclosed to overseas recipients (and in which countries).
+    - If Australia (Privacy Act) / APPs only: 
+      * Replace "Data Protection Officer (DPO)" with "Privacy Officer" or "Privacy Lead".
+      * Replace "ePrivacy Cookie and Tracking" header with "Cookies and Online Tracking".
+      * Reference the 13 Australian Privacy Principles (APPs) and the Privacy Act 1988.
+      * Include a dedicated section for APP 8 (Disclosure to Overseas Recipients).
+      * Include direct reference to lodging complaints with the Office of the Australian Information Commissioner (OAIC).
+      * Do NOT mention GDPR, CCPA, Law 25, ePrivacy Directive, or EU DPA complaint rights.
 
     MULTI-JURISDICTION INJECTION INSTRUCTIONS:
     1. IF CCPA/CPRA is selected:

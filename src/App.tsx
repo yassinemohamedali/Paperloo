@@ -40,6 +40,7 @@ const LegalPage = lazy(() => import('./pages/LegalPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Support = lazy(() => import('./pages/Support'));
+const DataRoom = lazy(() => import('./pages/DataRoom'));
 
 // Layout
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -188,6 +189,7 @@ const AnimatedRoutes = () => {
           <Route path="/billing" element={<PageTransition><Billing /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
           <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
+          <Route path="/data-room" element={<PageTransition><DataRoom /></PageTransition>} />
         </Route>
 
         {/* Redirects */}

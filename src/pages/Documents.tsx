@@ -134,15 +134,22 @@ export default function Documents() {
 
   const addClauseMutation = useMutation({
     mutationFn: async (clause: Partial<CustomClause>) => {
-      const { error } = await (supabase.from('custom_clauses') as any).insert({
-        site_id: id as string,
-        document_type: clause.document_type as string,
-        title: clause.title as string,
-        content: clause.content as string,
-        position: clause.position as any,
-        order_index: 0
-      } as any);
-      if (error) throw error;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const response = await fetch(`/api/sites/${id}/clauses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(clause)
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Failed to add custom clause' }));
+        throw new Error(err.error || 'Failed to add custom clause');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-clauses', id] });

@@ -46,12 +46,19 @@ export default function SiteDetail() {
     queryKey: ['comments', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('site_comments')
+        .from('custom_clauses')
         .select('*')
         .eq('site_id', id as string)
+        .eq('document_type', 'TEAM_NOTE')
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return data || [];
+      return (data || []).map((c: any) => ({
+        id: c.id,
+        site_id: c.site_id,
+        content: c.content,
+        created_at: c.created_at,
+        user_id: c.title
+      })) as any[];
     },
     enabled: !!id,
   });
@@ -101,7 +108,7 @@ export default function SiteDetail() {
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
-        table: 'site_comments',
+        table: 'custom_clauses',
         filter: `site_id=eq.${id}`
       }, () => {
         queryClient.invalidateQueries({ queryKey: ['comments', id] });
@@ -115,16 +122,36 @@ export default function SiteDetail() {
 
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      const { error } = await (supabase.from('site_comments') as any).insert({
-        site_id: id,
-        content
-      } as any);
-      if (error) throw error;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const response = await fetch(`/api/sites/${id}/clauses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          document_type: 'TEAM_NOTE',
+          content: content,
+          position: 'end'
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Failed to add note' }));
+        throw new Error(err.error || 'Failed to add note');
+      }
+      return await response.json();
     },
     onSuccess: () => {
       setNewComment('');
+      queryClient.invalidateQueries({ queryKey: ['comments', id] });
       toast.success('Comment added');
     },
+    onError: (err: any) => {
+      toast.error('Failed to add note: ' + err.message);
+    }
   });
 
   const issueCertificateMutation = useMutation({

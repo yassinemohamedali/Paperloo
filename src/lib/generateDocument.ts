@@ -17,44 +17,44 @@ export function generateDocument(type: string, siteName: string, answers: Record
   content += `<p>This document applies to <strong>${siteName}</strong>, operated by <strong>${companyName}</strong>.</p>`;
 
   if (type === 'privacy_policy') {
-    content += `<h2>1. Introduction</h2><p>We respect your privacy and are committed to protecting your personal data.</p>`;
+    content += `<h2>1. Statutory Preamble & Scope</h2><p>We maintain an unyielding commitment to the inviolable protection of individual privacy and the rigorous governance of personal data processed across our operational architecture.</p>`;
     
-    content += `<h2>2. Data We Collect</h2><ul>`;
+    content += `<h2>2. Categorization of Processed Data</h2><ul>`;
     dataCollected.forEach((item: string) => {
-      content += `<li>${item}</li>`;
+      content += `<li><strong>${item}:</strong> Collected and processed in accordance with strict statutory necessity and proportionality standards.</li>`;
     });
     content += `</ul>`;
 
     if (jurisdictions.includes('GDPR') || jurisdictions.some((j: string) => j.includes('GDPR'))) {
-      content += `<h2>3. GDPR Compliance (EU)</h2>`;
-      content += `<p>Under the General Data Protection Regulation (GDPR), we process your data based on legitimate interest, contract fulfillment, or consent.</p>`;
-      content += `<p>Your rights include: access, rectification, erasure, and data portability.</p>`;
+      content += `<h2>3. European Union General Data Protection Regulation (GDPR) Governance</h2>`;
+      content += `<p>Pursuant to Regulation (EU) 2016/679 (GDPR), processing operations are anchored strictly upon lawful grounds under Article 6, including legitimate interest, contractual necessity, or explicit consent negotiation.</p>`;
+      content += `<p>Data subjects retain unequivocal statutory rights: access, rectification, erasure, restriction of processing, and data portability.</p>`;
     }
 
     if (jurisdictions.includes('CCPA') || jurisdictions.some((j: string) => j.includes('CCPA'))) {
-      content += `<h2>4. CCPA Compliance (California)</h2>`;
-      content += `<p>California residents have the right to know what personal information is collected, used, shared, or sold.</p>`;
-      content += `<p>We ${sellData ? 'do' : 'do not'} sell your personal data.</p>`;
+      content += `<h2>4. California Consumer Privacy Act (CCPA / CPRA) Disclosures</h2>`;
+      content += `<p>California consumers possess explicit statutory entitlements regarding the disclosure, access, deletion, and opt-out of personal information commercialization.</p>`;
+      content += `<p>We ${sellData ? 'do' : 'do not'} sell or share personal information as defined under applicable statutory parameters.</p>`;
     }
 
     if (jurisdictions.some((j: string) => j.includes('PDPA (Thailand)'))) {
-      content += `<h2>PDPA Compliance (Thailand)</h2>`;
-      content += `<p>Pursuant to Thailand's Personal Data Protection Act (PDPA), we process personal data only when explicit, freely given consent is provided, or other lawful processing conditions are met. Data subjects have the right to request access, rectification, deletion, and portability of their information.</p>`;
+      content += `<h2>PDPA Compliance Matrix (Thailand)</h2>`;
+      content += `<p>Pursuant to Thailand's Personal Data Protection Act B.E. 2562 (PDPA), processing operations proceed strictly upon freely given, explicit consent or established statutory exemptions. Data subjects retain irrevocable rights to request access, rectification, deletion, and portability.</p>`;
     }
 
     if (jurisdictions.some((j: string) => j.includes('PDPA (Turkey)') || j.includes('KVKK'))) {
-      content += `<h2>KVKK Compliance (Turkey)</h2>`;
-      content += `<p>In accordance with the Turkish Personal Data Protection Law (KVKK Law No. 6698), we process your personal data securely. Data owners maintain explicit rights to learn data processing details, request corrections, and object to adverse outcomes resulting from automated systems.</p>`;
+      content += `<h2>KVKK Statutory Framework (Turkey)</h2>`;
+      content += `<p>In strict accordance with Law No. 6698 on the Protection of Personal Data (KVKK), data processing activities are safeguarded by organizational and technical security measures. Data subjects hold statutory rights to ascertain processing parameters and object to automated profiling.</p>`;
     }
 
     if (jurisdictions.some((j: string) => j.includes('POPIA'))) {
-      content += `<h2>POPIA Compliance (South Africa)</h2>`;
-      content += `<p>According to South Africa's Protection of Personal Information Act (POPIA), we strictly enforce minimum conditions for lawful processing of personal information, ensuring robust access control, and honoring your rights is our absolute operational baseline.</p>`;
+      content += `<h2>POPIA Governance Standard (South Africa)</h2>`;
+      content += `<p>Pursuant to the Protection of Personal Information Act 4 of 2013 (POPIA), we enforce eight mandatory conditions for lawful processing, establishing comprehensive access controls and data subject rights mechanisms.</p>`;
     }
 
     if (jurisdictions.some((j: string) => j.includes('Privacy Act'))) {
-      content += `<h2>Australian Privacy Compliance</h2>`;
-      content += `<p>Under the Australian Privacy Act and the Australian Privacy Principles (APPs), we manage personal information safely. You have the right to access and correct your stored personal data, and to lodge any privacy complaints with our officer.</p>`;
+      content += `<h2>Australian Privacy Principles (APPs) Framework</h2>`;
+      content += `<p>Under the Privacy Act 1988 (Cth) and the 13 Australian Privacy Principles (APPs), personal information is safeguarded against unauthorized access, modification, or disclosure. Data subjects maintain rights of access, correction, and direct recourse to the Office of the Australian Information Commissioner (OAIC).</p>`;
     }
 
     if (jurisdictions.some((j: string) => j.includes('APPI'))) {
