@@ -56,7 +56,36 @@ app.get("/api/health", (req, res) => {
 });
 
 app.post("/api/generate-content", async (req, res) => {
-  const { prompt, model, systemInstruction, temperature } = req.body;
+  const { prompt, model, systemInstruction, temperature, siteId } = req.body;
+  
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: "Missing or invalid authorization token" });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const supabase = getSupabase();
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (!siteId) {
+    return res.status(400).json({ error: "siteId is required" });
+  }
+
+  const { data: siteCheck, error: siteCheckError } = await supabase
+    .from('sites')
+    .select('id')
+    .eq('id', siteId)
+    .eq('agency_id', user.id)
+    .maybeSingle();
+    
+  if (siteCheckError || !siteCheck) {
+    return res.status(403).json({ error: "Forbidden: You do not own this site" });
+  }
+
   try {
     const groqApiKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
     if (groqApiKey) {
