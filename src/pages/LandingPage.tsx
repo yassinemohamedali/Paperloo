@@ -676,15 +676,17 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-black py-24 px-6 border-t border-white/10">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-16 mb-24 uppercase">
-            <div className="lg:col-span-1 space-y-8">
-              <span className="text-4xl logo">PAPERLOO INFRASTRUCTURE</span>
-              <p className="text-muted text-[10px] tracking-[0.15em] max-w-xs leading-relaxed">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 lg:gap-12 mb-24 uppercase">
+            <div className="sm:col-span-2 md:col-span-3 lg:col-span-2 space-y-6">
+              <div className="text-2xl sm:text-3xl font-black logo tracking-wider leading-tight text-white block">
+                PAPERLOO <span className="text-accent">INFRASTRUCTURE</span>
+              </div>
+              <p className="text-muted text-[10px] tracking-[0.15em] max-w-sm leading-relaxed">
                 THE GLOBAL STANDARD FOR AUTOMATED COMPLIANCE INFRASTRUCTURE.
               </p>
               <div className="space-y-2">
                 <p className="text-accent text-sm tracking-[0.1em]">compliance@paperloo.com</p>
-                <div className="pt-4 space-y-1">
+                <div className="pt-2 space-y-1">
                   <p className="text-[9px] text-white/40 tracking-[0.3em]">GLOBAL PRESENCE</p>
                   <p className="text-[10px] tracking-[0.2em] font-bold">ALEXANDRIA | NEW YORK | LONDON</p>
                 </div>
