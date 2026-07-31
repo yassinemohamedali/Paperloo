@@ -2,56 +2,65 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import { 
+  ShieldCheck, 
+  Activity, 
+  Globe, 
+  FileText, 
+  CheckCircle2, 
+  RefreshCw, 
+  Lock, 
+  Zap, 
+  Sparkles, 
+  Code, 
+  Scale, 
+  Layers, 
+  ArrowRight, 
+  ShieldAlert, 
+  Cpu, 
+  Terminal, 
+  Copy, 
+  Check,
+  Search,
+  Sliders,
+  Server
+} from 'lucide-react';
 
 import { useAuthStore } from '@/src/store/authStore';
 import { supabase } from '@/src/lib/supabase';
 
 const SERVICES = [
-  { id: '01', name: 'JURISPRUDENTIAL HARMONIZATION ENGINE', description: 'AUTONOMOUS ENTERPRISE-GRADE DISCLOSURE SYNTHESIS FOR MULTI-JURISDICTIONAL REGULATORY ALIGNMENT.' },
-  { id: '02', name: 'UBIQUITOUS GOVERNANCE FRAMEWORKS', description: 'INVIOLABLE LEGAL INFRASTRUCTURE AND STATUTORY MATRIX FOR MULTI-TENANT ENTERPRISE ECOSYSTEMS.' },
-  { id: '03', name: 'CONSENT ARCHITECTURE & TELEMETRY', description: 'DYNAMIC PRIVACY ORCHESTRATION AND OMNIPRESENT DATA GOVERNANCE PIPELINES.' },
-  { id: '04', name: 'TRANS-JURISDICTIONAL ADAPTATION', description: 'REAL-TIME STATUTORY SYNCHRONIZATION AND SANCTION MITIGATION ACROSS ALL SOVEREIGN DOMAINS.' },
-  { id: '05', name: 'PROACTIVE REGULATORY MITIGATION', description: 'CONTINUOUS MONITORING OF PARLIAMENTARY LEGISLATION AND GLOBAL JURISPRUDENTIAL SHIFTS.' },
+  { id: '01', name: 'AUTOMATED LEGAL COMPLIANCE ENGINE', description: 'Automatically generate, update, and publish bulletproof Privacy Policies, Terms of Service, and DPAs tailored to your tech stack and target jurisdictions.' },
+  { id: '02', name: 'COMPLETE SAAS & AGENCY LEGAL STACK', description: 'A unified compliance workspace built specifically for SaaS platforms, e-commerce brands, and marketing agencies managing multiple client sites.' },
+  { id: '03', name: 'ZERO-CODE COOKIE & CONSENT MANAGER', description: 'Deploy lightweight cookie banners that auto-block unauthorized trackers, handle opt-outs, and keep you compliant with GDPR & CCPA.' },
+  { id: '04', name: 'REAL-TIME STATUTORY AUTO-UPDATES', description: 'When privacy laws change in Europe, California, or Australia, your legal documents automatically update on your live sites with zero downtime.' },
+  { id: '05', name: '24/7 SITE RISK SCANNING', description: 'Continuous background monitoring scans your sites for missing disclosures, unmapped cookies, and legal vulnerabilities before fines happen.' },
 ];
 
 const ADVANTAGES = [
-  { title: 'STATUTORY INFRASTRUCTURE', content: 'THE PAPERLOO ARCHITECTURE SEAMLESSLY INTEGRATES WITH YOUR SYSTEM ECOSYSTEM, PROVIDING CONTINUOUS, AUTOMATED LEGAL DISCLOSURES AT SCALE.' },
-  { title: 'ENTERPRISE GOVERNANCE', content: 'COMPREHENSIVE JURISPRUDENTIAL ALIGNMENT ACROSS GDPR, CCPA, APPs, AND PIPEDA VIA OUR PROPRIETARY GOVERNANCE PROTOCOLS.' },
-  { title: 'EXPEDITIOUS DEPLOYMENT', content: 'MITIGATE STATUTORY EXPOSURE INSTANTANEOUSLY, TRANSFORMING COMPLIANCE AUDITING FROM MONTHS TO MILLISECONDS.' },
-  { title: 'ELEGANT ERUDITE ARCHITECTURE', content: 'AUTHORITATIVE DOCUMENT DESIGN AND SOPHISTICATED TYPOGRAPHY THAT AMPLIFIES INSTITUTIONAL TRUST.' },
-  { title: 'PLATFORM-AGNOSTIC TELEMETRY', content: 'UNIFIED ARCHITECTURAL ACCESS FOR BESPOKE BUILDS, E-COMMERCE CONGLOMERATES, AND ENTERPRISE CMS NETWORKS.' },
-  { title: 'ZERO-LATENCY ORCHESTRATION', content: 'HIGH-PERFORMANCE EDGE-COMPUTED INJECTION SCRIPTS ENSURING MISSION-CRITICAL THROUGHPUT IS NEVER IMPAIRED.' },
+  { title: 'INSTANT 1-CLICK INTEGRATION', content: 'Embed our lightweight script or connect your custom domain to publish legally binding disclosures across all client websites in under 3 minutes.' },
+  { title: 'GLOBAL MULTI-REGION COVERAGE', content: 'Stay 100% protected across GDPR (EU/UK), CCPA/CPRA (California), PIPEDA (Canada), and APPs (Australia) with a single unified platform.' },
+  { title: 'REDUCE LEGAL COSTS BY 90%', content: 'Skip $500/hr attorney fees. Generate customized, lawyer-vetted legal policies engineered specifically for digital businesses and SaaS.' },
+  { title: 'WHITE-LABEL BRANDING FOR AGENCIES', content: 'Remove Paperloo logos and deliver fully customized, client-branded legal portals and compliance badges to boost client trust.' },
+  { title: 'WORKS WITH ANY WEB STACK', content: 'Seamlessly integrates with Webflow, WordPress, React, Next.js, Shopify, custom Node.js backends, and headless CMS platforms.' },
+  { title: 'LIGHTSPEED EDGE PERFORMANCE', content: 'High-speed CDN script loading in under 2ms ensures your page speed, user experience, and Google SEO rankings remain completely unimpacted.' },
 ];
 
 const PROCESS = [
   { 
-    title: 'AUDIT & ASSESSMENT', 
-    bullets: ['ENTERPRISE DATA AUDIT', 'JURISDICTIONAL MAPPING', 'INFRASTRUCTURE ANALYSIS'],
-    icon: (
-      <svg className="w-12 h-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-      </svg>
-    )
+    title: 'AUTOMATED SITE AUDIT', 
+    subtitle: 'Scan your website to automatically detect third-party scripts, data collection points, and missing legal disclosures.',
+    bullets: ['Detect PII & Trackers', 'Map Target Jurisdictions', 'Identify Compliance Gaps'],
   },
   { 
-    title: 'GOVERNANCE SETUP', 
-    bullets: ['SaaS GOVERNANCE PLAN', 'API INTEGRATION', 'SECURITY PROTOCOLS'],
-    icon: (
-      <svg className="w-12 h-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M3 9h18M9 21V9" />
-      </svg>
-    )
+    title: 'ONE-CLICK POLICY SETUP', 
+    subtitle: 'Generate customized, lawyer-vetted legal policies and embed them on your site using a single line of code.',
+    bullets: ['Tailored Agency/SaaS Clauses', 'Custom White-Label Branding', 'Zero-Code Script Embed'],
   },
   { 
-    title: 'GLOBAL DEPLOYMENT', 
-    bullets: ['INFRASTRUCTURE ROLLOUT', 'LIVE MONITORING', 'COMPLIANCE SYNC'],
-    icon: (
-      <svg className="w-12 h-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 8v8M8 12h8" />
-      </svg>
-    )
+    title: 'AUTONOMOUS PROTECTION', 
+    subtitle: 'Sit back as Paperloo monitors global legislation changes and updates your live legal policies automatically.',
+    bullets: ['Real-Time Law Updates', '24/7 Threat Monitoring', 'Downloadable Audit Reports'],
   },
 ];
 
@@ -343,8 +352,8 @@ export default function LandingPage() {
             <AnimatedHeadline text="INFRASTRUCTURE." />
           </h1>
 
-          <p className="text-muted text-xs sm:text-sm md:text-lg tracking-[0.15em] max-w-3xl mx-auto mb-16 px-4">
-            WE PROVIDE THE UNDERLYING LEGAL ARCHITECTURE FOR SCALE-UP AGENCIES AND GLOBAL ENTERPRISE SaaS SOLUTIONS.
+          <p className="text-muted text-xs sm:text-sm md:text-base tracking-[0.12em] max-w-3xl mx-auto mb-16 px-4 uppercase font-semibold leading-relaxed">
+            AUTOMATE LEGAL COMPLIANCE FOR YOUR AGENCY OR SAAS. GENERATE BULLETPROOF PRIVACY POLICIES, TERMS OF SERVICE, AND COOKIE BANNERS IN MINUTES.
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 px-6">
@@ -378,45 +387,158 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Portfolio Section */}
-      <section className="bg-black py-24">
+      {/* Live Product Demo & Control Center Section */}
+      <section className="bg-black py-20 border-y border-white/10 relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6">
-          <div className="relative aspect-video bg-surface border border-white/10 overflow-hidden group reveal-up">
-            <img 
-              src="https://picsum.photos/seed/paperloo-dashboard/1920/1080" 
-              alt="Dashboard" 
-              className="w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-3/4 h-3/4 bg-black border border-white/20 shadow-2xl overflow-hidden">
-                 <div className="h-6 bg-surface-2 border-b border-white/10 flex items-center px-3 gap-1.5">
-                   <div className="w-2 h-2 rounded-full bg-white/20"></div>
-                   <div className="w-2 h-2 rounded-full bg-white/20"></div>
-                   <div className="w-2 h-2 rounded-full bg-white/20"></div>
-                 </div>
-                 <div className="p-8 space-y-4">
-                    <div className="h-8 w-1/3 bg-white/10"></div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="h-32 bg-white/5"></div>
-                      <div className="h-32 bg-white/5"></div>
-                      <div className="h-32 bg-white/5"></div>
-                    </div>
-                 </div>
-              </div>
-            </div>
+          <div className="section-label mb-4 text-accent flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-accent animate-ping"></span>
+            PAPERLOO COMPLIANCE OPERATING SYSTEM v4.2
           </div>
           
-          <div className="mt-12 relative aspect-[21/9] bg-surface border border-white/10 overflow-hidden reveal-up">
-            <img 
-              src="https://picsum.photos/seed/cash-roi/1920/800?grayscale" 
-              alt="ROI" 
-              className="w-full h-full object-cover opacity-40"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-            <div className="absolute bottom-12 left-12">
-              <h2 className="text-4xl font-sans font-extrabold tracking-[0.04em]">ROI DRIVEN <span className="whitespace-nowrap">COMPLIANCE.</span></h2>
+          <div className="relative rounded-2xl bg-surface border border-white/20 shadow-2xl overflow-hidden reveal-up">
+            {/* Control Bar Header */}
+            <div className="bg-surface-2 px-6 py-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                  <div className="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                </div>
+                <div className="h-4 w-px bg-white/20 mx-1"></div>
+                <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-lg px-3 py-1 text-xs text-muted font-mono">
+                  <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-white font-bold">https://app.your-agency.com/compliance-engine</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-mono">
+                <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  STATUTORY HEALTH: 100%
+                </span>
+                <span className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-muted">
+                  4 REGIMES ACTIVE
+                </span>
+              </div>
+            </div>
+
+            {/* Main Interactive Control Center Grid */}
+            <div className="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 bg-black/80">
+              
+              {/* Left Column: Active Legal Documents */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <span className="text-xs font-bold tracking-widest text-muted uppercase flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-accent" /> Active Disclosures
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">AUTO-SYNCHRONIZED</span>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    { title: 'Privacy Policy (GDPR / CCPA / PIPEDA)', ver: 'v2.4.1', status: 'COMPLIANT', time: 'Synced 2m ago', active: true },
+                    { title: 'Terms of Service & EULA', ver: 'v1.9.0', status: 'ACTIVE', time: 'Synced 12m ago', active: true },
+                    { title: 'Cookie Consent Manager & Telemetry', ver: 'v3.2.0', status: 'ENFORCING', time: '1,420 Consents Today', active: true },
+                    { title: 'Data Processing Agreement (DPA + SCCs)', ver: 'v1.4.2', status: 'EXECUTED', time: 'Synced 1h ago', active: true }
+                  ].map((doc, idx) => (
+                    <div key={idx} className="bg-surface border border-white/10 hover:border-accent/50 p-4 rounded-xl transition-all flex items-center justify-between group">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span className="text-sm font-bold text-white group-hover:text-accent transition-colors">{doc.title}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-muted font-mono pl-6">
+                          <span>{doc.ver}</span>
+                          <span>•</span>
+                          <span>{doc.time}</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md shrink-0">
+                        {doc.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Center Column: Global Compliance Metrics */}
+              <div className="lg:col-span-4 space-y-6">
+                <div className="bg-surface border border-white/10 p-6 rounded-xl space-y-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-accent" /> Regional Matrix
+                    </span>
+                    <span className="text-xs text-accent font-mono font-bold">0 Violations</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { reg: 'EU / UK', law: 'GDPR / UK-GDPR', score: '100%', badge: 'PASS' },
+                      { reg: 'USA', law: 'CCPA / CPRA / VCDPA', score: '100%', badge: 'PASS' },
+                      { reg: 'CANADA', law: 'PIPEDA / Law 25', score: '100%', badge: 'PASS' },
+                      { reg: 'GLOBAL', law: 'APPs / Privacy Act', score: '100%', badge: 'PASS' },
+                    ].map((item, idx) => (
+                      <div key={idx} className="bg-black/60 border border-white/10 p-3 rounded-lg space-y-1">
+                        <div className="flex justify-between items-center text-[10px] text-muted font-bold">
+                          <span>{item.reg}</span>
+                          <span className="text-emerald-400">{item.badge}</span>
+                        </div>
+                        <div className="text-sm font-bold text-white font-mono">{item.law}</div>
+                        <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+                          <div className="bg-emerald-400 h-full w-full"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-muted font-mono">
+                    <span className="flex items-center gap-1.5 text-white">
+                      <Zap className="w-3.5 h-3.5 text-accent" /> Edge Injection CDN:
+                    </span>
+                    <span className="text-emerald-400 font-bold">1.2ms Avg Latency</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Live Audit Terminal Stream */}
+              <div className="lg:col-span-3 space-y-4">
+                <div className="bg-black border border-white/20 rounded-xl p-4 font-mono text-[11px] space-y-3">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2 text-muted">
+                    <span className="flex items-center gap-2 text-white font-bold">
+                      <Terminal className="w-3.5 h-3.5 text-accent" /> Live Scanner Log
+                    </span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  </div>
+
+                  <div className="space-y-2 text-muted leading-relaxed">
+                    <p className="text-white/80"><span className="text-accent">[05:41:02]</span> Continuous DOM scan completed for app.your-agency.com</p>
+                    <p className="text-emerald-400"><span className="text-accent">[05:41:05]</span> Verified 14 third-party trackers (GA4, Meta, Stripe, Hubspot)</p>
+                    <p className="text-white/80"><span className="text-accent">[05:41:08]</span> Statutory policies synced to 12 CDN edge nodes</p>
+                    <p className="text-emerald-400"><span className="text-accent">[05:41:12]</span> All statutory checks passed. Zero legal exposure.</p>
+                  </div>
+
+                  <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                    <span className="text-[10px] text-muted">AUTO-SCAN FREQUENCY</span>
+                    <span className="text-[10px] text-accent font-bold">EVERY 24 HOURS</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Key Value Proposition Bar */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
+            <div className="p-6 bg-surface border border-white/10 rounded-xl space-y-2">
+              <div className="text-2xl font-black font-sans text-accent">3 MINUTES</div>
+              <p className="text-xs text-muted font-mono tracking-wider uppercase">Average setup time for full agency client site protection</p>
+            </div>
+            <div className="p-6 bg-surface border border-white/10 rounded-xl space-y-2">
+              <div className="text-2xl font-black font-sans text-emerald-400">0 MANUAL UPDATES</div>
+              <p className="text-xs text-muted font-mono tracking-wider uppercase">Policies automatically re-sync when global privacy laws change</p>
+            </div>
+            <div className="p-6 bg-surface border border-white/10 rounded-xl space-y-2">
+              <div className="text-2xl font-black font-sans text-white">100% WHITE-LABEL</div>
+              <p className="text-xs text-muted font-mono tracking-wider uppercase">Deliver custom legal portals with your agency logo and domain</p>
             </div>
           </div>
         </div>
@@ -555,34 +677,189 @@ export default function LandingPage() {
       </section>
 
       {/* Process Section */}
-      <section className="py-32 px-6">
+      <section className="py-32 px-6 bg-surface-2/30 border-t border-white/10">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-6xl md:text-8xl font-sans font-extrabold tracking-[0.04em] mb-24 text-center reveal-up uppercase">
-            UPGRADE YOUR<br /><span className="whitespace-nowrap">GOVERNANCE ENGINE</span>
-          </h2>
+          <div className="text-center mb-20 reveal-up">
+            <div className="section-label mb-4 text-accent inline-block">SIMPLE 3-STEP WORKFLOW</div>
+            <h2 className="text-4xl sm:text-6xl md:text-7xl font-sans font-black tracking-tighter uppercase">
+              HOW PAPERLOO WORKS
+            </h2>
+            <p className="text-muted text-xs sm:text-sm tracking-widest max-w-xl mx-auto mt-4 uppercase">
+              Automated legal protection for your agency clients and SaaS applications in under 3 minutes.
+            </p>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {PROCESS.map((step, idx) => (
-              <div key={idx} className="relative group reveal-up" style={{ transitionDelay: `${idx * 150}ms` }}>
-                <div className="aspect-square bg-surface border border-white/10 flex items-center justify-center mb-12 group-hover:border-accent transition-all duration-500 group-hover:-translate-y-2">
-                  {step.icon}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Step 1: Automated Site Audit */}
+            <div className="bg-surface border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-accent/50 transition-all group reveal-up space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-accent bg-accent/10 border border-accent/20 px-3 py-1 rounded-full">
+                    STEP 01
+                  </span>
+                  <Search className="w-5 h-5 text-muted group-hover:text-accent transition-colors" />
                 </div>
-                <div className="space-y-6">
-                  <h3 className="text-3xl font-sans font-extrabold tracking-[0.04em]">{step.title}</h3>
-                  <ul className="space-y-3">
-                    {step.bullets.map((bullet, bIdx) => (
-                      <li key={bIdx} className="flex items-center gap-3 text-muted text-[10px] tracking-[0.2em]">
-                        <div className="w-1 h-1 bg-accent"></div>
-                        {bullet}
-                      </li>
-                    ))}
-                  </ul>
+
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-sans font-black tracking-tight text-white uppercase">AUTOMATED SITE AUDIT</h3>
+                  <p className="text-xs text-muted leading-relaxed">
+                    Scan any client URL to automatically detect data collection points, analytics scripts, and missing required legal disclosures.
+                  </p>
                 </div>
-                {idx < PROCESS.length - 1 && (
-                  <div className="hidden md:block absolute top-1/4 -right-6 w-12 h-px bg-white/10"></div>
-                )}
+
+                {/* Visual Widget 1: Site Scanner UI */}
+                <div className="bg-black/80 border border-white/10 rounded-xl p-4 font-mono text-xs space-y-3 mt-4">
+                  <div className="flex items-center gap-2 bg-surface px-3 py-1.5 rounded-lg border border-white/10">
+                    <Search className="w-3.5 h-3.5 text-accent" />
+                    <span className="text-[11px] text-white truncate">https://client-agency.com</span>
+                    <span className="ml-auto text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">SCANNING</span>
+                  </div>
+
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex justify-between text-[10px] text-muted">
+                      <span>DOM Audit Progress</span>
+                      <span className="text-accent font-bold">100% Complete</span>
+                    </div>
+                    <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-accent h-full w-full"></div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1 text-[10px]">
+                    <div className="bg-white/5 p-2 rounded border border-white/10 text-center">
+                      <span className="block font-bold text-white text-sm">14</span>
+                      <span className="text-muted">Trackers Found</span>
+                    </div>
+                    <div className="bg-white/5 p-2 rounded border border-white/10 text-center">
+                      <span className="block font-bold text-emerald-400 text-sm">0</span>
+                      <span className="text-muted font-bold text-emerald-400">Missing Policies</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            ))}
+
+              <ul className="space-y-2 pt-4 border-t border-white/10 text-[11px] text-muted font-mono">
+                {['Detect PII & Third-Party Trackers', 'Map Target Global Jurisdictions', 'Identify Missing Disclosure Pages'].map((b, bIdx) => (
+                  <li key={bIdx} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Step 2: One-Click Policy Setup */}
+            <div className="bg-surface border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-accent/50 transition-all group reveal-up space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-accent bg-accent/10 border border-accent/20 px-3 py-1 rounded-full">
+                    STEP 02
+                  </span>
+                  <Code className="w-5 h-5 text-muted group-hover:text-accent transition-colors" />
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-sans font-black tracking-tight text-white uppercase">ONE-CLICK POLICY SETUP</h3>
+                  <p className="text-xs text-muted leading-relaxed">
+                    Generate customized, attorney-vetted legal documents and embed them on your client sites using a single line of script.
+                  </p>
+                </div>
+
+                {/* Visual Widget 2: Policy Snippet & Toggles */}
+                <div className="bg-black/80 border border-white/10 rounded-xl p-4 font-mono text-xs space-y-3 mt-4">
+                  <div className="flex items-center justify-between text-[10px] text-muted border-b border-white/10 pb-2">
+                    <span className="text-white font-bold flex items-center gap-1.5">
+                      <Code className="w-3.5 h-3.5 text-accent" /> Zero-Code Embed Snippet
+                    </span>
+                    <span className="text-accent text-[9px] font-bold">1-LINE SCRIPT</span>
+                  </div>
+
+                  <div className="bg-surface p-2.5 rounded-lg border border-white/10 text-[10px] text-muted overflow-x-auto">
+                    <code className="text-emerald-400 whitespace-nowrap">
+                      &lt;script src="https://cdn.paperloo.ai/v2/sdk.js" data-site="ag_8f921"&gt;&lt;/script&gt;
+                    </code>
+                  </div>
+
+                  <div className="space-y-1.5 pt-1">
+                    {[
+                      { label: 'Privacy Policy (GDPR/CCPA)', enabled: true },
+                      { label: 'Terms of Service', enabled: true },
+                      { label: 'Cookie Banner + Opt-Out', enabled: true }
+                    ].map((t, tidx) => (
+                      <div key={tidx} className="flex items-center justify-between text-[10px] bg-white/5 px-2.5 py-1.5 rounded border border-white/10">
+                        <span className="text-white">{t.label}</span>
+                        <span className="text-emerald-400 font-bold text-[9px]">[ACTIVE]</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <ul className="space-y-2 pt-4 border-t border-white/10 text-[11px] text-muted font-mono">
+                {['Tailored Agency & SaaS Clauses', 'White-Label Branding Customization', 'Zero-Code 1-Line Script Embed'].map((b, bIdx) => (
+                  <li key={bIdx} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Step 3: Autonomous Protection */}
+            <div className="bg-surface border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-accent/50 transition-all group reveal-up space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-accent bg-accent/10 border border-accent/20 px-3 py-1 rounded-full">
+                    STEP 03
+                  </span>
+                  <Globe className="w-5 h-5 text-muted group-hover:text-accent transition-colors" />
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-sans font-black tracking-tight text-white uppercase">AUTONOMOUS PROTECTION</h3>
+                  <p className="text-xs text-muted leading-relaxed">
+                    Paperloo continuously monitors global legislation changes and updates your live policies automatically with zero downtime.
+                  </p>
+                </div>
+
+                {/* Visual Widget 3: Live CDN Edge Status */}
+                <div className="bg-black/80 border border-white/10 rounded-xl p-4 font-mono text-xs space-y-3 mt-4">
+                  <div className="flex items-center justify-between text-[10px] text-muted border-b border-white/10 pb-2">
+                    <span className="text-white font-bold flex items-center gap-1.5">
+                      <Server className="w-3.5 h-3.5 text-accent" /> Global Edge CDN Distribution
+                    </span>
+                    <span className="text-emerald-400 text-[9px] font-bold">12 NODES LIVE</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-[10px] bg-white/5 p-2 rounded border border-white/10">
+                      <span className="text-white">US-East Node (Virginia)</span>
+                      <span className="text-emerald-400 font-bold">1.1ms</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] bg-white/5 p-2 rounded border border-white/10">
+                      <span className="text-white">EU-Central Node (Frankfurt)</span>
+                      <span className="text-emerald-400 font-bold">1.4ms</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-lg flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="text-[10px] text-emerald-400 font-bold">STATUTORY AUDIT CERTIFICATE ISSUED</span>
+                  </div>
+                </div>
+              </div>
+
+              <ul className="space-y-2 pt-4 border-t border-white/10 text-[11px] text-muted font-mono">
+                {['Real-Time Global Law Updates', '24/7 Automated Vulnerability Monitoring', 'Downloadable Legal Audit Certificates'].map((b, bIdx) => (
+                  <li key={bIdx} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
           </div>
         </div>
       </section>
