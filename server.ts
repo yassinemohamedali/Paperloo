@@ -704,6 +704,147 @@ app.post("/api/scan-external-site", async (req, res) => {
     }
   });
 
+  // Autonomous 0-Code GitHub Injection: Pushes Cookie Banner script & Legal Docs directly to client repo
+  app.post("/api/github/inject-compliance", async (req, res) => {
+    try {
+      const { token, repoFullName, siteId } = req.body;
+      if (!token || !repoFullName || !siteId) {
+        return res.status(400).json({ error: "Missing token, repoFullName, or siteId" });
+      }
+
+      const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+      const host = req.get("host") || "localhost:3000";
+      const appUrl = `${protocol}://${host}`;
+
+      const bannerScriptTag = `<script src="${appUrl}/api/paperloo.js?siteId=${siteId}" async></script>`;
+
+      const committedFiles: Array<{ path: string; html_url?: string }> = [];
+
+      // 1. Commit public/paperloo-compliance.html
+      const complianceHtml = `<!DOCTYPE html>
+<!-- Paperloo Zero-Code Compliance Script & Legal Documents Injection -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Paperloo Compliance Injection</title>
+  ${bannerScriptTag}
+</head>
+<body>
+  <div id="paperloo-compliance-root"></div>
+</body>
+</html>`;
+
+      const commitFileOnGithub = async (filePath: string, fileContent: string, commitMsg: string) => {
+        const url = `https://api.github.com/repos/${repoFullName}/contents/${filePath}`;
+        
+        let sha: string | undefined;
+        try {
+          const getRes = await fetch(url, {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "User-Agent": "Paperloo-App",
+              "Accept": "application/vnd.github.v3+json"
+            }
+          });
+          if (getRes.ok) {
+            const data = await getRes.json();
+            sha = data.sha;
+          }
+        } catch (e) {}
+
+        const putRes = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "User-Agent": "Paperloo-App"
+          },
+          body: JSON.stringify({
+            message: commitMsg,
+            content: Buffer.from(fileContent).toString("base64"),
+            ...(sha ? { sha } : {})
+          })
+        });
+
+        if (putRes.ok) {
+          const resData = await putRes.json();
+          committedFiles.push({ path: filePath, html_url: resData.content?.html_url });
+        } else {
+          const errText = await putRes.text();
+          console.warn(`GitHub PUT failed for ${filePath}:`, errText);
+        }
+      };
+
+      await commitFileOnGithub(
+        "public/paperloo-compliance.html", 
+        complianceHtml, 
+        "ci(paperloo): deploy active cookie banner & compliance script (zero-code)"
+      );
+
+      const privacyHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Privacy Policy</title>
+  ${bannerScriptTag}
+</head>
+<body style="font-family: sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto;">
+  <h1>Privacy Policy</h1>
+  <p>This website is protected by Paperloo Autonomous Compliance Infrastructure.</p>
+  ${bannerScriptTag}
+</body>
+</html>`;
+
+      await commitFileOnGithub(
+        "public/privacy.html",
+        privacyHtml,
+        "docs(compliance): publish automated privacy policy"
+      );
+
+      try {
+        const getIndex = await fetch(`https://api.github.com/repos/${repoFullName}/contents/index.html`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "User-Agent": "Paperloo-App",
+            "Accept": "application/vnd.github.v3+json"
+          }
+        });
+
+        if (getIndex.ok) {
+          const indexData = await getIndex.json();
+          const currentContent = Buffer.from(indexData.content, "base64").toString("utf-8");
+
+          if (!currentContent.includes("/api/paperloo.js")) {
+            let updatedContent = currentContent;
+            if (currentContent.includes("</head>")) {
+              updatedContent = currentContent.replace("</head>", `  ${bannerScriptTag}\n</head>`);
+            } else {
+              updatedContent = bannerScriptTag + "\n" + currentContent;
+            }
+
+            await commitFileOnGithub(
+              "index.html",
+              updatedContent,
+              "feat(compliance): zero-code injection of Paperloo Cookie Banner into index.html"
+            );
+          }
+        }
+      } catch (e) {
+        console.warn("Could not check/inject index.html:", e);
+      }
+
+      res.json({
+        success: true,
+        message: `Successfully injected Paperloo Cookie Banner & Compliance Docs into GitHub repo: ${repoFullName}`,
+        committedFiles
+      });
+
+    } catch (error: any) {
+      console.error("GitHub injection error:", error);
+      res.status(500).json({ error: error.message || "Failed to inject compliance to GitHub" });
+    }
+  });
+
   // OAuth Callback Handler for Popups
   app.get("/auth/callback", (req, res) => {
     res.send(`
