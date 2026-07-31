@@ -241,8 +241,18 @@ export default function AuditReport() {
             </div>
             <div className="flex flex-col md:flex-row gap-4">
               <button 
+                onClick={() => window.print()}
+                className="bracket-btn py-3 px-6 text-[11px] font-black flex items-center gap-3 border-accent/50 text-accent mb-2"
+              >
+                <span className="bracket-btn-inner"></span>
+                <span className="relative z-10 flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  PRINT / PDF REPORT
+                </span>
+              </button>
+              <button 
                 onClick={() => {
-                  toast.success('Compliance Package exported. Preparing ZIP archive...', { duration: 4000 });
+                  toast.success('Compliance Package exported. Preparing JSON audit archive...', { duration: 4000 });
                   setTimeout(() => {
                     const blob = new Blob([JSON.stringify({ audit_date: new Date(), scores, averageScore }, null, 2)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
@@ -253,14 +263,14 @@ export default function AuditReport() {
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-                  }, 1500);
+                  }, 1200);
                 }}
-                className="bracket-btn py-3 px-8 text-[11px] font-black flex items-center gap-3 border-white text-white mb-2"
+                className="bracket-btn py-3 px-6 text-[11px] font-black flex items-center gap-3 border-white text-white mb-2"
               >
                 <span className="bracket-btn-inner"></span>
                 <span className="relative z-10 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-file-archive"><circle cx="15" cy="19" r="2"/><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="9" cy="19" r="2"/><path d="M5 11h14"/><path d="m14 15-4-4"/></svg>
-                  EXPORT COMPLIANCE PACKAGE
+                  EXPORT JSON
                 </span>
               </button>
               <button 

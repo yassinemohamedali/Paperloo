@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
 import { Globe, FileText, Settings, ArrowLeft, ExternalLink, RefreshCw, AlertCircle, MessageSquare, Send, ShieldCheck, Trash2, Cookie, Search, Inbox, Cpu } from 'lucide-react';
@@ -18,15 +18,38 @@ type Comment = Database['public']['Tables']['site_comments']['Row'];
 export default function SiteDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'banner' | 'scanner' | 'dsar' | 'gtm'>('overview');
 
-  const { data: site, isLoading: siteLoading } = useQuery<Site>({
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.includes('/cookie-banner')) setActiveTab('banner');
+    else if (path.includes('/cookie-scanner')) setActiveTab('scanner');
+    else if (path.includes('/dsar-inbox')) setActiveTab('dsar');
+    else if (path.includes('/google-gtm-tags') || path.includes('/gtm-tags')) setActiveTab('gtm');
+    else setActiveTab('overview');
+  }, [location.pathname]);
+
+  const handleTabChange = (tabId: 'overview' | 'banner' | 'scanner' | 'dsar' | 'gtm') => {
+    setActiveTab(tabId);
+    if (tabId === 'overview') navigate(`/sites/${id}`);
+    else if (tabId === 'banner') navigate(`/sites/${id}/cookie-banner`);
+    else if (tabId === 'scanner') navigate(`/sites/${id}/cookie-scanner`);
+    else if (tabId === 'dsar') navigate(`/sites/${id}/dsar-inbox`);
+    else if (tabId === 'gtm') navigate(`/sites/${id}/google-gtm-tags`);
+  };
+
+  const { data: site, isLoading: siteLoading } = useQuery<Site | null>({
     queryKey: ['site', id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('sites').select('*').eq('id', id).single();
-      if (error) throw error;
+      if (!id) return null;
+      const { data, error } = await supabase.from('sites').select('*').eq('id', id).maybeSingle();
+      if (error) {
+        console.error('Error fetching site:', error);
+        return null;
+      }
       return data;
     },
     enabled: !!id,
@@ -193,13 +216,30 @@ export default function SiteDetail() {
     },
   });
 
-  if (siteLoading || docsLoading || !site) return <div className="animate-pulse space-y-8">
+  if (siteLoading || docsLoading) return <div className="animate-pulse space-y-8">
     <div className="h-48 bg-surface rounded-[10px]" />
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div className="h-64 bg-surface rounded-[10px]" />
       <div className="h-64 bg-surface rounded-[10px]" />
     </div>
   </div>;
+
+  if (!site) {
+    return (
+      <div className="p-12 text-center bg-surface border border-white/10 rounded-[10px] space-y-6 font-mono max-w-2xl mx-auto my-12">
+        <AlertCircle className="h-12 w-12 text-rose-500 mx-auto animate-bounce" />
+        <h2 className="text-xl font-bold tracking-tight text-white uppercase">SITE NOT FOUND OR INVALID NODE ID</h2>
+        <p className="text-xs text-muted leading-relaxed uppercase tracking-wider">
+          The requested site identifier <code className="text-accent bg-black/50 px-2 py-1 rounded border border-white/10">{id}</code> does not match any active monitored digital property in your account.
+        </p>
+        <button onClick={() => navigate('/sites')} className="bracket-btn py-3 px-6 text-xs inline-flex items-center gap-2 border-accent text-accent">
+          <span className="bracket-btn-inner"></span>
+          <ArrowLeft className="h-4 w-4" />
+          RETURN TO MONITORED PROPERTIES
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12 font-mono">
@@ -245,7 +285,7 @@ export default function SiteDetail() {
         ].map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => handleTabChange(tab.id as any)}
             className={cn(
               "flex items-center gap-2 px-6 py-4 text-[10px] font-black tracking-widest transition-all border-b-2",
               activeTab === tab.id ? "border-accent text-accent" : "border-transparent text-muted hover:text-white"

@@ -239,9 +239,6 @@ export async function calculateComplianceScore(siteId: string) {
   };
 
   // Final adjustments (Cap at 100)
-  if (docCount === 3) {
-    score = 100;
-  }
   score = Math.min(100, Math.max(0, score));
 
   // Determine Grade

@@ -114,6 +114,16 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     dpoEmail: dpoContact
   }, null, 2);
 
+  const langNames: Record<string, string> = {
+    en: 'English',
+    fr: 'French (Français)',
+    ar: 'Arabic (العربية)',
+    es: 'Spanish (Español)',
+    pt: 'Portuguese (Português)',
+    de: 'German (Deutsch)',
+  };
+  const targetLanguageName = langNames[language] || language || 'English';
+
   for (const type of docTypes) {
     console.log(`Generating ${type}...`);
 
@@ -177,6 +187,9 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     4. IF POPIA (South Africa) is selected:
        - Include the title "Information Officer" alongside "Data Protection Officer".
 
+    STRICT LANGUAGE & TRANSLATION MANDATE:
+    You MUST output the entire document in ${targetLanguageName}. All section titles, headings, clauses, disclosures, tables, and legal language MUST be fluently written and translated in ${targetLanguageName}. Do NOT output in English unless ${targetLanguageName} is English.
+
     STRICT RULE: Never output phrases like "Since no specific data was provided...", "As no retention period was given...", or "No DPO was specified." Every statement in the generated policy must be written as a definitive, legally binding commitment from the company to the user.
 
     FORMATTING: Return ONLY valid HTML content inside the body (excluding <html>, <head>, or <body> tags). Use headings (<h2>, <h3>), paragraphs (<p>), and unordered lists (<ul>).`;
@@ -206,7 +219,12 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
       }
 
       const completion = await response.json();
-      const aiContent = completion.text || '';
+      let aiContent = completion.text || '';
+
+      // Clean raw markdown code fences if outputted by LLM
+      if (aiContent.includes('```')) {
+        aiContent = aiContent.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim();
+      }
       
       // Inject custom clauses
       const beginningClauses = clauses?.filter(c => c.document_type === type && c.position === 'beginning')

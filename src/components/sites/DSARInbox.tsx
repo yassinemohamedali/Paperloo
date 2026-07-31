@@ -56,6 +56,21 @@ export default function DSARInbox({ siteId }: DSARInboxProps) {
     }
   });
 
+  const calculateSLA = (submittedAt: string, status: string) => {
+    if (status === 'completed') {
+      return { text: 'SLA FULFILLED', class: 'border-green-500/30 text-green-400 bg-green-500/10' };
+    }
+    const daysElapsed = Math.floor((new Date().getTime() - new Date(submittedAt).getTime()) / (1000 * 60 * 60 * 24));
+    const daysRemaining = 30 - daysElapsed;
+    if (daysRemaining < 0) {
+      return { text: `${Math.abs(daysRemaining)}D OVERDUE (GDPR SLA BREACH)`, class: 'border-red-500/50 text-red-400 bg-red-500/10 animate-pulse' };
+    } else if (daysRemaining <= 5) {
+      return { text: `${daysRemaining}D REMAINING (SLA CRITICAL)`, class: 'border-amber-500/50 text-amber-400 bg-amber-500/10' };
+    } else {
+      return { text: `${daysRemaining}D REMAINING (SLA ON TRACK)`, class: 'border-accent/30 text-accent bg-accent/10' };
+    }
+  };
+
   const embedCode = `<!-- Paperloo DSAR Form -->
 <div id="paperloo-dsar-form"></div>
 <script src="${config.appUrl}/api/paperloo.js?siteId=${siteId}" async></script>`.trim();
@@ -139,6 +154,15 @@ export default function DSARInbox({ siteId }: DSARInboxProps) {
                         )}>
                           {req.status}
                         </span>
+                        {(() => {
+                          const sla = calculateSLA(req.submitted_at, req.status);
+                          return (
+                            <span className={cn("px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border flex items-center gap-1", sla.class)}>
+                              <Clock className="h-2.5 w-2.5" />
+                              {sla.text}
+                            </span>
+                          );
+                        })()}
                       </div>
                       <div className="flex items-center gap-4 text-[10px] text-muted font-bold uppercase tracking-widest">
                         <span className="flex items-center gap-1.5">

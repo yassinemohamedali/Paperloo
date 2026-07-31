@@ -182,6 +182,15 @@ const AnimatedRoutes = () => {
           <Route path="/audit-report" element={<PageTransition><AuditReport /></PageTransition>} />
           <Route path="/sites" element={<PageTransition><Sites /></PageTransition>} />
           <Route path="/sites/:id" element={<PageTransition><SiteDetail /></PageTransition>} />
+          <Route path="/sites/:id/cookie-banner" element={<PageTransition><SiteDetail /></PageTransition>} />
+          <Route path="/sites/:id/cookie-scanner" element={<PageTransition><SiteDetail /></PageTransition>} />
+          <Route path="/sites/:id/dsar-inbox" element={<PageTransition><SiteDetail /></PageTransition>} />
+          <Route path="/sites/:id/google-gtm-tags" element={<PageTransition><SiteDetail /></PageTransition>} />
+          <Route path="/sites/:id/gtm-tags" element={<PageTransition><SiteDetail /></PageTransition>} />
+          <Route path="/cookie-banner" element={<Navigate to="/sites" replace />} />
+          <Route path="/cookie-scanner" element={<Navigate to="/sites" replace />} />
+          <Route path="/dsar-inbox" element={<Navigate to="/sites" replace />} />
+          <Route path="/google-gtm-tags" element={<Navigate to="/sites" replace />} />
           <Route path="/sites/:id/questionnaire" element={<PageTransition><Questionnaire /></PageTransition>} />
           <Route path="/sites/:id/documents" element={<PageTransition><Documents /></PageTransition>} />
           <Route path="/alerts" element={<PageTransition><Alerts /></PageTransition>} />

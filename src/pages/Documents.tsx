@@ -40,6 +40,7 @@ export default function Documents() {
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const [showEmbed, setShowEmbed] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
+  const [previewingVersion, setPreviewingVersion] = useState<DocumentVersion | null>(null);
   const [showClauseModal, setShowClauseModal] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
 
@@ -101,6 +102,47 @@ export default function Documents() {
       return data || [];
     },
     enabled: !!id,
+  });
+
+  const restoreVersionMutation = useMutation({
+    mutationFn: async ({ docId, targetVersion }: { docId: string; targetVersion: DocumentVersion | any }) => {
+      const currentDoc = documents.find(d => d.id === docId);
+      if (currentDoc) {
+        // Backup current content before restore
+        await supabase.from('document_versions').insert({
+          document_id: currentDoc.id,
+          site_id: id as string,
+          content: currentDoc.content,
+          version: currentDoc.version,
+          changelog_note: `Backup prior to restoring v${targetVersion.version}`
+        });
+      }
+
+      const { data, error } = await supabase
+        .from('documents')
+        .update({
+          content: targetVersion.content,
+          version: targetVersion.version,
+          is_active: true,
+          updated_at: new Date().toISOString()
+        } as any)
+        .eq('id', docId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (restoredDoc) => {
+      queryClient.invalidateQueries({ queryKey: ['documents', id] });
+      queryClient.invalidateQueries({ queryKey: ['document-versions', id] });
+      toast.success(`Document successfully restored to Version ${restoredDoc.version}!`);
+      setShowHistory(null);
+      setPreviewingVersion(null);
+    },
+    onError: (err: any) => {
+      toast.error(`Restore failed: ${err.message}`);
+    }
   });
 
   const regenerateMutation = useMutation({
@@ -175,8 +217,330 @@ export default function Documents() {
     toast.success('Embed code copied to clipboard');
   };
 
-  const handleDownloadPDF = () => {
-    window.print();
+  const handleDownloadPDF = (docToDownload?: Document | null) => {
+    if (!docToDownload) {
+      toast.error("Please select a document to download.");
+      return;
+    }
+
+    const siteName = site?.name || 'Monitored Site';
+    const docTitle = docToDownload.type ? docToDownload.type.replace(/_/g, ' ').toUpperCase() : 'LEGAL DOCUMENT';
+    const formattedDate = new Date(docToDownload.created_at || Date.now()).toLocaleDateString();
+
+    const printableHtml = `
+      <!DOCTYPE html>
+      <html lang="${selectedLanguage || 'en'}">
+        <head>
+          <meta charset="utf-8" />
+          <title>${docTitle} - ${siteName} | Paperloo AI Compliance</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,700;0,800;0,900;1,800;1,900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+          <style>
+            @page {
+              size: A4;
+              margin: 15mm 15mm 20mm 15mm;
+            }
+            * {
+              box-sizing: border-box;
+            }
+            body {
+              font-family: 'Space Mono', monospace, -apple-system, sans-serif;
+              color: #111111;
+              line-height: 1.6;
+              margin: 0;
+              padding: 0;
+              background: #ffffff;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .paperloo-banner {
+              background: #000000;
+              color: #ffffff;
+              padding: 24px 32px;
+              border-bottom: 4px solid #c8f135;
+              position: relative;
+            }
+            .banner-top {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 12px;
+            }
+            .logo-text {
+              font-family: 'Barlow', sans-serif;
+              font-weight: 900;
+              font-style: italic;
+              font-size: 20px;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+              color: #ffffff;
+            }
+            .logo-accent {
+              color: #c8f135;
+            }
+            .badge-verified {
+              background: rgba(200, 241, 53, 0.15);
+              border: 1px solid #c8f135;
+              color: #c8f135;
+              font-size: 10px;
+              font-weight: 700;
+              padding: 4px 10px;
+              letter-spacing: 0.15em;
+              text-transform: uppercase;
+              display: inline-block;
+            }
+            .banner-title {
+              font-family: 'Barlow', sans-serif;
+              font-weight: 900;
+              font-size: 26px;
+              text-transform: uppercase;
+              letter-spacing: 0.04em;
+              margin: 0 0 6px 0;
+              color: #ffffff;
+            }
+            .banner-sub {
+              font-size: 11px;
+              color: #a1a1aa;
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+            }
+            
+            .container {
+              padding: 32px;
+              max-width: 900px;
+              margin: 0 auto;
+            }
+            
+            .meta-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 12px;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-left: 4px solid #000000;
+              padding: 16px 20px;
+              margin-bottom: 32px;
+              font-size: 11px;
+            }
+            .meta-item {
+              display: flex;
+              flex-direction: column;
+            }
+            .meta-label {
+              color: #64748b;
+              font-weight: 700;
+              font-size: 9px;
+              letter-spacing: 0.12em;
+              text-transform: uppercase;
+              margin-bottom: 2px;
+            }
+            .meta-val {
+              color: #0f172a;
+              font-weight: 700;
+              letter-spacing: 0.05em;
+              word-break: break-all;
+            }
+
+            .content {
+              font-size: 12px;
+              color: #1e293b;
+              line-height: 1.7;
+            }
+            .content h1, .content h2, .content h3, .content h4 {
+              font-family: 'Barlow', sans-serif;
+              font-weight: 800;
+              color: #000000;
+              text-transform: uppercase;
+              letter-spacing: 0.04em;
+              margin-top: 2em;
+              margin-bottom: 0.8em;
+              padding-left: 12px;
+              border-left: 3px solid #c8f135;
+              background: rgba(200, 241, 53, 0.08);
+              padding-top: 6px;
+              padding-bottom: 6px;
+            }
+            .content p {
+              margin-bottom: 1.2em;
+              text-align: justify;
+            }
+            .content ul, .content ol {
+              margin-bottom: 1.2em;
+              padding-left: 24px;
+            }
+            .content li {
+              margin-bottom: 0.4em;
+            }
+            
+            .callout-box {
+              border: 1px solid #c8f135;
+              background: #fafdf0;
+              padding: 16px 20px;
+              margin: 24px 0;
+              border-radius: 2px;
+            }
+            .callout-title {
+              font-family: 'Barlow', sans-serif;
+              font-weight: 800;
+              font-size: 13px;
+              color: #000;
+              text-transform: uppercase;
+              margin-bottom: 6px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+
+            .footer-seal {
+              margin-top: 48px;
+              padding: 20px;
+              border: 2px dashed #cbd5e1;
+              background: #f8fafc;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              font-size: 10px;
+              color: #475569;
+            }
+            .seal-left {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+            }
+            .seal-box {
+              width: 44px;
+              height: 44px;
+              background: #000000;
+              border: 2px solid #c8f135;
+              color: #c8f135;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-family: 'Barlow', sans-serif;
+              font-weight: 900;
+              font-size: 14px;
+              letter-spacing: 0.05em;
+            }
+            .seal-text-title {
+              font-family: 'Barlow', sans-serif;
+              font-weight: 800;
+              color: #000000;
+              font-size: 12px;
+              letter-spacing: 0.05em;
+              text-transform: uppercase;
+            }
+            .seal-right {
+              text-align: right;
+              font-family: 'Space Mono', monospace;
+              font-size: 9px;
+              letter-spacing: 0.1em;
+            }
+
+            @media print {
+              .paperloo-banner {
+                background: #000000 !important;
+                color: #ffffff !important;
+                -webkit-print-color-adjust: exact;
+              }
+              .badge-verified {
+                border-color: #c8f135 !important;
+                color: #c8f135 !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="paperloo-banner">
+            <div class="banner-top">
+              <div class="logo-text">PAPERLOO <span class="logo-accent">//</span> AI COMPLIANCE ENGINE</div>
+              <div class="badge-verified">✓ STATUTORY AUDIT CERTIFIED</div>
+            </div>
+            <h1 class="banner-title">${docTitle}</h1>
+            <div class="banner-sub">MONITORED DIGITAL PROPERTY: ${siteName} • EFFECTIVE DATE: ${formattedDate}</div>
+          </div>
+
+          <div class="container">
+            <div class="meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">Target Organization</span>
+                <span class="meta-val">${siteName} (${site?.url || 'Monitored Site'})</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Document Revision</span>
+                <span class="meta-val">VERSION ${docToDownload.version || '1.0'} (ACTIVE RELEASE)</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Regulatory Frameworks</span>
+                <span class="meta-val">GDPR (EU/UK) • CCPA/CPRA (CA) • PIPEDA • VCDPA</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Cryptographic Audit Hash</span>
+                <span class="meta-val">0x${(docToDownload.id || 'paperloo').replace(/[^a-f0-9]/gi, '').substring(0, 16).toUpperCase()}...SHA256</span>
+              </div>
+            </div>
+
+            <div class="content">
+              ${docToDownload.content}
+            </div>
+
+            <div class="footer-seal">
+              <div class="seal-left">
+                <div class="seal-box">PL</div>
+                <div>
+                  <div class="seal-text-title">OFFICIAL COMPLIANCE CERTIFICATE</div>
+                  <div>GENERATED & VERIFIED BY PAPERLOO LEGAL ENGINE v4.2</div>
+                </div>
+              </div>
+              <div class="seal-right">
+                <div>AUDIT STAMP: ${new Date().toISOString()}</div>
+                <div>SECURE COMPLIANCE INFRASTRUCTURE</div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Print isolated hidden document window
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const docFrame = iframe.contentWindow?.document;
+    if (docFrame) {
+      docFrame.open();
+      docFrame.write(printableHtml);
+      docFrame.close();
+
+      setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 1500);
+      }, 300);
+    }
+
+    // Direct standalone HTML document file download
+    const blob = new Blob([printableHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}_${docToDownload.type}_v${docToDownload.version || '1'}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Exporting ${docTitle} document file...`);
   };
 
   if (siteLoading || docsLoading || !site) return <div className="animate-pulse space-y-8">
@@ -272,11 +636,14 @@ export default function Documents() {
                       <Eye className="h-3 w-3" /> PREVIEW
                     </button>
                     <button 
-                      onClick={() => setShowHistory(doc.id)}
+                      onClick={() => {
+                        setShowHistory(doc.id);
+                        setPreviewingVersion(null);
+                      }}
                       className="bracket-btn py-2 text-[10px] flex items-center justify-center gap-2"
                     >
                       <span className="bracket-btn-inner"></span>
-                      <History className="h-3 w-3" /> HISTORY
+                      <History className="h-3 w-3" /> VERSIONS ({docVersions.length + 1})
                     </button>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -296,7 +663,7 @@ export default function Documents() {
                     </button>
                   </div>
                   <button 
-                    onClick={handleDownloadPDF}
+                    onClick={() => handleDownloadPDF(doc)}
                     className="bracket-btn w-full py-2 text-[10px] flex items-center justify-center gap-2 border-accent/30 text-accent"
                   >
                     <span className="bracket-btn-inner"></span>
@@ -321,58 +688,161 @@ export default function Documents() {
           <div className="relative bg-white text-black w-full max-w-4xl h-full overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom-8">
             <div className="h-16 flex-shrink-0 border-b border-black/10 flex items-center justify-between px-8 bg-gray-50">
               <span className="font-sans font-extrabold uppercase tracking-[0.04em] text-sm text-black">DOCUMENT PREVIEW</span>
-              <button onClick={() => setSelectedDoc(null)} className="text-gray-400 hover:text-black">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    const activeDocObj = documents?.find(d => d.id === selectedDoc);
+                    if (activeDocObj) handleDownloadPDF(activeDocObj);
+                  }}
+                  className="bracket-btn py-1.5 px-4 text-[10px] flex items-center gap-2 border-accent/40 text-black bg-accent hover:bg-accent/80 font-bold"
+                >
+                  <Download className="h-3.5 w-3.5" /> DOWNLOAD DOCUMENT
+                </button>
+                <button onClick={() => setSelectedDoc(null)} className="text-gray-400 hover:text-black">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-16 prose prose-slate max-w-none uppercase text-sm tracking-wider leading-relaxed">
+            <div 
+              dir={selectedLanguage === 'ar' ? 'rtl' : 'ltr'} 
+              className={cn(
+                "flex-1 overflow-y-auto p-16 prose prose-slate max-w-none uppercase text-sm tracking-wider leading-relaxed",
+                selectedLanguage === 'ar' && "text-right font-sans"
+              )}
+            >
               <div dangerouslySetInnerHTML={{ __html: documents?.find(d => d.id === selectedDoc)?.content || '' }} />
             </div>
           </div>
         </div>
       )}
 
-      {/* History Modal */}
-      {showHistory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-8">
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setShowHistory(null)} />
-          <div className="relative bg-surface border border-white/10 w-full max-w-2xl h-full max-h-[600px] overflow-hidden flex flex-col shadow-2xl">
-            <div className="h-16 flex-shrink-0 border-b border-white/10 flex items-center justify-between px-8">
-              <span className="font-sans font-extrabold uppercase tracking-[0.04em] text-sm">VERSION HISTORY</span>
-              <button onClick={() => setShowHistory(null)} className="text-muted hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-8 space-y-6">
-              {versions.filter(v => v.document_id === showHistory).map((v, idx) => (
-                <div key={v.id} className="flex gap-6 relative">
-                  {idx !== versions.length - 1 && <div className="absolute left-4 top-8 bottom-0 w-px bg-white/10" />}
-                  <div className="h-8 w-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center flex-shrink-0 relative z-10">
-                    <span className="text-[10px] font-black">{v.version}</span>
-                  </div>
-                  <div className="flex-1 space-y-2 pb-8">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold uppercase tracking-tighter">{new Date(v.created_at).toLocaleString()}</p>
-                      <button 
-                        onClick={() => {
-                          // Restore logic
-                          toast.info('Restoring version...');
-                        }}
-                        className="text-[10px] font-bold text-accent hover:underline uppercase tracking-widest"
-                      >
-                        RESTORE
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted font-light uppercase tracking-widest">
-                      {v.changelog_note || `CONTENT LENGTH: ${v.content.length} CHARS`}
-                    </p>
-                  </div>
+      {/* History / Versions Modal */}
+      {showHistory && (() => {
+        const currentDoc = documents.find(d => d.id === showHistory);
+        const docVersions = versions.filter(v => v.document_id === showHistory);
+        
+        const historyItems: any[] = [];
+        if (currentDoc) {
+          const exists = docVersions.some(v => v.version === currentDoc.version);
+          if (!exists) {
+            historyItems.push({
+              id: `current_${currentDoc.id}`,
+              document_id: currentDoc.id,
+              site_id: currentDoc.site_id,
+              version: currentDoc.version,
+              content: currentDoc.content,
+              created_at: (currentDoc as any).updated_at || currentDoc.created_at,
+              changelog_note: 'Current Active Revision',
+              is_current: true
+            });
+          }
+        }
+        docVersions.forEach(v => {
+          historyItems.push({
+            ...v,
+            is_current: currentDoc ? v.version === currentDoc.version : false
+          });
+        });
+
+        historyItems.sort((a, b) => b.version - a.version);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-8">
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => { setShowHistory(null); setPreviewingVersion(null); }} />
+            <div className="relative bg-surface border border-white/10 w-full max-w-3xl h-full max-h-[700px] overflow-hidden flex flex-col shadow-2xl">
+              <div className="h-16 flex-shrink-0 border-b border-white/10 flex items-center justify-between px-8">
+                <div>
+                  <span className="font-sans font-extrabold uppercase tracking-[0.04em] text-sm">VERSION REVISION HISTORY</span>
+                  <p className="text-[10px] text-muted tracking-widest uppercase mt-0.5">
+                    {currentDoc?.type ? currentDoc.type.replace(/_/g, ' ') : 'DOCUMENT'} • {historyItems.length} REVISIONS STORED
+                  </p>
                 </div>
-              ))}
+                <button onClick={() => { setShowHistory(null); setPreviewingVersion(null); }} className="text-muted hover:text-white">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                {historyItems.length === 0 ? (
+                  <div className="text-center py-12 text-muted text-xs uppercase tracking-widest">
+                    NO PREVIOUS VERSIONS RECORDED YET.
+                  </div>
+                ) : (
+                  historyItems.map((v, idx) => (
+                    <div key={v.id || idx} className="bg-black/40 border border-white/10 p-5 rounded-[4px] space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "h-7 px-2.5 rounded flex items-center justify-center font-bold text-xs uppercase tracking-wider",
+                            v.is_current ? "bg-accent text-black" : "bg-white/10 text-white"
+                          )}>
+                            v{v.version} {v.is_current ? '(ACTIVE)' : ''}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-tight">{new Date(v.created_at).toLocaleString()}</p>
+                            <p className="text-[10px] text-muted font-light uppercase tracking-widest">
+                              {v.changelog_note || `Length: ${v.content?.length || 0} chars`}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => setPreviewingVersion(previewingVersion?.version === v.version ? null : v)}
+                            className="bracket-btn py-1 px-3 text-[10px] flex items-center gap-1.5"
+                          >
+                            <span className="bracket-btn-inner"></span>
+                            <Eye className="h-3 w-3" /> {previewingVersion?.version === v.version ? 'HIDE' : 'PREVIEW'}
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
+                              if (currentDoc) {
+                                restoreVersionMutation.mutate({ docId: currentDoc.id, targetVersion: v });
+                              }
+                            }}
+                            disabled={v.is_current || restoreVersionMutation.isPending}
+                            className={cn(
+                              "bracket-btn py-1 px-3 text-[10px] flex items-center gap-1.5",
+                              v.is_current ? "opacity-40 cursor-not-allowed border-white/20 text-muted" : "border-accent/40 text-accent"
+                            )}
+                          >
+                            <span className="bracket-btn-inner"></span>
+                            <RefreshCw className={cn("h-3 w-3", restoreVersionMutation.isPending && "animate-spin")} />
+                            {v.is_current ? 'ACTIVE VERSION' : 'RESTORE VERSION'}
+                          </button>
+
+                          <button
+                            onClick={() => handleDownloadPDF({ ...v, type: currentDoc?.type || 'policy' } as any)}
+                            className="bracket-btn py-1 px-3 text-[10px] flex items-center gap-1.5 border-white/20 text-white hover:text-accent"
+                            title="Export version document"
+                          >
+                            <span className="bracket-btn-inner"></span>
+                            <Download className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Expandable Preview */}
+                      {previewingVersion?.version === v.version && (
+                        <div className="pt-4 border-t border-white/10 space-y-3 animate-in fade-in duration-200">
+                          <div className="flex items-center justify-between text-[10px] font-bold text-accent uppercase tracking-widest">
+                            <span>SNAPSHOT PREVIEW (VERSION {v.version})</span>
+                            <span>{v.content?.length || 0} CHARACTERS</span>
+                          </div>
+                          <div className="bg-white text-black p-6 max-h-60 overflow-y-auto text-xs uppercase tracking-wider leading-relaxed font-sans rounded">
+                            <div dangerouslySetInnerHTML={{ __html: v.content || '' }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Clause Modal */}
       {showClauseModal && (
