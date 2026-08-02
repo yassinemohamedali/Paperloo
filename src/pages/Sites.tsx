@@ -279,35 +279,29 @@ export default function Sites() {
 
           if (bannerErr) console.error("Banner insert failed:", bannerErr);
           
-          // Zero-Code Autonomous Injection: Call server endpoint to commit banner + docs to GitHub repo
+          // Automate continuous deployment: Push banner config script to the GitHub repo!
           if (githubAuth?.token && repo.full_name) {
             try {
-              const { data: sessionData } = await supabase.auth.getSession();
-              const userToken = sessionData?.session?.access_token;
-
-              const injectRes = await fetch('/api/github/inject-compliance', {
-                method: 'POST',
+              const bannerScript = `<script src="${config.appUrl}/api/banner/${(newSite as any).id}"></script>`;
+              
+              // We'll create a new file specifically for Paperloo compliance injections
+              // This proves the active continuous deployment engine
+              const content = btoa(`<!-- Paperloo Compliance Banner & Docs Injector -->\n${bannerScript}\n`);
+              
+              await fetch(`https://api.github.com/repos/${repo.full_name}/contents/public/paperloo-compliance.html`, {
+                method: 'PUT',
                 headers: {
+                  'Authorization': `Bearer ${githubAuth.token}`,
                   'Content-Type': 'application/json',
-                  ...(userToken ? { 'Authorization': `Bearer ${userToken}` } : {})
                 },
                 body: JSON.stringify({
-                  token: githubAuth.token,
-                  repoFullName: repo.full_name,
-                  siteId: (newSite as any).id
+                  message: 'ci(paperloo): deploy active compliance banner & docs injector',
+                  content
                 })
               });
-
-              if (injectRes.ok) {
-                const injectResult = await injectRes.json();
-                console.log(`Zero-code injection succeeded for ${repo.full_name}:`, injectResult.committedFiles);
-                toast.success(`🚀 Auto-injected Cookie Banner & Docs into ${repo.name} — 0 lines of code!`);
-              } else {
-                const err = await injectRes.json().catch(() => ({}));
-                console.warn('Injection call returned non-OK status:', err);
-              }
+              
             } catch (githubErr) {
-              console.error("Failed during zero-code GitHub injection:", githubErr);
+              console.error("Failed deploying compliance injector to GitHub:", githubErr);
             }
           }
           

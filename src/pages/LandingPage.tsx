@@ -376,61 +376,68 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Client Logos */}
-          <div className="mt-24 flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-30 grayscale">
-            <span className="text-xs tracking-[0.3em] font-bold uppercase">Aether Analytics</span>
-            <div className="w-px h-4 bg-white/20"></div>
-            <span className="text-xs tracking-[0.3em] font-bold uppercase">Quantum Platforms</span>
-            <div className="w-px h-4 bg-white/20"></div>
-            <span className="text-xs tracking-[0.3em] font-bold uppercase">Apex Infrastructure</span>
+          {/* Client Logos - Liquid Glass Pill */}
+          <div className="mt-20 inline-flex flex-wrap items-center justify-center gap-x-10 gap-y-4 px-8 py-4 rounded-full liquid-glass-item border border-white/20 shadow-xl reveal-up">
+            <span className="text-[10px] sm:text-xs tracking-[0.25em] font-bold uppercase text-white/70">Aether Analytics</span>
+            <div className="w-px h-3 bg-accent/40"></div>
+            <span className="text-[10px] sm:text-xs tracking-[0.25em] font-bold uppercase text-white/70">Quantum Platforms</span>
+            <div className="w-px h-3 bg-accent/40"></div>
+            <span className="text-[10px] sm:text-xs tracking-[0.25em] font-bold uppercase text-white/70">Apex Infrastructure</span>
           </div>
         </div>
       </section>
 
-      {/* Live Product Demo & Control Center Section */}
-      <section className="bg-black py-20 border-y border-white/10 relative overflow-hidden">
-        <div className="max-w-[1400px] mx-auto px-6">
-          <div className="section-label mb-4 text-accent flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-accent animate-ping"></span>
+      {/* Live Product Demo & Control Center Section (Liquid Glass Theme) */}
+      <section className="bg-black py-24 border-y border-white/10 relative overflow-hidden">
+        {/* Floating Liquid Glow Orbs */}
+        <div className="liquid-glow-orb bg-accent/20 w-[450px] h-[450px] -top-20 -left-20"></div>
+        <div className="liquid-glow-orb bg-purple-600/15 w-[500px] h-[500px] top-1/2 -right-30"></div>
+        <div className="liquid-glow-orb bg-cyan-400/15 w-[400px] h-[400px] -bottom-20 left-1/3"></div>
+
+        <div className="max-w-[1400px] mx-auto px-6 relative z-10">
+          <div className="section-label mb-6 text-accent flex items-center gap-2 bg-accent/10 border border-accent/30 rounded-full px-4 py-1 backdrop-blur-md">
+            <span className="w-2.5 h-2.5 rounded-full bg-accent animate-ping"></span>
             PAPERLOO COMPLIANCE OPERATING SYSTEM v4.2
           </div>
           
-          <div className="relative rounded-2xl bg-surface border border-white/20 shadow-2xl overflow-hidden reveal-up">
+          <div className="relative rounded-3xl liquid-glass-card overflow-hidden reveal-up">
             {/* Control Bar Header */}
-            <div className="bg-surface-2 px-6 py-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-4">
+            <div className="liquid-glass-header px-6 py-4 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                  <div className="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-red-500/90 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-yellow-500/90 shadow-[0_0_10px_rgba(245,158,11,0.5)]"></div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-emerald-500/90 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                 </div>
                 <div className="h-4 w-px bg-white/20 mx-1"></div>
-                <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-lg px-3 py-1 text-xs text-muted font-mono">
+                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/20 rounded-xl px-4 py-1.5 text-xs text-muted font-mono shadow-inner">
                   <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-white font-bold">https://app.your-agency.com/compliance-engine</span>
+                  <span className="text-white font-bold tracking-wide">https://app.your-agency.com/compliance-engine</span>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-xs font-mono">
-                <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full font-bold">
+                <span className="flex items-center gap-2 bg-emerald-500/15 text-emerald-300 border border-emerald-400/40 px-3.5 py-1.5 rounded-full font-bold shadow-[0_0_15px_rgba(16,185,129,0.2)] backdrop-blur-md">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                   STATUTORY HEALTH: 100%
                 </span>
-                <span className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-muted">
+                <span className="bg-white/10 border border-white/20 backdrop-blur-md px-3.5 py-1.5 rounded-full text-white/80 font-bold">
                   4 REGIMES ACTIVE
                 </span>
               </div>
             </div>
 
             {/* Main Interactive Control Center Grid */}
-            <div className="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 bg-black/80">
+            <div className="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 bg-black/40 backdrop-blur-xl">
               
               {/* Left Column: Active Legal Documents */}
               <div className="lg:col-span-5 space-y-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <span className="text-xs font-bold tracking-widest text-muted uppercase flex items-center gap-2">
+                <div className="flex items-center justify-between border-b border-white/15 pb-3">
+                  <span className="text-xs font-bold tracking-widest text-white/80 uppercase flex items-center gap-2">
                     <FileText className="w-4 h-4 text-accent" /> Active Disclosures
                   </span>
-                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">AUTO-SYNCHRONIZED</span>
+                  <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-0.5 rounded-full backdrop-blur-md">
+                    AUTO-SYNCHRONIZED
+                  </span>
                 </div>
 
                 <div className="space-y-3">
@@ -440,19 +447,19 @@ export default function LandingPage() {
                     { title: 'Cookie Consent Manager & Telemetry', ver: 'v3.2.0', status: 'ENFORCING', time: '1,420 Consents Today', active: true },
                     { title: 'Data Processing Agreement (DPA + SCCs)', ver: 'v1.4.2', status: 'EXECUTED', time: 'Synced 1h ago', active: true }
                   ].map((doc, idx) => (
-                    <div key={idx} className="bg-surface border border-white/10 hover:border-accent/50 p-4 rounded-xl transition-all flex items-center justify-between group">
+                    <div key={idx} className="liquid-glass-item p-4 rounded-2xl flex items-center justify-between group cursor-pointer">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="flex items-center gap-2.5">
+                          <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400 shrink-0 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                           <span className="text-sm font-bold text-white group-hover:text-accent transition-colors">{doc.title}</span>
                         </div>
-                        <div className="flex items-center gap-3 text-[10px] text-muted font-mono pl-6">
+                        <div className="flex items-center gap-3 text-[10px] text-white/60 font-mono pl-7">
                           <span>{doc.ver}</span>
                           <span>•</span>
                           <span>{doc.time}</span>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md shrink-0">
+                      <span className="text-[10px] font-bold tracking-widest text-emerald-300 bg-emerald-500/15 border border-emerald-400/30 px-3 py-1 rounded-full shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
                         {doc.status}
                       </span>
                     </div>
@@ -462,12 +469,12 @@ export default function LandingPage() {
 
               {/* Center Column: Global Compliance Metrics */}
               <div className="lg:col-span-4 space-y-6">
-                <div className="bg-surface border border-white/10 p-6 rounded-xl space-y-6">
+                <div className="liquid-glass-item p-6 rounded-2xl space-y-6">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                    <span className="text-xs font-bold text-white/80 uppercase tracking-wider flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-accent" /> Regional Matrix
                     </span>
-                    <span className="text-xs text-accent font-mono font-bold">0 Violations</span>
+                    <span className="text-xs text-accent font-mono font-bold drop-shadow-[0_0_10px_rgba(200,241,53,0.3)]">0 Violations</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -477,21 +484,21 @@ export default function LandingPage() {
                       { reg: 'CANADA', law: 'PIPEDA / Law 25', score: '100%', badge: 'PASS' },
                       { reg: 'GLOBAL', law: 'APPs / Privacy Act', score: '100%', badge: 'PASS' },
                     ].map((item, idx) => (
-                      <div key={idx} className="bg-black/60 border border-white/10 p-3 rounded-lg space-y-1">
-                        <div className="flex justify-between items-center text-[10px] text-muted font-bold">
+                      <div key={idx} className="bg-black/40 border border-white/15 p-3.5 rounded-xl space-y-1.5 backdrop-blur-md">
+                        <div className="flex justify-between items-center text-[10px] text-white/60 font-bold">
                           <span>{item.reg}</span>
-                          <span className="text-emerald-400">{item.badge}</span>
+                          <span className="text-emerald-400 font-mono">{item.badge}</span>
                         </div>
-                        <div className="text-sm font-bold text-white font-mono">{item.law}</div>
-                        <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
-                          <div className="bg-emerald-400 h-full w-full"></div>
+                        <div className="text-xs font-bold text-white font-mono">{item.law}</div>
+                        <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden p-0.5">
+                          <div className="bg-emerald-400 h-full w-full rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-muted font-mono">
-                    <span className="flex items-center gap-1.5 text-white">
+                  <div className="pt-3 border-t border-white/15 flex items-center justify-between text-xs text-white/70 font-mono">
+                    <span className="flex items-center gap-2 text-white font-semibold">
                       <Zap className="w-3.5 h-3.5 text-accent" /> Edge Injection CDN:
                     </span>
                     <span className="text-emerald-400 font-bold">1.2ms Avg Latency</span>
@@ -501,23 +508,23 @@ export default function LandingPage() {
 
               {/* Right Column: Live Audit Terminal Stream */}
               <div className="lg:col-span-3 space-y-4">
-                <div className="bg-black border border-white/20 rounded-xl p-4 font-mono text-[11px] space-y-3">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-2 text-muted">
+                <div className="liquid-glass-item p-5 rounded-2xl font-mono text-[11px] space-y-3">
+                  <div className="flex items-center justify-between border-b border-white/15 pb-2 text-white/60">
                     <span className="flex items-center gap-2 text-white font-bold">
                       <Terminal className="w-3.5 h-3.5 text-accent" /> Live Scanner Log
                     </span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
                   </div>
 
-                  <div className="space-y-2 text-muted leading-relaxed">
-                    <p className="text-white/80"><span className="text-accent">[05:41:02]</span> Continuous DOM scan completed for app.your-agency.com</p>
-                    <p className="text-emerald-400"><span className="text-accent">[05:41:05]</span> Verified 14 third-party trackers (GA4, Meta, Stripe, Hubspot)</p>
-                    <p className="text-white/80"><span className="text-accent">[05:41:08]</span> Statutory policies synced to 12 CDN edge nodes</p>
-                    <p className="text-emerald-400"><span className="text-accent">[05:41:12]</span> All statutory checks passed. Zero legal exposure.</p>
+                  <div className="space-y-2.5 text-white/70 leading-relaxed">
+                    <p className="text-white/90"><span className="text-accent font-bold">[05:41:02]</span> Continuous DOM scan completed for app.your-agency.com</p>
+                    <p className="text-emerald-300"><span className="text-accent font-bold">[05:41:05]</span> Verified 14 third-party trackers (GA4, Meta, Stripe, Hubspot)</p>
+                    <p className="text-white/90"><span className="text-accent font-bold">[05:41:08]</span> Statutory policies synced to 12 CDN edge nodes</p>
+                    <p className="text-emerald-300"><span className="text-accent font-bold">[05:41:12]</span> All statutory checks passed. Zero legal exposure.</p>
                   </div>
 
-                  <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-                    <span className="text-[10px] text-muted">AUTO-SCAN FREQUENCY</span>
+                  <div className="pt-3 border-t border-white/15 flex items-center justify-between">
+                    <span className="text-[10px] text-white/50">AUTO-SCAN FREQUENCY</span>
                     <span className="text-[10px] text-accent font-bold">EVERY 24 HOURS</span>
                   </div>
                 </div>
@@ -526,19 +533,19 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Key Value Proposition Bar */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
-            <div className="p-6 bg-surface border border-white/10 rounded-xl space-y-2">
-              <div className="text-2xl font-black font-sans text-accent">3 MINUTES</div>
-              <p className="text-xs text-muted font-mono tracking-wider uppercase">Average setup time for full agency client site protection</p>
+          {/* Key Value Proposition Bar - Liquid Glass Cards */}
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
+            <div className="p-6 rounded-2xl liquid-glass-item space-y-2">
+              <div className="text-3xl font-black font-sans text-accent drop-shadow-[0_0_12px_rgba(200,241,53,0.3)]">3 MINUTES</div>
+              <p className="text-xs text-white/70 font-mono tracking-wider uppercase">Average setup time for full agency client site protection</p>
             </div>
-            <div className="p-6 bg-surface border border-white/10 rounded-xl space-y-2">
-              <div className="text-2xl font-black font-sans text-emerald-400">0 MANUAL UPDATES</div>
-              <p className="text-xs text-muted font-mono tracking-wider uppercase">Policies automatically re-sync when global privacy laws change</p>
+            <div className="p-6 rounded-2xl liquid-glass-item space-y-2">
+              <div className="text-3xl font-black font-sans text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]">0 MANUAL UPDATES</div>
+              <p className="text-xs text-white/70 font-mono tracking-wider uppercase">Policies automatically re-sync when global privacy laws change</p>
             </div>
-            <div className="p-6 bg-surface border border-white/10 rounded-xl space-y-2">
-              <div className="text-2xl font-black font-sans text-white">100% WHITE-LABEL</div>
-              <p className="text-xs text-muted font-mono tracking-wider uppercase">Deliver custom legal portals with your agency logo and domain</p>
+            <div className="p-6 rounded-2xl liquid-glass-item space-y-2">
+              <div className="text-3xl font-black font-sans text-white">100% WHITE-LABEL</div>
+              <p className="text-xs text-white/70 font-mono tracking-wider uppercase">Deliver custom legal portals with your agency logo and domain</p>
             </div>
           </div>
         </div>
@@ -548,79 +555,93 @@ export default function LandingPage() {
 
       {/* Services Section */}
       <section id="solutions" className="py-32 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 grid-dots-animated opacity-10 pointer-events-none" />
+        {/* Spatial UI Floating Glow Orbs */}
+        <div className="liquid-glow-orb bg-accent/15 w-[500px] h-[500px] top-10 -right-20"></div>
+        <div className="liquid-glow-orb bg-cyan-500/10 w-[400px] h-[400px] bottom-10 -left-20"></div>
+
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="mb-24 reveal-up">
-            <div className="section-label mb-8">COMPLIANCE AS INFRASTRUCTURE</div>
-          <h2 className="text-3xl sm:text-6xl md:text-8xl font-sans font-black tracking-tighter">
-            THE <span className="sm:whitespace-nowrap italic">PAPERLOO</span><br className="hidden sm:block" /> GOVERNANCE STACK
-          </h2>
+          <div className="mb-20 reveal-up">
+            <div className="section-label mb-4 text-accent inline-block bg-accent/10 border border-accent/20 px-3.5 py-1 rounded-full text-xs font-mono font-bold">
+              COMPLIANCE AS INFRASTRUCTURE
+            </div>
+            <h2 className="text-3xl sm:text-6xl md:text-8xl font-sans font-black tracking-tighter uppercase">
+              THE <span className="sm:whitespace-nowrap italic text-accent drop-shadow-[0_0_20px_rgba(200,241,53,0.3)]">PAPERLOO</span><br className="hidden sm:block" /> GOVERNANCE STACK
+            </h2>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-6">
             {SERVICES.map((service, index) => (
               <div 
                 key={service.id} 
                 style={{ transitionDelay: `${index * 100}ms` }}
-                className="group relative bg-surface border-b border-white/10 p-12 flex flex-col md:flex-row md:items-center justify-between hover:bg-surface-2 transition-colors overflow-hidden reveal-up"
+                className="group relative liquid-glass-item spatial-glass-hover rounded-3xl p-8 sm:p-10 flex flex-col md:flex-row md:items-center justify-between border border-white/15 overflow-hidden reveal-up shadow-xl hover:border-accent/60"
               >
-                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent scale-y-0 group-hover:scale-y-100 transition-transform origin-top duration-500"></div>
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-accent via-emerald-400 to-accent scale-y-0 group-hover:scale-y-100 transition-transform origin-top duration-500"></div>
                 
-                <div className="relative z-10 space-y-4 md:max-w-xl">
-                  <h3 className="text-2xl md:text-4xl font-sans font-extrabold tracking-[0.04em]">{service.name}</h3>
-                  <p className="text-muted text-[10px] sm:text-xs tracking-[0.2em]">{service.description}</p>
+                <div className="relative z-10 space-y-3 md:max-w-2xl">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono font-bold text-accent bg-accent/10 border border-accent/30 px-3 py-1 rounded-full shadow-sm">
+                      MODULE {service.id}
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-mono font-bold uppercase tracking-wider bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                      LIVE INJECTION
+                    </span>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-sans font-black tracking-tight text-white group-hover:text-accent transition-colors">
+                    {service.name}
+                  </h3>
+                  <p className="text-white/70 text-xs sm:text-sm tracking-wide leading-relaxed">
+                    {service.description}
+                  </p>
                 </div>
 
-                <div className="hidden md:block absolute right-12 top-8 text-[120px] font-sans font-extrabold text-white/[0.15] leading-none pointer-events-none">
+                <div className="hidden md:block absolute right-16 top-6 text-[110px] font-sans font-black text-white/[0.04] group-hover:text-accent/[0.08] transition-colors leading-none pointer-events-none select-none">
                   {service.id}
                 </div>
 
-                <div className="mt-12 md:mt-0 relative z-10">
-                  <svg className="w-20 h-20 text-white/20 group-hover:text-accent transition-all duration-500 group-hover:scale-110" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    {service.id === '01' && (
-                      <g stroke="currentColor" strokeWidth="1.5">
-                        <rect x="20" y="15" width="40" height="50" rx="2" />
-                        <path d="M35 45V40C35 37.2386 37.2386 35 40 35C42.7614 35 45 37.2386 45 40V45" />
-                        <rect x="32" y="45" width="16" height="12" rx="1" />
-                      </g>
-                    )}
-                    {service.id === '02' && (
-                      <g stroke="currentColor" strokeWidth="1.5">
-                        <path d="M20 20C20 17.2386 22.2386 15 25 15H55C57.7614 15 60 17.2386 60 20V60C60 62.7614 57.7614 65 55 65H25C22.2386 65 20 62.7614 20 60V20Z" />
-                        <path d="M20 25H60" />
-                        <path d="M30 40H50" />
-                        <path d="M30 50H45" />
-                      </g>
-                    )}
-                    {service.id === '03' && (
-                      <g stroke="currentColor" strokeWidth="1.5">
-                        <circle cx="40" cy="40" r="25" />
-                        <circle cx="30" cy="30" r="2" fill="currentColor" />
-                        <circle cx="50" cy="35" r="2" fill="currentColor" />
-                        <circle cx="35" cy="50" r="2" fill="currentColor" />
-                        <path d="M55 55L65 65" />
-                        <path d="M50 20C55 25 60 30 60 40" />
-                      </g>
-                    )}
-                    {service.id === '04' && (
-                      <g stroke="currentColor" strokeWidth="1.5">
-                        <circle cx="40" cy="40" r="25" />
-                        <path d="M15 40H65" />
-                        <path d="M40 15V65" />
-                        <path d="M40 15C45 25 45 55 40 65" />
-                        <path d="M40 15C35 25 35 55 40 65" />
-                        <circle cx="50" cy="30" r="3" fill="var(--color-accent)" />
-                      </g>
-                    )}
-                    {service.id === '05' && (
-                      <g stroke="currentColor" strokeWidth="1.5">
-                        <path d="M40 15C31.7157 15 25 21.7157 25 30V45L20 50V55H60V50L55 45V30C55 21.7157 48.2843 15 40 15Z" />
-                        <path d="M35 60C35 62.7614 37.2386 65 40 65C42.7614 65 45 62.7614 45 60" />
-                        <path d="M60 20L65 15" stroke="var(--color-accent)" />
-                        <path d="M65 25L70 20" stroke="var(--color-accent)" />
-                      </g>
-                    )}
-                  </svg>
+                <div className="mt-8 md:mt-0 relative z-10 shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-black/40 border border-white/20 backdrop-blur-md flex items-center justify-center group-hover:border-accent/60 group-hover:bg-accent/10 transition-all shadow-lg group-hover:scale-110">
+                    <svg className="w-10 h-10 text-white/40 group-hover:text-accent transition-all duration-500" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      {service.id === '01' && (
+                        <g stroke="currentColor" strokeWidth="2">
+                          <rect x="20" y="15" width="40" height="50" rx="4" />
+                          <path d="M35 45V40C35 37.2386 37.2386 35 40 35C42.7614 35 45 37.2386 45 40V45" />
+                          <rect x="32" y="45" width="16" height="12" rx="2" />
+                        </g>
+                      )}
+                      {service.id === '02' && (
+                        <g stroke="currentColor" strokeWidth="2">
+                          <path d="M20 20C20 17.2386 22.2386 15 25 15H55C57.7614 15 60 17.2386 60 20V60C60 62.7614 57.7614 65 55 65H25C22.2386 65 20 62.7614 20 60V20Z" />
+                          <path d="M20 25H60" />
+                          <path d="M30 40H50" />
+                          <path d="M30 50H45" />
+                        </g>
+                      )}
+                      {service.id === '03' && (
+                        <g stroke="currentColor" strokeWidth="2">
+                          <circle cx="40" cy="40" r="25" />
+                          <circle cx="30" cy="30" r="3" fill="currentColor" />
+                          <circle cx="50" cy="35" r="3" fill="currentColor" />
+                          <circle cx="35" cy="50" r="3" fill="currentColor" />
+                          <path d="M55 55L65 65" />
+                        </g>
+                      )}
+                      {service.id === '04' && (
+                        <g stroke="currentColor" strokeWidth="2">
+                          <circle cx="40" cy="40" r="25" />
+                          <path d="M15 40H65" />
+                          <path d="M40 15V65" />
+                          <circle cx="50" cy="30" r="3" fill="var(--color-accent)" />
+                        </g>
+                      )}
+                      {service.id === '05' && (
+                        <g stroke="currentColor" strokeWidth="2">
+                          <path d="M40 15C31.7157 15 25 21.7157 25 30V45L20 50V55H60V50L55 45V30C55 21.7157 48.2843 15 40 15Z" />
+                          <path d="M35 60C35 62.7614 37.2386 65 40 65C42.7614 65 45 62.7614 45 60" />
+                        </g>
+                      )}
+                    </svg>
+                  </div>
                 </div>
               </div>
             ))}
@@ -629,33 +650,40 @@ export default function LandingPage() {
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="py-32 px-6 bg-black">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-24 reveal-up">
-            <div className="section-label mb-8">THE STANDARD FOR GLOBAL FIRMS</div>
-            <h2 className="text-6xl md:text-8xl font-sans font-black tracking-tighter">
-              WHY THE WORLD'S<br />LEADING SaaS TRUST US
+      <section className="py-32 px-6 bg-black relative overflow-hidden">
+        <div className="liquid-glow-orb bg-purple-600/10 w-[600px] h-[600px] top-1/3 -left-40"></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="mb-20 reveal-up">
+            <div className="section-label mb-4 text-accent inline-block bg-accent/10 border border-accent/20 px-3.5 py-1 rounded-full text-xs font-mono font-bold">
+              THE STANDARD FOR GLOBAL FIRMS
+            </div>
+            <h2 className="text-4xl sm:text-6xl md:text-8xl font-sans font-black tracking-tighter uppercase">
+              WHY THE WORLD'S<br /><span className="text-accent italic drop-shadow-[0_0_20px_rgba(200,241,53,0.3)]">LEADING SaaS</span> TRUST US
             </h2>
           </div>
 
           <div className="space-y-4">
             {ADVANTAGES.map((adv, idx) => (
-              <div key={idx} className="border-b border-white/10 reveal-up" style={{ transitionDelay: `${idx * 50}ms` }}>
+              <div 
+                key={idx} 
+                className="liquid-glass-item rounded-2xl p-6 sm:p-8 border border-white/15 hover:border-accent/60 transition-all reveal-up shadow-lg"
+                style={{ transitionDelay: `${idx * 50}ms` }}
+              >
                 <button 
                   onClick={() => setActiveAccordion(activeAccordion === idx ? null : idx)}
-                  className="w-full py-8 flex items-center justify-between group"
+                  className="w-full flex items-center justify-between text-left group"
                 >
                   <span className={cn(
-                    "text-2xl md:text-4xl font-sans font-extrabold tracking-[0.04em] transition-colors",
-                    activeAccordion === idx ? "text-accent" : "text-white group-hover:text-accent"
+                    "text-xl sm:text-2xl md:text-3xl font-sans font-black tracking-tight transition-colors",
+                    activeAccordion === idx ? "text-accent drop-shadow-[0_0_10px_rgba(200,241,53,0.3)]" : "text-white group-hover:text-accent"
                   )}>
                     {adv.title}
                   </span>
                   <div className={cn(
-                    "w-8 h-8 flex items-center justify-center border border-white/20 transition-transform duration-300",
-                    activeAccordion === idx ? "rotate-45 border-accent text-accent" : ""
+                    "w-9 h-9 rounded-xl bg-black/50 border border-white/20 flex items-center justify-center transition-all duration-300 shadow-md shrink-0 ml-4",
+                    activeAccordion === idx ? "rotate-45 border-accent text-accent bg-accent/20 shadow-[0_0_15px_rgba(200,241,53,0.3)]" : "group-hover:border-accent group-hover:text-accent"
                   )}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <line x1="12" y1="5" x2="12" y2="19" />
                       <line x1="5" y1="12" x2="19" y2="12" />
                     </svg>
@@ -666,7 +694,7 @@ export default function LandingPage() {
                   animate={{ height: activeAccordion === idx ? 'auto' : 0, opacity: activeAccordion === idx ? 1 : 0 }}
                   className="overflow-hidden"
                 >
-                  <p className="pb-8 text-muted text-sm tracking-[0.15em] max-w-2xl">
+                  <p className="pt-6 text-white/80 text-xs sm:text-sm tracking-wide leading-relaxed font-mono border-t border-white/10 mt-6">
                     {adv.content}
                   </p>
                 </motion.div>
@@ -676,107 +704,121 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Process Section */}
-      <section className="py-32 px-6 bg-surface-2/30 border-t border-white/10">
-        <div className="max-w-7xl mx-auto">
+      {/* Process Section (Spatial UI Liquid Glass) */}
+      <section className="py-32 px-6 bg-black relative overflow-hidden border-t border-white/10">
+        {/* Glowing atmospheric orbs */}
+        <div className="liquid-glow-orb bg-accent/15 w-[550px] h-[550px] -top-20 -left-20"></div>
+        <div className="liquid-glow-orb bg-emerald-500/10 w-[500px] h-[500px] bottom-0 right-0"></div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-20 reveal-up">
-            <div className="section-label mb-4 text-accent inline-block">SIMPLE 3-STEP WORKFLOW</div>
+            <div className="section-label mb-4 text-accent inline-block bg-accent/10 border border-accent/20 px-4 py-1.5 rounded-full text-xs font-mono font-bold backdrop-blur-md">
+              SIMPLE 3-STEP WORKFLOW
+            </div>
             <h2 className="text-4xl sm:text-6xl md:text-7xl font-sans font-black tracking-tighter uppercase">
-              HOW PAPERLOO WORKS
+              HOW <span className="text-accent italic drop-shadow-[0_0_20px_rgba(200,241,53,0.3)]">PAPERLOO</span> WORKS
             </h2>
-            <p className="text-muted text-xs sm:text-sm tracking-widest max-w-xl mx-auto mt-4 uppercase">
+            <p className="text-white/70 text-xs sm:text-sm tracking-widest max-w-xl mx-auto mt-4 uppercase font-mono">
               Automated legal protection for your agency clients and SaaS applications in under 3 minutes.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Step 1: Automated Site Audit */}
-            <div className="bg-surface border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-accent/50 transition-all group reveal-up space-y-6">
+            {/* Step 1: Automated Site Audit (Spatial Glass Card) */}
+            <div className="spatial-glass-card liquid-glass-card spatial-glass-hover rounded-3xl p-6 sm:p-8 flex flex-col justify-between border border-white/20 shadow-2xl group reveal-up space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-accent bg-accent/10 border border-accent/20 px-3 py-1 rounded-full">
+                  <span className="text-xs font-mono font-bold text-accent bg-accent/15 border border-accent/40 px-3.5 py-1.5 rounded-full shadow-[0_0_12px_rgba(200,241,53,0.2)]">
                     STEP 01
                   </span>
-                  <Search className="w-5 h-5 text-muted group-hover:text-accent transition-colors" />
+                  <div className="w-9 h-9 rounded-xl bg-black/40 border border-white/20 flex items-center justify-center group-hover:border-accent/60 group-hover:text-accent transition-all">
+                    <Search className="w-5 h-5 text-white/80 group-hover:text-accent transition-colors" />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-sans font-black tracking-tight text-white uppercase">AUTOMATED SITE AUDIT</h3>
-                  <p className="text-xs text-muted leading-relaxed">
+                  <h3 className="text-2xl font-sans font-black tracking-tight text-white uppercase group-hover:text-accent transition-colors">
+                    AUTOMATED SITE AUDIT
+                  </h3>
+                  <p className="text-xs text-white/70 leading-relaxed font-sans">
                     Scan any client URL to automatically detect data collection points, analytics scripts, and missing required legal disclosures.
                   </p>
                 </div>
 
-                {/* Visual Widget 1: Site Scanner UI */}
-                <div className="bg-black/80 border border-white/10 rounded-xl p-4 font-mono text-xs space-y-3 mt-4">
-                  <div className="flex items-center gap-2 bg-surface px-3 py-1.5 rounded-lg border border-white/10">
-                    <Search className="w-3.5 h-3.5 text-accent" />
-                    <span className="text-[11px] text-white truncate">https://client-agency.com</span>
-                    <span className="ml-auto text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">SCANNING</span>
+                {/* Visual Widget 1: Spatial Scanner UI */}
+                <div className="liquid-glass-item border border-white/20 p-4 rounded-2xl font-mono text-xs space-y-3 mt-4 shadow-inner">
+                  <div className="flex items-center gap-2 bg-black/60 px-3 py-2 rounded-xl border border-white/15 backdrop-blur-md">
+                    <Search className="w-3.5 h-3.5 text-accent shrink-0" />
+                    <span className="text-[11px] text-white truncate font-bold">https://client-agency.com</span>
+                    <span className="ml-auto text-[9px] text-emerald-300 font-bold bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 rounded-full">SCANNING</span>
                   </div>
 
                   <div className="space-y-1.5 pt-1">
-                    <div className="flex justify-between text-[10px] text-muted">
+                    <div className="flex justify-between text-[10px] text-white/70">
                       <span>DOM Audit Progress</span>
                       <span className="text-accent font-bold">100% Complete</span>
                     </div>
-                    <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-accent h-full w-full"></div>
+                    <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden p-0.5 border border-white/10">
+                      <div className="bg-gradient-to-r from-accent to-emerald-400 h-full w-full rounded-full shadow-[0_0_10px_rgba(200,241,53,0.8)]"></div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 pt-1 text-[10px]">
-                    <div className="bg-white/5 p-2 rounded border border-white/10 text-center">
-                      <span className="block font-bold text-white text-sm">14</span>
-                      <span className="text-muted">Trackers Found</span>
+                    <div className="bg-black/40 p-2.5 rounded-xl border border-white/15 text-center">
+                      <span className="block font-black text-white text-base font-mono">14</span>
+                      <span className="text-white/60">Trackers Found</span>
                     </div>
-                    <div className="bg-white/5 p-2 rounded border border-white/10 text-center">
-                      <span className="block font-bold text-emerald-400 text-sm">0</span>
-                      <span className="text-muted font-bold text-emerald-400">Missing Policies</span>
+                    <div className="bg-black/40 p-2.5 rounded-xl border border-white/15 text-center">
+                      <span className="block font-black text-emerald-400 text-base font-mono">0</span>
+                      <span className="text-emerald-300 font-bold">Missing Policies</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <ul className="space-y-2 pt-4 border-t border-white/10 text-[11px] text-muted font-mono">
+              <ul className="space-y-2.5 pt-4 border-t border-white/15 text-[11px] text-white/80 font-mono">
                 {['Detect PII & Third-Party Trackers', 'Map Target Global Jurisdictions', 'Identify Missing Disclosure Pages'].map((b, bIdx) => (
-                  <li key={bIdx} className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <li key={bIdx} className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
                     <span>{b}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Step 2: One-Click Policy Setup */}
-            <div className="bg-surface border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-accent/50 transition-all group reveal-up space-y-6">
+            {/* Step 2: One-Click Policy Setup (Spatial Glass Card) */}
+            <div className="spatial-glass-card liquid-glass-card spatial-glass-hover rounded-3xl p-6 sm:p-8 flex flex-col justify-between border border-white/20 shadow-2xl group reveal-up space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-accent bg-accent/10 border border-accent/20 px-3 py-1 rounded-full">
+                  <span className="text-xs font-mono font-bold text-accent bg-accent/15 border border-accent/40 px-3.5 py-1.5 rounded-full shadow-[0_0_12px_rgba(200,241,53,0.2)]">
                     STEP 02
                   </span>
-                  <Code className="w-5 h-5 text-muted group-hover:text-accent transition-colors" />
+                  <div className="w-9 h-9 rounded-xl bg-black/40 border border-white/20 flex items-center justify-center group-hover:border-accent/60 group-hover:text-accent transition-all">
+                    <Code className="w-5 h-5 text-white/80 group-hover:text-accent transition-colors" />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-sans font-black tracking-tight text-white uppercase">ONE-CLICK POLICY SETUP</h3>
-                  <p className="text-xs text-muted leading-relaxed">
+                  <h3 className="text-2xl font-sans font-black tracking-tight text-white uppercase group-hover:text-accent transition-colors">
+                    ONE-CLICK POLICY SETUP
+                  </h3>
+                  <p className="text-xs text-white/70 leading-relaxed font-sans">
                     Generate customized, attorney-vetted legal documents and embed them on your client sites using a single line of script.
                   </p>
                 </div>
 
                 {/* Visual Widget 2: Policy Snippet & Toggles */}
-                <div className="bg-black/80 border border-white/10 rounded-xl p-4 font-mono text-xs space-y-3 mt-4">
-                  <div className="flex items-center justify-between text-[10px] text-muted border-b border-white/10 pb-2">
+                <div className="liquid-glass-item border border-white/20 p-4 rounded-2xl font-mono text-xs space-y-3 mt-4 shadow-inner">
+                  <div className="flex items-center justify-between text-[10px] text-white/70 border-b border-white/15 pb-2">
                     <span className="text-white font-bold flex items-center gap-1.5">
                       <Code className="w-3.5 h-3.5 text-accent" /> Zero-Code Embed Snippet
                     </span>
-                    <span className="text-accent text-[9px] font-bold">1-LINE SCRIPT</span>
+                    <span className="text-accent text-[9px] font-bold bg-accent/15 px-2 py-0.5 rounded-full border border-accent/30">1-LINE SCRIPT</span>
                   </div>
 
-                  <div className="bg-surface p-2.5 rounded-lg border border-white/10 text-[10px] text-muted overflow-x-auto">
-                    <code className="text-emerald-400 whitespace-nowrap">
+                  <div className="bg-black/60 p-3 rounded-xl border border-white/15 text-[10px] text-muted overflow-x-auto">
+                    <code className="text-emerald-300 font-bold whitespace-nowrap">
                       &lt;script src="https://cdn.paperloo.ai/v2/sdk.js" data-site="ag_8f921"&gt;&lt;/script&gt;
                     </code>
                   </div>
@@ -787,73 +829,77 @@ export default function LandingPage() {
                       { label: 'Terms of Service', enabled: true },
                       { label: 'Cookie Banner + Opt-Out', enabled: true }
                     ].map((t, tidx) => (
-                      <div key={tidx} className="flex items-center justify-between text-[10px] bg-white/5 px-2.5 py-1.5 rounded border border-white/10">
-                        <span className="text-white">{t.label}</span>
-                        <span className="text-emerald-400 font-bold text-[9px]">[ACTIVE]</span>
+                      <div key={tidx} className="flex items-center justify-between text-[10px] bg-black/40 px-3 py-1.5 rounded-lg border border-white/15">
+                        <span className="text-white font-semibold">{t.label}</span>
+                        <span className="text-emerald-400 font-bold text-[9px] bg-emerald-500/15 border border-emerald-400/30 px-2 py-0.5 rounded-full">[ACTIVE]</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <ul className="space-y-2 pt-4 border-t border-white/10 text-[11px] text-muted font-mono">
+              <ul className="space-y-2.5 pt-4 border-t border-white/15 text-[11px] text-white/80 font-mono">
                 {['Tailored Agency & SaaS Clauses', 'White-Label Branding Customization', 'Zero-Code 1-Line Script Embed'].map((b, bIdx) => (
-                  <li key={bIdx} className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <li key={bIdx} className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
                     <span>{b}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Step 3: Autonomous Protection */}
-            <div className="bg-surface border border-white/10 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-accent/50 transition-all group reveal-up space-y-6">
+            {/* Step 3: Autonomous Protection (Spatial Glass Card) */}
+            <div className="spatial-glass-card liquid-glass-card spatial-glass-hover rounded-3xl p-6 sm:p-8 flex flex-col justify-between border border-white/20 shadow-2xl group reveal-up space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-accent bg-accent/10 border border-accent/20 px-3 py-1 rounded-full">
+                  <span className="text-xs font-mono font-bold text-accent bg-accent/15 border border-accent/40 px-3.5 py-1.5 rounded-full shadow-[0_0_12px_rgba(200,241,53,0.2)]">
                     STEP 03
                   </span>
-                  <Globe className="w-5 h-5 text-muted group-hover:text-accent transition-colors" />
+                  <div className="w-9 h-9 rounded-xl bg-black/40 border border-white/20 flex items-center justify-center group-hover:border-accent/60 group-hover:text-accent transition-all">
+                    <Globe className="w-5 h-5 text-white/80 group-hover:text-accent transition-colors" />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-sans font-black tracking-tight text-white uppercase">AUTONOMOUS PROTECTION</h3>
-                  <p className="text-xs text-muted leading-relaxed">
+                  <h3 className="text-2xl font-sans font-black tracking-tight text-white uppercase group-hover:text-accent transition-colors">
+                    AUTONOMOUS PROTECTION
+                  </h3>
+                  <p className="text-xs text-white/70 leading-relaxed font-sans">
                     Paperloo continuously monitors global legislation changes and updates your live policies automatically with zero downtime.
                   </p>
                 </div>
 
                 {/* Visual Widget 3: Live CDN Edge Status */}
-                <div className="bg-black/80 border border-white/10 rounded-xl p-4 font-mono text-xs space-y-3 mt-4">
-                  <div className="flex items-center justify-between text-[10px] text-muted border-b border-white/10 pb-2">
+                <div className="liquid-glass-item border border-white/20 p-4 rounded-2xl font-mono text-xs space-y-3 mt-4 shadow-inner">
+                  <div className="flex items-center justify-between text-[10px] text-white/70 border-b border-white/15 pb-2">
                     <span className="text-white font-bold flex items-center gap-1.5">
                       <Server className="w-3.5 h-3.5 text-accent" /> Global Edge CDN Distribution
                     </span>
-                    <span className="text-emerald-400 text-[9px] font-bold">12 NODES LIVE</span>
+                    <span className="text-emerald-300 text-[9px] font-bold bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 rounded-full">12 NODES LIVE</span>
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center text-[10px] bg-white/5 p-2 rounded border border-white/10">
-                      <span className="text-white">US-East Node (Virginia)</span>
-                      <span className="text-emerald-400 font-bold">1.1ms</span>
+                    <div className="flex justify-between items-center text-[10px] bg-black/40 p-2.5 rounded-xl border border-white/15">
+                      <span className="text-white font-semibold">US-East Node (Virginia)</span>
+                      <span className="text-emerald-400 font-bold font-mono">1.1ms</span>
                     </div>
-                    <div className="flex justify-between items-center text-[10px] bg-white/5 p-2 rounded border border-white/10">
-                      <span className="text-white">EU-Central Node (Frankfurt)</span>
-                      <span className="text-emerald-400 font-bold">1.4ms</span>
+                    <div className="flex justify-between items-center text-[10px] bg-black/40 p-2.5 rounded-xl border border-white/15">
+                      <span className="text-white font-semibold">EU-Central Node (Frankfurt)</span>
+                      <span className="text-emerald-400 font-bold font-mono">1.4ms</span>
                     </div>
                   </div>
 
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-lg flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span className="text-[10px] text-emerald-400 font-bold">STATUTORY AUDIT CERTIFICATE ISSUED</span>
+                  <div className="bg-emerald-500/15 border border-emerald-400/30 p-3 rounded-xl flex items-center gap-2.5 shadow-inner">
+                    <ShieldCheck className="w-4.5 h-4.5 text-emerald-400 shrink-0 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                    <span className="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">STATUTORY AUDIT CERTIFICATE ISSUED</span>
                   </div>
                 </div>
               </div>
 
-              <ul className="space-y-2 pt-4 border-t border-white/10 text-[11px] text-muted font-mono">
+              <ul className="space-y-2.5 pt-4 border-t border-white/15 text-[11px] text-white/80 font-mono">
                 {['Real-Time Global Law Updates', '24/7 Automated Vulnerability Monitoring', 'Downloadable Legal Audit Certificates'].map((b, bIdx) => (
-                  <li key={bIdx} className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <li key={bIdx} className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
                     <span>{b}</span>
                   </li>
                 ))}
@@ -864,86 +910,97 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-48 px-6 bg-black text-center relative overflow-hidden">
-        <div className="absolute inset-0 scan-lines pointer-events-none opacity-10"></div>
-        <div className="relative z-10 max-w-5xl mx-auto reveal-up">
-          <h2 className="text-7xl md:text-[120px] font-sans font-extrabold tracking-[0.04em] leading-[0.9] mb-12">
-            READY FOR <br />INFRASTRUCTURE?
-          </h2>
-          <p className="text-muted text-sm md:text-lg tracking-[0.15em] mb-16 max-w-2xl mx-auto">
-            WE ARE CURRENTLY ACCEPTING A LIMITED NUMBER OF ENTERPRISE PILOT PARTNERS.
-          </p>
-          {user ? (
-            <Link to="/dashboard" className="bracket-btn inline-block border-accent text-accent">
-              <span className="bracket-btn-inner"></span>
-              GO TO DASHBOARD
-            </Link>
-          ) : (
-            <Link to="/signup" className="bracket-btn inline-block">
-              <span className="bracket-btn-inner"></span>
-              APPLY FOR EARLY ACCESS
-            </Link>
-          )}
+      {/* CTA Section (Spatial Glass UI) */}
+      <section className="py-32 px-6 bg-black text-center relative overflow-hidden">
+        <div className="liquid-glow-orb bg-accent/20 w-[600px] h-[600px] top-10 left-1/2 -translate-x-1/2"></div>
+        <div className="max-w-5xl mx-auto relative z-10">
+          <div className="spatial-glass-card liquid-glass-card rounded-3xl p-12 sm:p-20 border border-white/20 shadow-2xl relative overflow-hidden reveal-up">
+            <h2 className="text-5xl sm:text-7xl md:text-[90px] font-sans font-black tracking-tight leading-none mb-8 uppercase text-white">
+              READY FOR <br /><span className="text-accent italic drop-shadow-[0_0_30px_rgba(200,241,53,0.4)]">INFRASTRUCTURE?</span>
+            </h2>
+            <p className="text-white/80 text-xs sm:text-sm md:text-base tracking-widest mb-12 max-w-2xl mx-auto font-mono uppercase">
+              WE ARE CURRENTLY ACCEPTING A LIMITED NUMBER OF ENTERPRISE PILOT PARTNERS.
+            </p>
+            {user ? (
+              <Link to="/dashboard" className="bracket-btn inline-block border-accent text-accent shadow-[0_0_30px_rgba(200,241,53,0.3)] hover:scale-105 transition-transform">
+                <span className="bracket-btn-inner"></span>
+                GO TO DASHBOARD
+              </Link>
+            ) : (
+              <Link to="/signup" className="bracket-btn inline-block shadow-[0_0_30px_rgba(200,241,53,0.3)] hover:scale-105 transition-transform">
+                <span className="bracket-btn-inner"></span>
+                APPLY FOR EARLY ACCESS
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Trust Center / Data Integrity Section */}
-      <section className="py-32 px-6 border-y border-white/5 bg-surface/30">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div className="reveal-up">
-            <div className="section-label mb-8">TRUST CENTER & DATA INTEGRITY</div>
-            <h2 className="text-5xl font-sans font-black tracking-tighter mb-8 italic uppercase">
-              YOUR DATA IS <span className="text-accent underline decoration-2">SECURE.</span>
+      {/* Trust Center / Data Integrity Section (Spatial UI) */}
+      <section className="py-32 px-6 border-y border-white/10 bg-black relative overflow-hidden">
+        <div className="liquid-glow-orb bg-emerald-500/10 w-[500px] h-[500px] top-1/2 -right-30"></div>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
+          <div className="spatial-glass-card liquid-glass-card p-8 sm:p-12 rounded-3xl border border-white/20 shadow-2xl reveal-up">
+            <div className="section-label mb-6 text-accent inline-block bg-accent/10 border border-accent/20 px-3.5 py-1 rounded-full text-xs font-mono font-bold">
+              TRUST CENTER & DATA INTEGRITY
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-sans font-black tracking-tighter mb-6 italic uppercase text-white">
+              YOUR DATA IS <span className="text-accent underline decoration-2 drop-shadow-[0_0_15px_rgba(200,241,53,0.3)]">SECURE.</span>
             </h2>
-            <div className="space-y-6 text-muted text-sm tracking-widest leading-loose">
+            <div className="space-y-4 text-white/80 text-xs sm:text-sm tracking-wide leading-relaxed font-mono">
               <p>THE PAPERLOO PLATFORM IS BUILT WITH A SECURITY-FIRST ARCHITECTURE. ALL DATA IS ENCRYPTED AT REST VIA AES-256 AND PROTECTED DURING TRANSIT WITH TLS 1.3 PROTOCOLS.</p>
               <p>WE ADHERE TO SOC2-ALIGNED GOVERNANCE PRACTICES, ENSURING THAT OUR AUTOMATED WORKFLOWS MEET THE RIGOROUS STANDARDS REQUIRED BY GLOBAL ENTERPRISE LEGAL DEPARTMENTS.</p>
             </div>
-            <Link to="/trust" className="inline-block mt-12 text-[10px] font-bold tracking-[0.4em] text-accent hover:underline">
+            <Link to="/trust" className="inline-flex items-center gap-2 mt-8 text-xs font-mono font-bold tracking-widest text-accent bg-accent/10 border border-accent/30 px-5 py-2.5 rounded-full hover:bg-accent/20 transition-all shadow-md">
               VIEW FULL SECURITY WHITEPAPER →
             </Link>
           </div>
+
           <div className="reveal-up delay-200">
-            <div className="aspect-square bg-black border border-white/10 p-1 relative overflow-hidden group">
+            <div className="spatial-glass-card liquid-glass-card aspect-square rounded-3xl p-8 border border-white/20 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center text-center group">
               <div className="absolute inset-0 grid-dots opacity-20"></div>
-              <div className="relative h-full flex flex-col items-center justify-center space-y-12 text-center p-12">
-                <div className="w-24 h-24 border border-accent flex items-center justify-center rotate-45 group-hover:rotate-0 transition-transform duration-700">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="-rotate-45 group-hover:rotate-0 transition-transform duration-700">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                </div>
-                <div className="space-y-4">
-                  <p className="text-3xl font-sans font-black tracking-[0.1em]">SOC2 ALIGNED</p>
-                  <p className="text-[10px] tracking-[0.3em] text-accent">ENTERPRISE-STRENGTH PROTECTION</p>
-                </div>
+              <div className="w-28 h-28 border-2 border-accent/80 rounded-2xl flex items-center justify-center rotate-45 group-hover:rotate-0 transition-transform duration-700 bg-accent/10 shadow-[0_0_30px_rgba(200,241,53,0.25)] backdrop-blur-md">
+                <ShieldCheck className="w-14 h-14 text-accent -rotate-45 group-hover:rotate-0 transition-transform duration-700" />
+              </div>
+              <div className="space-y-3 mt-10">
+                <p className="text-3xl font-sans font-black tracking-wide text-white">SOC2 ALIGNED</p>
+                <p className="text-xs font-mono font-bold tracking-widest text-accent bg-accent/10 border border-accent/30 px-4 py-1.5 rounded-full">
+                  ENTERPRISE-STRENGTH PROTECTION
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
+      {/* FAQ Section (Spatial UI Liquid Glass) */}
       <section className="py-32 px-6 bg-black relative">
-        <div className="absolute inset-0 radial-fade-top opacity-30" />
+        <div className="liquid-glow-orb bg-accent/10 w-[450px] h-[450px] bottom-10 left-10"></div>
         <div className="max-w-4xl mx-auto relative z-10">
           <div className="mb-20 text-center reveal-up">
-            <div className="section-label mb-8 inline-block">KNOWLEDGE BASE</div>
-            <h2 className="text-4xl md:text-6xl font-sans font-black tracking-tighter italic uppercase">
-              FREQUENTLY ASKED <span className="text-accent">QUESTIONS</span>
+            <div className="section-label mb-4 text-accent inline-block bg-accent/10 border border-accent/20 px-3.5 py-1 rounded-full text-xs font-mono font-bold">
+              KNOWLEDGE BASE
+            </div>
+            <h2 className="text-4xl md:text-6xl font-sans font-black tracking-tighter italic uppercase text-white">
+              FREQUENTLY ASKED <span className="text-accent drop-shadow-[0_0_20px_rgba(200,241,53,0.3)]">QUESTIONS</span>
             </h2>
           </div>
 
-          <div className="space-y-6 reveal-up">
+          <div className="space-y-4 reveal-up">
             {[
               { q: 'What is Paperloo?', a: 'Paperloo is a comprehensive compliance infrastructure platform designed to automate the generation of legal documents, cookie scanners, and governance policies for global agencies.' },
               { q: 'Is the compliance score accurate?', a: 'Yes, our high-fidelity auditing engine relies strictly on actual generated documents and deployed mechanisms across your domains, ensuring a 100% authentic compliance grade.' },
               { q: 'Do you provide legal advice?', a: 'No. Paperloo is an automated infrastructure platform. All generated documents should be reviewed by qualified legal counsel prior to use.' },
               { q: 'Can I connect multiple Github repositories?', a: 'Yes, our GitHub integration allows you to instantly import multiple live web properties and automatically inject compliance structures into them.' }
             ].map((faq, i) => (
-              <div key={i} className="border border-white/10 p-6 bg-zinc-950 hover:border-accent/30 transition-colors">
-                <h3 className="text-xl font-sans font-black italic tracking-tighter text-white uppercase mb-2">Q. {faq.q}</h3>
-                <p className="text-sm font-mono text-muted leading-relaxed uppercase tracking-widest">{faq.a}</p>
+              <div key={i} className="liquid-glass-item spatial-glass-hover rounded-2xl p-6 sm:p-8 border border-white/15 backdrop-blur-xl shadow-lg hover:border-accent/60 transition-all">
+                <h3 className="text-lg sm:text-xl font-sans font-black tracking-tight text-white uppercase mb-3 flex items-center gap-3">
+                  <span className="text-accent font-mono text-sm bg-accent/15 px-2.5 py-0.5 rounded-md border border-accent/30">Q</span>
+                  {faq.q}
+                </h3>
+                <p className="text-xs sm:text-sm font-mono text-white/70 leading-relaxed tracking-wide uppercase pl-9 border-l-2 border-accent/40">
+                  {faq.a}
+                </p>
               </div>
             ))}
           </div>
