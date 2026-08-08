@@ -13,10 +13,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// STEALTH-OPS: Mount point updated to custom runtime element eliminating default #root DOM shell fingerprint
-const mountPoint = document.getElementById('pl-core-runtime') || document.getElementById('root');
-
-createRoot(mountPoint!).render(
+createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />

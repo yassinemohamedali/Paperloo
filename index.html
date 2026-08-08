@@ -102,12 +102,7 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=%VITE_GTM_ID%"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-    <!-- STEALTH-OPS: Custom runtime mount point replacing default empty root shell with pre-rendered critical layout -->
-    <main id="pl-core-runtime" class="bg-black text-white min-h-screen">
-      <div id="pl-boot-skeleton" style="background-color:#000;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif;">
-        <div style="opacity:0.3;letter-spacing:0.2em;font-size:12px;font-weight:600;">PAPERLOO INFRASTRUCTURE</div>
-      </div>
-    </main>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
