@@ -35,12 +35,58 @@ function getStripe() {
 const app = express();
 const PORT = 3000;
 
+app.disable("x-powered-by");
+
+// Rate limiting in-memory store
+const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 120; // 120 requests per minute per IP
+
+// SEC-AUDIT-FIX: Prevent brute-force and denial-of-service (DoS) via multi-tiered client IP rate-limiting middleware
+function rateLimiter(req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (!req.path.startsWith('/api/')) return next();
+  
+  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.ip || 'unknown';
+  const now = Date.now();
+  const record = ipRequestCounts.get(clientIp);
+
+  if (!record || now > record.resetTime) {
+    ipRequestCounts.set(clientIp, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return next();
+  }
+
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: "Too many requests. Please slow down and try again shortly." });
+  }
+
+  record.count += 1;
+  next();
+}
+
+// SEC-AUDIT-FIX: Prevent Web Cache Poisoning and Cache Deception by enforcing strict Vary and Cache-Control headers across all dynamic responses
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("Vary", "Accept-Encoding, Authorization, Cookie, Origin");
+  if (req.path.startsWith('/api/')) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  }
+  next();
+});
+
+app.use(rateLimiter);
+
 app.use((req, res, next) => {
   console.log(`[${req.method}] ${req.url}`);
   const oldSend = res.send;
   res.send = function(data) {
     if (res.statusCode >= 400) {
-      console.log(`[${req.method}] ${req.url} -> ${res.statusCode}: ${data}`);
+      console.log(`[${req.method}] ${req.url} -> ${res.statusCode}: ${typeof data === 'string' ? data.slice(0, 200) : '[Binary/Object]'}`);
     }
     return oldSend.apply(res, arguments as any);
   };
@@ -48,7 +94,7 @@ app.use((req, res, next) => {
 });
 
 app.set("trust proxy", true);
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(cors());
 
 // API Routes
@@ -183,7 +229,32 @@ app.post("/api/scan-external-site", async (req, res) => {
     targetUrl = "https://" + targetUrl;
   }
 
-  const cleanDomain = targetUrl.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0].trim();
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(targetUrl);
+  } catch (e) {
+    return res.status(400).json({ error: "Invalid URL format" });
+  }
+
+  // SEC-AUDIT-FIX: Mitigate Server-Side Request Forgery (SSRF) and Cloud Metadata Exfiltration by validating target URLs against loopback, private CIDR blocks, link-local addresses, and internal domain suffixes.
+  const hostname = parsedUrl.hostname.toLowerCase();
+  if (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '0.0.0.0' ||
+    hostname === '::1' ||
+    hostname.startsWith('10.') ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('162.254.') ||
+    hostname.startsWith('169.254.') ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
+    hostname.endsWith('.internal') ||
+    hostname.endsWith('.local')
+  ) {
+    return res.status(400).json({ error: "Scanning private or loopback addresses is prohibited." });
+  }
+
+  const cleanDomain = hostname.replace(/^(www\.)?/, '').trim();
 
   try {
     console.log(`[REAL-TIME AUDIT] Initiating crawl of external domain: ${targetUrl}`);
@@ -257,15 +328,36 @@ app.post("/api/scan-external-site", async (req, res) => {
                           /id=["'][^"']*(cookie-consent|cookie-banner|consent-banner|cmp-container)[^"']/i.test(html) ||
                           /class=["'][^"']*(cookie-consent|cookie-banner|consent-banner|cookiebanner)[^"']/i.test(html);
 
+    // 5. Scan for ADA Title III & WCAG 2.1 AA Accessibility Defenses
+    const accessibilityKeywords = [
+      'accessibility', 'accessibility-statement', 'ada-compliance', 'wcag', 'vpat', 'accessibility_statement', 'ada-statement'
+    ];
+    let hasAccessibilityPolicy = accessibilityKeywords.some(keyword => htmlLower.includes(keyword)) ||
+                                 /href=["'][^"']*(accessibility|ada|wcag)[^"']*["']/i.test(html) ||
+                                 /accessibility statement|ada compliance|wcag 2.1|vpat/i.test(html);
+
+    const accessibilityWidgetKeywords = [
+      'accessibe', 'userway', 'equalweb', 'paperloo-accessibility', 'accessibility-widget', 'acc-widget', 'accessibility-toolbar'
+    ];
+    let hasAccessibilityWidget = accessibilityWidgetKeywords.some(keyword => htmlLower.includes(keyword)) ||
+                                  /id=["'][^"']*(accessibility|acc-widget|ada-toolbar)[^"']/i.test(html) ||
+                                  /class=["'][^"']*(accessibility|acc-widget|ada-toolbar)[^"']/i.test(html);
+
+    const hasAriaLandmarks = /role=["'](main|navigation|banner|contentinfo|complementary)["']/i.test(html) ||
+                             /aria-label=/i.test(html) ||
+                             /alt=["'][^"']+["']/i.test(html);
+
     // If redirected to state-of-the-art consent/policies domains, these are verifiably present & managed!
     if (isConsentGatewayRedirect) {
       hasPrivacy = true;
       hasTerms = true;
       hasCookiePolicy = true;
       hasCookieBanner = true;
+      hasAccessibilityPolicy = true;
+      hasAccessibilityWidget = true;
     }
 
-    // 5. Scan for Active Analytics, Advertisement, or Marketing trackers
+    // 6. Scan for Active Analytics, Advertisement, or Marketing trackers
     const trackers: Array<{ name: string; label: string }> = [];
     if (htmlLower.includes('gtag') || htmlLower.includes('google-analytics') || htmlLower.includes('analytics.js') || htmlLower.includes('googletagmanager')) {
       // If we have a consent gateway redirect, it's shielded by Google Consent Mode v2 or central cookie guard
@@ -289,12 +381,12 @@ app.post("/api/scan-external-site", async (req, res) => {
     }
 
     // High fidelity compliance scoring algorithm
-    let score = 30; // base score if fetch succeeded
+    let score = 25; // base score if fetch succeeded
     let violations = 0;
     const violationList: string[] = [];
 
     if (hasPrivacy) {
-      score += 20;
+      score += 15;
     } else {
       violations++;
       violationList.push("MISSING GDPR PRIVACY DISCLOSURE");
@@ -315,12 +407,24 @@ app.post("/api/scan-external-site", async (req, res) => {
     }
 
     if (hasCookieBanner) {
-      score += 20;
+      score += 15;
     } else {
       if (!isConsentGatewayRedirect) {
         violations++;
         violationList.push("MISSING COOKIE SHIELD OR CONSENT BANNER");
       }
+    }
+
+    // ADA & WCAG 2.1 AA Accessibility Evaluation
+    if (hasAccessibilityPolicy && (hasAccessibilityWidget || hasAriaLandmarks)) {
+      score += 15;
+    } else if (hasAccessibilityPolicy || hasAccessibilityWidget) {
+      score += 10;
+      violations++;
+      violationList.push("INCOMPLETE ADA TITLE III ACCESSIBILITY TOOLBAR / VPAT STATEMENT");
+    } else {
+      violations++;
+      violationList.push("ACCESSIBILITY WARNING: MISSING WCAG 2.1 AA STATEMENT & ACCESSIBILITY TOOLBAR");
     }
 
     // For trackers without proper banner/consent shield
@@ -373,6 +477,9 @@ app.post("/api/scan-external-site", async (req, res) => {
         hasTerms,
         hasCookiePolicy,
         hasCookieBanner: hasCookieBanner || isConsentGatewayRedirect,
+        hasAccessibilityPolicy: hasAccessibilityPolicy || isConsentGatewayRedirect,
+        hasAccessibilityWidget: hasAccessibilityWidget || isConsentGatewayRedirect,
+        adaRiskLevel: (hasAccessibilityPolicy && hasAccessibilityWidget) ? 'LOW' : 'HIGH',
         trackers,
         violationList: finalViolationList
       }

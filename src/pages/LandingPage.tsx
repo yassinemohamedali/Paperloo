@@ -28,6 +28,7 @@ import {
 
 import { useAuthStore } from '@/src/store/authStore';
 import { supabase } from '@/src/lib/supabase';
+import Aurora from '@/src/components/ui/Aurora';
 
 const SERVICES = [
   { id: '01', name: 'AUTOMATED LEGAL COMPLIANCE ENGINE', description: 'Automatically generate, update, and publish bulletproof Privacy Policies, Terms of Service, and DPAs tailored to your tech stack and target jurisdictions.' },
@@ -327,6 +328,16 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+        {/* Aurora Background */}
+        <div className="absolute inset-0 pointer-events-none opacity-50 z-0">
+          <Aurora
+            colorStops={["#c8f135", "#10b981", "#84cc16"]}
+            blend={0.5}
+            amplitude={1.0}
+            speed={0.5}
+          />
+        </div>
+
         <div className="absolute inset-0 scan-lines pointer-events-none opacity-20"></div>
         
         {/* Globe Background */}
@@ -335,7 +346,7 @@ export default function LandingPage() {
         </div>
 
         {/* Watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+        <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
           <span className="text-[25vw] font-sans font-extrabold text-white/[0.02] tracking-[0.04em]">PAPERLOO</span>
         </div>
 

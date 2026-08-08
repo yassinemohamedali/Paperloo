@@ -6,6 +6,7 @@ import { useAuthStore } from '@/src/store/authStore';
 import { Toaster } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import ConsentManager from './components/ConsentManager';
+import AccessibilityWidget from './components/AccessibilityWidget';
 
 // Lazy load pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -41,6 +42,7 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Support = lazy(() => import('./pages/Support'));
 const DataRoom = lazy(() => import('./pages/DataRoom'));
+const AccessibilityCenter = lazy(() => import('./pages/AccessibilityCenter'));
 
 // Layout
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -199,6 +201,7 @@ const AnimatedRoutes = () => {
           <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
           <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
           <Route path="/data-room" element={<PageTransition><DataRoom /></PageTransition>} />
+          <Route path="/accessibility-defense" element={<PageTransition><AccessibilityCenter /></PageTransition>} />
         </Route>
 
         {/* Redirects */}
@@ -280,6 +283,7 @@ export default function App() {
         <AnimatedRoutes />
       </Suspense>
       <ConsentManager />
+      <AccessibilityWidget />
       <Toaster 
         position="top-right" 
         toastOptions={{

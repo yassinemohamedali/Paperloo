@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase } from '@/src/lib/supabase';
+import { rateLimitedAuth } from '@/src/lib/supabaseAuthWrapper';
 import { toast } from 'sonner';
 
 const signupSchema = z.object({
@@ -216,7 +217,7 @@ export default function Signup() {
 
   const onSubmit = async (formData: SignupForm) => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { error } = await rateLimitedAuth.signUp({
       email: formData.email,
       password: formData.password,
       options: {

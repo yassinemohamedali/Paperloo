@@ -142,6 +142,12 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     } else if (type === 'return_policy') {
       docSpecificInstructions = `
     1. Detail refund windows, shipping obligations, and return eligibility for physical products or SaaS subscriptions.`;
+    } else if (type === 'accessibility_statement') {
+      docSpecificInstructions = `
+    1. Express definitive compliance commitment to W3C Web Content Accessibility Guidelines (WCAG 2.1 Level AA), Americans with Disabilities Act (ADA Title III), Section 508 of the US Rehabilitation Act, and the European Accessibility Act (EAA EN 301 549).
+    2. Outline implemented technical defenses: ARIA landmarks, minimum 4.5:1 text contrast ratios, full keyboard tab-navigation support, screen reader compatibility (NVDA, JAWS, VoiceOver), and reduced motion support.
+    3. Include explicit alternative format SLA: Guarantee alternative document formats (large print, plain text, audio transcript) within 48 business hours upon request to ${dpoContact}.
+    4. Provide direct contact information for accessibility escalation and formal reporting.`;
     } else {
       docSpecificInstructions = `
     1. Ensure the document addresses the specific legal requirements for a ${type.replace(/_/g, ' ')} under the selected jurisdictions.

@@ -80,7 +80,38 @@ export default function Regulations() {
     <div className="space-y-12 font-mono">
       <div className="space-y-4">
         <h2 className="text-4xl font-sans font-extrabold tracking-[0.04em] uppercase">REGULATION MONITORING</h2>
-        <p className="text-muted text-xs tracking-[0.15em] uppercase">TRACKING GLOBAL PRIVACY LAWS AND THEIR IMPACT ON YOUR SITES.</p>
+        <p className="text-muted text-xs tracking-[0.15em] uppercase">TRACKING GLOBAL PRIVACY LAWS AND ACCESSIBILITY MANDATES ON YOUR SITES.</p>
+      </div>
+
+      {/* ADA & WCAG 2.1 AA Accessibility Banner */}
+      <div className="bg-accent/10 border-2 border-accent/40 p-8 rounded-2xl relative overflow-hidden space-y-4 shadow-[0_0_30px_rgba(200,241,53,0.15)]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-3">
+              <span className="bg-accent text-black font-black text-[9px] px-2.5 py-1 uppercase tracking-widest rounded-md">
+                ACCESSIBILITY STANDARDS
+              </span>
+              <span className="text-accent text-xs font-mono font-bold tracking-widest uppercase">
+                ADA TITLE III & WCAG 2.1 AA MANAGEMENT
+              </span>
+            </div>
+            <h3 className="text-2xl font-sans font-extrabold uppercase tracking-tight text-white">
+              Comprehensive Web Accessibility Conformance
+            </h3>
+            <p className="text-xs text-white/80 leading-relaxed uppercase tracking-wider">
+              Enhance web accessibility for all users. Paperloo provides WCAG 2.1 AA compliant toolbars, generates VPAT 2.4 accessibility statements, and supports alternative format request workflows.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <a 
+              href="/accessibility-defense" 
+              className="bracket-btn py-3.5 px-6 text-center text-xs font-black uppercase tracking-wider"
+            >
+              <span className="bracket-btn-inner"></span>
+              ACCESSIBILITY CENTER
+            </a>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">

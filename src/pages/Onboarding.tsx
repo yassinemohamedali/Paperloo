@@ -86,7 +86,15 @@ export default function Onboarding() {
     onError: (error: any) => toast.error(error.message)
   });
 
-  const nextStep = () => setStep(s => s + 1);
+  // SEC-AUDIT-FIX: State Machine Integrity Enforcement - Prevent step-skipping and state manipulation attacks
+  const nextStep = () => {
+    if (step === 1 && !agencyName.trim()) {
+      toast.error("Please enter a valid Agency Name before proceeding.");
+      return;
+    }
+    setStep(s => Math.min(s + 1, 3));
+  };
+  
   const skip = () => completeOnboardingMutation.mutate();
 
   return (

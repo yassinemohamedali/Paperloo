@@ -21,6 +21,9 @@ export default function LeadScanner() {
       hasTerms: boolean;
       hasCookiePolicy: boolean;
       hasCookieBanner: boolean;
+      hasAccessibilityPolicy?: boolean;
+      hasAccessibilityWidget?: boolean;
+      adaRiskLevel?: 'LOW' | 'HIGH';
       trackers: Array<{ name: string; label: string }>;
       violationList: string[];
     };
@@ -256,6 +259,12 @@ export default function LeadScanner() {
                   <li className="flex items-center gap-2">
                     <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${scanResult.details?.hasCookieBanner ? 'bg-green-400' : 'bg-red-500'}`} />
                     {scanResult.details?.hasCookieBanner ? 'COMPLIANT COOKIE CONSENT GATEWAY' : 'MISSING COOKIE SHIELD OR CONSENT BANNER'}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${scanResult.details?.hasAccessibilityPolicy ? 'bg-green-400' : 'bg-red-500'}`} />
+                    {scanResult.details?.hasAccessibilityPolicy 
+                      ? 'ADA TITLE III ACCESSIBILITY STATEMENT DEPLOYED' 
+                      : 'MISSING ACCESSIBILITY STATEMENT & WCAG TOOLBAR'}
                   </li>
                   {scanResult.details?.trackers && scanResult.details.trackers.length > 0 && (
                     <li className="mt-4 pt-3 border-t border-white/5 space-y-2">
