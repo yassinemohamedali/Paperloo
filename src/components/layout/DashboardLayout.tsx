@@ -14,8 +14,7 @@ import {
   AlertCircle,
   Menu,
   X,
-  LifeBuoy,
-  FolderLock
+  LifeBuoy
 } from 'lucide-react';
 import { useAuthStore } from '@/src/store/authStore';
 import { cn } from '@/src/lib/utils';
@@ -27,7 +26,6 @@ const navItems = [
   { icon: ShieldCheck, label: 'ADA Defense', path: '/accessibility-defense' },
   { icon: Bell, label: 'Alerts', path: '/alerts' },
   { icon: Shield, label: 'Regulations', path: '/regulations' },
-  { icon: FolderLock, label: 'Data Room', path: '/data-room' },
   { icon: CreditCard, label: 'Billing', path: '/billing' },
   { icon: Settings, label: 'Settings', path: '/settings' },
   { icon: LifeBuoy, label: 'Support', path: '/support' },
