@@ -128,16 +128,29 @@ export default function Aurora(props: AuroraProps) {
     const ctn = ctnDom.current;
     if (!ctn) return;
 
-    const renderer = new Renderer({
-      alpha: true,
-      premultipliedAlpha: true,
-      antialias: true
-    });
-    const gl = renderer.gl;
+    let renderer: Renderer | undefined;
+    let gl: any;
+
+    try {
+      renderer = new Renderer({
+        alpha: true,
+        premultipliedAlpha: true,
+        antialias: true
+      });
+      gl = renderer.gl;
+    } catch (e) {
+      console.warn('WebGL not supported for Aurora background:', e);
+      return;
+    }
+
+    if (!gl || !renderer) return;
+
     gl.clearColor(0, 0, 0, 0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.canvas.style.backgroundColor = 'transparent';
+    if (gl.canvas && 'style' in gl.canvas) {
+      (gl.canvas as HTMLCanvasElement).style.backgroundColor = 'transparent';
+    }
 
     let program: Program | undefined;
 
@@ -191,7 +204,7 @@ export default function Aurora(props: AuroraProps) {
           return [c.r, c.g, c.b];
         });
       }
-      renderer.render({ scene: mesh });
+      renderer?.render({ scene: mesh });
     };
     animateId = requestAnimationFrame(update);
 
@@ -200,10 +213,10 @@ export default function Aurora(props: AuroraProps) {
     return () => {
       cancelAnimationFrame(animateId);
       window.removeEventListener('resize', resize);
-      if (ctn && gl.canvas.parentNode === ctn) {
+      if (ctn && gl?.canvas?.parentNode === ctn) {
         ctn.removeChild(gl.canvas);
       }
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amplitude]);
