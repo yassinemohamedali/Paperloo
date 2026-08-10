@@ -23,7 +23,6 @@ import { motion } from 'motion/react';
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Globe, label: 'Sites', path: '/sites' },
-  { icon: ShieldCheck, label: 'ADA Defense', path: '/accessibility-defense' },
   { icon: Bell, label: 'Alerts', path: '/alerts' },
   { icon: Shield, label: 'Regulations', path: '/regulations' },
   { icon: CreditCard, label: 'Billing', path: '/billing' },

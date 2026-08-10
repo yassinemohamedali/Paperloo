@@ -104,7 +104,7 @@ export default function Regulations() {
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <a 
-              href="/accessibility-defense" 
+              href="/settings?tab=accessibility" 
               className="bracket-btn py-3.5 px-6 text-center text-xs font-black uppercase tracking-wider"
             >
               <span className="bracket-btn-inner"></span>

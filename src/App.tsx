@@ -253,7 +253,8 @@ const AnimatedRoutes = () => {
           <Route path="/billing" element={<PageTransition><Billing /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
           <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
-          <Route path="/accessibility-defense" element={<PageTransition><AccessibilityCenter /></PageTransition>} />
+          <Route path="/accessibility-defense" element={<Navigate to="/settings?tab=accessibility" replace />} />
+          <Route path="/accessibility" element={<Navigate to="/settings?tab=accessibility" replace />} />
         </Route>
 
         {/* Redirects */}

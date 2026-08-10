@@ -40,9 +40,9 @@ export default function AccessibilityCenter() {
     enabled: !!user?.id
   });
 
-  const embedScript = `<!-- Paperloo ADA Title III & WCAG 2.1 AA Accessibility Shield -->
+  const embedScript = `<!-- Paperloo Web Accessibility & WCAG 2.1 AA Widget -->
 <script 
-  src="https://paperloo.com/accessibility-shield.js" 
+  src="https://paperloo.com/accessibility-widget.js" 
   data-agency-id="${user?.id || 'agency-default'}"
   data-position="bottom-right"
   data-[#high-contrast]="true"
@@ -53,7 +53,7 @@ export default function AccessibilityCenter() {
   const copyScript = () => {
     navigator.clipboard.writeText(embedScript);
     setCopiedScript(true);
-    toast.success("Accessibility Shield embed script copied to clipboard!");
+    toast.success("Accessibility Widget embed script copied to clipboard!");
     setTimeout(() => setCopiedScript(false), 3000);
   };
 
@@ -82,7 +82,7 @@ export default function AccessibilityCenter() {
             </span>
           </div>
           <h1 className="text-4xl font-sans font-extrabold tracking-tight uppercase italic">
-            ACCESSIBILITY & ADA COMPLIANCE CENTER
+            ACCESSIBILITY & COMPLIANCE TOOLS
           </h1>
           <p className="text-muted text-xs tracking-widest uppercase max-w-2xl">
             Ensure your digital platforms and client sites align with ADA Title III, California Unruh Act, and European Accessibility Act (EAA) standards with automated toolbars and VPAT 2.4 documentation.
@@ -219,7 +219,7 @@ export default function AccessibilityCenter() {
           <div className="bg-surface border border-white/10 p-8 space-y-6">
             <div className="space-y-2">
               <h3 className="text-xl font-sans font-extrabold uppercase tracking-tight">
-                Embed Accessibility Shield On Client Websites
+                Embed Accessibility Widget On Client Websites
               </h3>
               <p className="text-muted text-xs uppercase tracking-wider">
                 Paste this single script tag into the <code>&lt;head&gt;</code> of any client website to automatically render an interactive ADA Title III toolbar.
@@ -250,7 +250,7 @@ export default function AccessibilityCenter() {
               </div>
               <div className="bg-white/5 border border-white/10 p-5 rounded-xl space-y-2">
                 <ShieldCheck className="w-6 h-6 text-accent" />
-                <h4 className="font-bold text-sm uppercase">Litigation Defense Certificate</h4>
+                <h4 className="font-bold text-sm uppercase">WCAG 2.1 AA Conformance Statement</h4>
                 <p className="text-xs text-muted uppercase">Publicly verifies active WCAG 2.1 AA compliance certification.</p>
               </div>
             </div>
