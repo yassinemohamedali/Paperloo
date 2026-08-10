@@ -2,57 +2,10 @@ import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
+import { PLANS } from '@/src/lib/plans';
 import { Check, CreditCard, Zap, Shield, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
-
-const PLANS = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: '$49',
-    period: '/mo',
-    description: 'Perfect for small agencies starting out.',
-    features: [
-      'Up to 3 Client Sites',
-      'Basic Compliance Monitoring',
-      'Standard Document Templates',
-      'Email Support',
-    ],
-    icon: Zap,
-  },
-  {
-    id: 'agency',
-    name: 'Agency',
-    price: '$149',
-    period: '/mo',
-    description: 'The standard for growing agencies.',
-    features: [
-      'Up to 20 Client Sites',
-      'Real-time Compliance Alerts',
-      'Custom White-labeling',
-      'Priority Support',
-      'Advanced Risk Assessment',
-    ],
-    icon: Shield,
-    popular: true,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: '$499',
-    period: '/mo',
-    description: 'Scale your compliance operations.',
-    features: [
-      'Unlimited Client Sites',
-      'API Access',
-      'Dedicated Account Manager',
-      'Custom Legal Review',
-      'SLA Guarantee',
-    ],
-    icon: Crown,
-  },
-];
 
 export default function Billing() {
   const { user } = useAuthStore();
@@ -74,19 +27,17 @@ export default function Billing() {
 
   const updatePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      // Functional upgrade for demo purposes
-      const { error } = await (supabase
-        .from('profiles') as any)
-        .update({ plan: planId as any })
-        .eq('id', user?.id as string);
-      
+      const { data, error } = await supabase
+        .functions
+        .invoke('create-checkout-session', {
+          body: { planId, agencyId: user?.id as string },
+        });
+
       if (error) throw error;
-      return { success: true, planId };
+      return data as { url: string };
     },
     onSuccess: (data) => {
-      const planName = PLANS.find(p => p.id === data.planId)?.name;
-      toast.success(`${planName} Plan Activated!`);
-      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+      window.location.href = data.url;
     },
     onError: (error: any) => toast.error(error.message),
   });
@@ -107,7 +58,7 @@ export default function Billing() {
           <div className="space-y-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted">CURRENT PLAN</span>
             <div className="flex items-center gap-3">
-              <h3 className="text-3xl font-sans font-extrabold tracking-[0.04em] uppercase text-accent">{currentPlan}</h3>
+              <h3 className="text-3xl font-sans font-extrabold tracking-[0.04em] uppercase text-accent">{currentPlan.toUpperCase()}</h3>
               <span className="px-2 py-1 bg-accent/10 border border-accent/20 text-[10px] font-bold text-accent uppercase tracking-widest">ACTIVE</span>
             </div>
           </div>
@@ -121,10 +72,65 @@ export default function Billing() {
         </div>
       </div>
 
+      {/* Plans */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {PLANS.map((plan) => (
+          <div
+            key={plan.id}
+            className={`bg-surface border border-white/10 p-6 relative overflow-hidden group flex flex-col h-full ${
+              plan.popular ? 'border-accent/20' : ''
+            }`}
+          >
+            <div className="absolute inset-0 scan-lines opacity-10 pointer-events-none" />
+            <div className="relative z-10 flex flex-col flex-1 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted">{plan.name}</span>
+                  {plan.popular && (
+                    <span className="px-2 py-0.5 bg-accent/20 text-[9px] font-bold text-accent uppercase tracking-widest">
+                      POPULAR
+                    </span>
+                  )}
+                </div>
+                <div className="text-right space-y-1">
+                  <span className="block text-2xl font-sans font-extrabold tracking-[0.04em] text-accent">
+                    ${plan.price}
+                  </span>
+                  <span className="text-muted text-xs tracking-wider">{plan.period}</span>
+                </div>
+              </div>
+
+              <ul className="space-y-2 text-left text-sm">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2">
+                    <Check className="h-3 w-3 text-accent" />
+                    <span className="text-muted">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto">
+                <button
+                  onClick={() => updatePlanMutation.mutate(plan.id)}
+                  disabled={updatePlanMutation.isPending}
+                  className={`
+                    bracket-btn w-full py-3
+                    ${plan.popular ? 'bg-accent text-muted' : 'border-accent/20 hover:bg-accent/10'}
+                    ${updatePlanMutation.isPending ? 'pointer-events-none opacity-50' : ''}
+                  `}
+                >
+                  <span className="bracket-btn-inner"></span>
+                  {updatePlanMutation.isPending ? 'PROCESSING...' : 'SELECT PLAN'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Exclusive Enterprise Aura */}
       <div className="bg-surface border border-accent/20 p-12 text-center space-y-8 relative overflow-hidden group">
         <div className="absolute inset-0 scan-lines opacity-10 pointer-events-none" />
-        
+
         <div className="mx-auto h-16 w-16 bg-accent/10 flex items-center justify-center border border-accent/30 relative z-10">
           <Crown className="h-8 w-8 text-accent" />
         </div>
