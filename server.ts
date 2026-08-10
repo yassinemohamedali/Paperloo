@@ -32,6 +32,10 @@ function getStripe() {
   return stripeClient;
 }
 
+function safeJsonLiteral(val: any): string {
+  return JSON.stringify(val ?? '').replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/\//g, '\\u002f');
+}
+
 const app = express();
 const PORT = 3000;
 
@@ -565,10 +569,16 @@ app.post("/api/scan-external-site", async (req, res) => {
   }
 })// GitHub OAuth URL Endpoint
   app.get("/api/auth/github/url", (req, res) => {
-    const rawClientId = process.env.GITHUB_CLIENT_ID;
-    const clientId = (!rawClientId || rawClientId.trim() === "" || rawClientId === "your_github_client_id") ? "Ov23liAt1LF75UHNZ8i0" : rawClientId;
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    if (!clientId || clientId.trim() === "" || clientId === "your_github_client_id") {
+      return res.status(500).json({ error: "GITHUB_CLIENT_ID environment variable is not configured" });
+    }
     
-    const incomingState = (req.query.state as string) || "/dashboard";
+    let incomingState = "/dashboard";
+    const rawState = req.query.state as string;
+    if (rawState && rawState.startsWith("/") && !rawState.startsWith("//") && !rawState.includes("\\") && !rawState.includes("\n") && !rawState.includes("\r")) {
+      incomingState = rawState;
+    }
     
     // Dynamically resolve appUrl (protocol + host) with support for query origin for precision
     const clientOrigin = req.query.origin as string;
@@ -584,7 +594,7 @@ app.post("/api/scan-external-site", async (req, res) => {
 
     const redirectUri = `${appUrl}/api/auth/github/callback`;
     const params = new URLSearchParams({
-      client_id: clientId || "",
+      client_id: clientId,
       redirect_uri: redirectUri,
       scope: 'read:user,repo',
       state: incomingState,
@@ -597,19 +607,21 @@ app.post("/api/scan-external-site", async (req, res) => {
   // GitHub OAuth Callback Endpoint
   app.get("/api/auth/github/callback", async (req, res) => {
     const { code, state } = req.query;
-    const fallbackPath = (state as string) || "/dashboard";
+    let fallbackPath = "/dashboard";
+    if (typeof state === "string" && state.startsWith("/") && !state.startsWith("//") && !state.includes("\\") && !state.includes("\n") && !state.includes("\r")) {
+      fallbackPath = state;
+    }
 
     let accessToken = "";
     let githubUser = "";
 
-    if (code) {
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret || clientId === "your_github_client_id" || clientSecret === "your_github_client_secret") {
+      console.error("GitHub OAuth credentials not configured on server");
+    } else if (code) {
       try {
-        const rawClientId = process.env.GITHUB_CLIENT_ID;
-        const clientId = (!rawClientId || rawClientId.trim() === "" || rawClientId === "your_github_client_id") ? "Ov23liAt1LF75UHNZ8i0" : rawClientId;
-        
-        const rawClientSecret = process.env.GITHUB_CLIENT_SECRET;
-        const clientSecret = (!rawClientSecret || rawClientSecret.trim() === "" || rawClientSecret === "your_github_client_secret") ? "bdd6738fb66704b63e3c18b3e76b89d1d188c8ab" : rawClientSecret;
-        
         // Exchange code for token
         const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
           method: "POST",
@@ -645,6 +657,8 @@ app.post("/api/scan-external-site", async (req, res) => {
         console.error("GitHub Token exchange failed:", err);
       }
     }
+
+    const safeUserHtml = (githubUser || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
     res.send(`
       <!DOCTYPE html>
@@ -683,23 +697,26 @@ app.post("/api/scan-external-site", async (req, res) => {
         <body>
           <div class="spinner"></div>
           <p>GITHUB CONNECTOR ACCESS GRANTED</p>
-          <p style="font-size: 11px; color: #c8f135; margin-top: 5px;">USER: ${githubUser}</p>
+          <p style="font-size: 11px; color: #c8f135; margin-top: 5px;">USER: ${safeUserHtml}</p>
           <p style="font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 15px;">SYNCHRONIZING REPOSITORIES...</p>
 
           <script>
             if (window.opener) {
+              const targetOrigin = ${safeJsonLiteral(process.env.APP_URL || (req.protocol + '://' + req.get('host')))};
               window.opener.postMessage({ 
                 type: 'GITHUB_AUTH_SUCCESS', 
-                token: '${accessToken}', 
-                username: '${githubUser}',
-              }, '*');
+                token: ${safeJsonLiteral(accessToken)}, 
+                username: ${safeJsonLiteral(githubUser)},
+              }, targetOrigin);
               setTimeout(() => {
                 window.close();
               }, 1200);
             } else {
-              const redirText = "${fallbackPath}";
+              const redirText = ${safeJsonLiteral(fallbackPath)};
+              const tokenVal = ${safeJsonLiteral(accessToken)};
+              const userVal = ${safeJsonLiteral(githubUser)};
               const separator = redirText.includes("?") ? "&" : "?";
-              const targetUrl = redirText + separator + 'github_token=' + encodeURIComponent('${accessToken}') + '&github_user=' + encodeURIComponent('${githubUser}');
+              const targetUrl = redirText + separator + 'github_token=' + encodeURIComponent(tokenVal) + '&github_user=' + encodeURIComponent(userVal);
               window.location.href = targetUrl;
             }
           </script>
@@ -748,23 +765,43 @@ app.post("/api/scan-external-site", async (req, res) => {
   // Bulk Import for GitHub discovered sites
   app.post("/api/github/bulk-import", async (req, res) => {
     try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Unauthorized: Missing authorization header" });
+      }
+
+      const token = authHeader.substring(7);
+      const supabase = getSupabase();
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+      if (authError || !user) {
+        return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+      }
+
       const { userId, repos } = req.body;
       if (!userId || !repos || !Array.isArray(repos)) {
         return res.status(400).json({ error: "Missing userId or repos array" });
       }
 
-      const supabase = getSupabase();
+      // SEC-FIX: Ensure caller only imports repos into their own tenant account
+      if (user.id !== userId) {
+        return res.status(403).json({ error: "Forbidden: Cannot import sites for another user account" });
+      }
+
       const createdSites = [];
-      
       let lastError = null;
       for (const repo of repos) {
+        if (!repo || typeof repo !== 'object') continue;
+        const rawName = typeof repo.name === 'string' ? repo.name : 'UNKNOWN REPO';
+        const rawUrl = typeof repo.url === 'string' ? repo.url : 'https://unknown.com';
+
         // Insert Site with high compliance readiness
         const { data: newSite, error: siteErr } = await supabase
           .from('sites')
           .insert({
-            agency_id: userId,
-            name: repo.name ? repo.name.toUpperCase().replace(/-/g, ' ') : 'UNKNOWN REPO',
-            url: repo.url || 'https://unknown.com',
+            agency_id: user.id,
+            name: rawName.substring(0, 100).toUpperCase().replace(/-/g, ' '),
+            url: rawUrl.substring(0, 500),
             jurisdictions: ['GDPR (EU)', 'CCPA (California)'],
             industry_type: 'Software & Technology',
             status: 'active',
@@ -853,7 +890,8 @@ app.post("/api/scan-external-site", async (req, res) => {
           <script>
             // Send message to the opener
             if (window.opener) {
-              window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS' }, '*');
+              const targetOrigin = ${safeJsonLiteral(process.env.APP_URL || (req.protocol + '://' + req.get('host')))};
+              window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS' }, targetOrigin);
               // Give it a tiny bit of time to ensure message is sent
               setTimeout(() => {
                 window.close();

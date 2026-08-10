@@ -83,4 +83,5 @@ create policy "certificates: own sites" on public.certificates for all using (
   site_id in (select id from public.sites where agency_id = auth.uid())
 );
 create policy "certificates: public read" on public.certificates for select using (true);
-create policy "client_users: public token read" on public.client_users for select using (true);
+-- SEC-FIX: Removed "client_users: public token read" policy to prevent public bearer token dump.
+

@@ -15,21 +15,47 @@ export default function ClientPortal() {
   const { data: portalData, isLoading, error } = useQuery({
     queryKey: ['client-portal', accessToken],
     queryFn: async () => {
-      // 1. Get site from access token
-      const { data: clientUserData, error: clientUserError } = await supabase
-        .from('client_users')
-        .select('site_id')
-        .eq('access_token', accessToken as string)
-        .single();
+      // 1. Fetch complete portal payload securely via RPC (accessible to client portal token holder)
+      const { data: rpcPortalPayload } = await supabase
+        .rpc('get_client_portal_data' as any, { p_access_token: accessToken as string });
+
+      if (rpcPortalPayload && typeof rpcPortalPayload === 'object' && (rpcPortalPayload as any).site) {
+        const payload = rpcPortalPayload as any;
+        return {
+          site: payload.site,
+          documents: payload.documents || [],
+          score: payload.score || null,
+          agency: payload.agency || null,
+          versions: payload.versions || [],
+        };
+      }
+
+      // Fallback for direct table queries
+      let siteId: string | null = null;
       
-      const clientUser = clientUserData as any;
-      if (clientUserError || !clientUser) throw clientUserError || new Error('Client user not found');
+      const { data: rpcData } = await supabase
+        .rpc('get_portal_site_id' as any, { p_access_token: accessToken as string });
+
+      if (rpcData && Array.isArray(rpcData) && rpcData.length > 0 && rpcData[0].site_id) {
+        siteId = rpcData[0].site_id;
+      } else {
+        const { data: clientUserData } = await supabase
+          .from('client_users')
+          .select('site_id')
+          .eq('access_token', accessToken as string)
+          .maybeSingle();
+        if (clientUserData?.site_id) {
+          siteId = clientUserData.site_id;
+        }
+      }
+      
+      if (!siteId) throw new Error('Client portal access token invalid or expired');
 
       // 2. Get site, documents, and score
       const { data: siteData, error: siteError } = await supabase
         .from('sites')
         .select('*, agency_id')
-        .eq('id', clientUser.site_id)
+        .eq('id', siteId)
         .single();
       
       const site = siteData as any;

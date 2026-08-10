@@ -12,9 +12,27 @@ serve(async (req) => {
   }
 
   try {
+    // SEC-FIX: Restrict weekly digest trigger to internal cron / service role invocations
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const engineKey = Deno.env.get('PAPERLOO_ENGINE_KEY') ?? '';
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const engineHeader = req.headers.get('x-engine-key') ?? '';
+
+    const providedToken = authHeader.replace('Bearer ', '').trim();
+    const isAuthorized = 
+      (serviceKey && providedToken === serviceKey) ||
+      (engineKey && engineHeader === engineKey);
+
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({ error: 'Unauthorized: Requires service-role or engine authorization' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      serviceKey
     )
 
     // 1. Fetch all agencies with weekly digest enabled

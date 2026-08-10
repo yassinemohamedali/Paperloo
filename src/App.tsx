@@ -1,4 +1,5 @@
-import React, { useEffect, lazy, Suspense } from 'react';
+import * as React from 'react';
+import { useEffect, lazy, Suspense, Component, ErrorInfo, ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
@@ -45,6 +46,55 @@ const AccessibilityCenter = lazy(() => import('./pages/AccessibilityCenter'));
 
 // Layout
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class AppErrorBoundary extends (Component as any)<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = {
+    hasError: false,
+    error: null,
+  };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('AppErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if ((this as any).state.hasError) {
+      return (
+        <div className="min-h-screen w-screen bg-black text-white font-mono flex flex-col items-center justify-center p-6 text-center">
+          <div className="max-w-md space-y-6 border border-white/10 p-8 rounded-xl bg-surface">
+            <h2 className="text-xl font-bold text-accent">SYSTEM RUNTIME RECOVERY</h2>
+            <p className="text-xs text-muted leading-relaxed">
+              An unexpected render anomaly was safely intercepted.
+            </p>
+            <button
+              onClick={() => {
+                (this as any).setState({ hasError: false, error: null });
+                window.location.href = '/';
+              }}
+              className="bracket-btn text-xs px-6 py-3"
+            >
+              RELOAD RUNTIME
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (this as any).props.children;
+  }
+}
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuthStore();
@@ -135,17 +185,21 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const PageTransition = ({ children }: { children: React.ReactNode }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 5 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -5 }}
-    transition={{ duration: 0.15, ease: 'easeOut' }}
-    className="h-full w-full"
-  >
-    {children}
-  </motion.div>
-);
+const PageTransition = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  return (
+    <motion.div
+      key={location.pathname}
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -5 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
+      className="h-full w-full"
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -277,18 +331,24 @@ export default function App() {
 
   return (
     <Router>
-      <Suspense fallback={<div className="h-screen w-screen bg-bg" />}>
-        <AnimatedRoutes />
-      </Suspense>
-      <ConsentManager />
-      <AccessibilityWidget />
-      <Toaster 
-        position="top-right" 
-        toastOptions={{
-          className: 'bg-surface border-border-custom text-text-custom font-dm',
-          duration: 4000,
-        }} 
-      />
+      <AppErrorBoundary>
+        <Suspense fallback={
+          <div className="h-screen w-screen bg-black flex items-center justify-center">
+            <div className="h-8 w-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          </div>
+        }>
+          <AnimatedRoutes />
+        </Suspense>
+        <ConsentManager />
+        <AccessibilityWidget />
+        <Toaster 
+          position="top-right" 
+          toastOptions={{
+            className: 'bg-surface border-border-custom text-text-custom font-dm',
+            duration: 4000,
+          }} 
+        />
+      </AppErrorBoundary>
     </Router>
   );
 }

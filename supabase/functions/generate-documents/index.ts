@@ -124,6 +124,14 @@ serve(async (req) => {
       })
     }
 
+    // SEC-FIX: Verify user owns the site before generating or mutating documents
+    if (site.agency_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Forbidden: You do not own this site' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const { data: response } = await supabase
       .from('questionnaire_responses')
       .select('*')
