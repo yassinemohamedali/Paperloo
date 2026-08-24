@@ -115,10 +115,10 @@ export default function Questionnaire() {
       await calculateComplianceScore(id);
 
       if (results && results.length > 0) {
-        toast.success(`Generated ${results.length} documents successfully!`);
+        toast.success(`Generated ${results.length} compliance documents successfully!`);
         navigate(`/sites/${id}/documents`);
       } else {
-        toast.error('AI generation started but no documents were saved. Check your Groq API key and try again.');
+        toast.error('Unable to save generated documents to the database. Please verify your connection and try again.');
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to generate documents');

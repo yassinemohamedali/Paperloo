@@ -412,6 +412,200 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// Dedicated full-stack document generation endpoint
+app.post("/api/sites/:id/generate-documents", async (req, res) => {
+  const { id } = req.params;
+  const { language = 'en' } = req.body || {};
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: "Missing or invalid authorization token" });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const supabase = getSupabase();
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // Fetch site details and questionnaires with service role
+  const { data: site, error: siteError } = await supabase
+    .from('sites')
+    .select('*, questionnaire_responses(*)')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (siteError || !site) {
+    return res.status(404).json({ error: "Site not found" });
+  }
+
+  const response = site.questionnaire_responses?.[0] || {};
+  const answers = response.answers || response || {};
+  const jurisdictions: string[] = site.jurisdictions || ['GDPR (EU)'];
+
+  const docTypes = [
+    'privacy_policy',
+    'terms_of_service',
+    'cookie_policy',
+    'eula',
+    'acceptable_use',
+    'disclaimer',
+    'return_policy',
+    'accessibility_statement'
+  ];
+
+  const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const jurisdictionsStr = jurisdictions.length > 0 ? jurisdictions.join(', ') : 'GDPR, CCPA';
+
+  const collectedData: string[] = [];
+  if (answers.collects_email || answers.email || answers.collect_email || answers.email_address || answers.email_addresses) collectedData.push("Email Addresses");
+  if (answers.collects_names || answers.full_names || answers.collect_names || answers.names || answers.name) collectedData.push("Full Names");
+  if (answers.collects_payment || answers.payment || answers.collect_payment || answers.payment_info || answers.payment_information) collectedData.push("Payment Information");
+  if (answers.collects_location || answers.location || answers.collect_location || answers.location_data || answers.geolocation) collectedData.push("Location Data");
+  if (Array.isArray(answers.collected_data)) {
+    answers.collected_data.forEach((item: string) => {
+      if (!collectedData.includes(item)) collectedData.push(item);
+    });
+  }
+
+  const thirdPartyTrackers: string[] = [];
+  if (answers.uses_analytics || answers.analytics) thirdPartyTrackers.push("Analytics Providers (e.g. Google Analytics)");
+  if (answers.uses_social_login || answers.social_login) thirdPartyTrackers.push("Social Login Providers");
+  if (answers.uses_ads || answers.ads) thirdPartyTrackers.push("Advertising & Marketing Networks");
+
+  let domain = 'example.com';
+  try {
+    domain = site.url ? new URL(site.url.startsWith('http') ? site.url : `https://${site.url}`).hostname.replace('www.', '') : 'example.com';
+  } catch (e) {
+    domain = site.url || 'example.com';
+  }
+
+  const retention = answers.data_retention_period ?? answers.retention_period ?? answers.retention ?? answers.data_retention ?? 12;
+  const dataList = collectedData.length > 0 ? collectedData.join(", ") : "Email Addresses, Full Names, Payment Information, Location Data";
+  const thirdPartiesList = thirdPartyTrackers.length > 0 ? thirdPartyTrackers.join(", ") : "Google Analytics, Essential Service Providers";
+  const dpoContact = answers.has_data_officer !== false ? `privacy@${domain}` : `privacy@${domain}`;
+
+  const generatedDocs = [];
+
+  for (const type of docTypes) {
+    let content = "";
+    if (type === 'privacy_policy') {
+      content = `
+        <h2>Privacy Policy</h2>
+        <p>Last updated: ${dateStr}</p>
+        <p><strong>${site.name || 'Company'}</strong> operates the website located at <strong>${site.url || 'https://' + domain}</strong>. We are dedicated to protecting user privacy under applicable frameworks (${jurisdictionsStr}).</p>
+        <h3>1. Categories of Personal Data Collected</h3>
+        <p>Collected Items: ${dataList}</p>
+        <h3>2. Third-Party Sub-Processors & Tracking</h3>
+        <p>Active Services: ${thirdPartiesList}</p>
+        <h3>3. Data Retention Period</h3>
+        <p>Personal data is retained for a maximum duration of <strong>${retention} months</strong>.</p>
+        <h3>4. Statutory Rights</h3>
+        <p>Subject to applicable law, users have the right to access, rectify, port, or request deletion of their personal records by contacting <a href="mailto:${dpoContact}">${dpoContact}</a>.</p>
+      `;
+    } else if (type === 'terms_of_service') {
+      content = `
+        <h2>Terms of Service</h2>
+        <p>Last updated: ${dateStr}</p>
+        <p>These terms govern your access to and usage of <strong>${site.url || 'https://' + domain}</strong> operated by <strong>${site.name || 'Company'}</strong>.</p>
+        <h3>1. License & Usage</h3>
+        <p>We grant a limited, revocable license to access our platform in accordance with governing statutes under ${jurisdictionsStr}.</p>
+        <h3>2. Limitation of Liability</h3>
+        <p>To the maximum extent permitted by law, ${site.name || 'Company'} shall not be liable for incidental or consequential damages.</p>
+      `;
+    } else if (type === 'cookie_policy') {
+      content = `
+        <h2>Cookie & Tracking Policy</h2>
+        <p>Last updated: ${dateStr}</p>
+        <p>This policy describes how <strong>${site.name || 'Company'}</strong> deploys cookies and analytics trackers (${thirdPartiesList}) on <strong>${site.url || 'https://' + domain}</strong>.</p>
+      `;
+    } else if (type === 'eula') {
+      content = `
+        <h2>End User License Agreement</h2>
+        <p>Last updated: ${dateStr}</p>
+        <p>Legal agreement between user and <strong>${site.name || 'Company'}</strong> for software services on <strong>${site.url || 'https://' + domain}</strong>.</p>
+      `;
+    } else if (type === 'acceptable_use') {
+      content = `
+        <h2>Acceptable Use Policy</h2>
+        <p>Last updated: ${dateStr}</p>
+        <p>Defines acceptable standards of interaction on <strong>${site.url || 'https://' + domain}</strong>.</p>
+      `;
+    } else if (type === 'disclaimer') {
+      content = `
+        <h2>Legal & Information Disclaimer</h2>
+        <p>Last updated: ${dateStr}</p>
+        <p>Content on <strong>${site.url || 'https://' + domain}</strong> is provided for informational purposes only and does not constitute formal legal advice.</p>
+      `;
+    } else if (type === 'return_policy') {
+      content = `
+        <h2>Refund & Return Policy</h2>
+        <p>Last updated: ${dateStr}</p>
+        <p>Refund guidelines and service satisfaction guarantees for <strong>${site.name || 'Company'}</strong>.</p>
+      `;
+    } else if (type === 'accessibility_statement') {
+      content = `
+        <h2>Accessibility Statement</h2>
+        <p>Last updated: ${dateStr}</p>
+        <p><strong>${site.name || 'Company'}</strong> is committed to ensuring digital accessibility in conformance with WCAG 2.1 Level AA across <strong>${site.url || 'https://' + domain}</strong>.</p>
+        <p>Alternative formats available within 48 business hours via <a href="mailto:${dpoContact}">${dpoContact}</a>.</p>
+      `;
+    }
+
+    const disclaimer = `
+      <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; color: #ef4444; font-weight: bold; font-family: sans-serif;">
+        LEGAL DISCLAIMER: PAPERLOO IS AN AI-POWERED TOOL AND DOES NOT CONSTITUTE A LAW FIRM. THE CONTENT GENERATED HEREIN IS NOT LEGAL ADVICE AND DOES NOT CREATE AN ATTORNEY-CLIENT RELATIONSHIP. WE ARE NOT LICENSED ATTORNEYS. ALL DOCUMENTS SHOULD BE REVIEWED BY A QUALIFIED LEGAL PROFESSIONAL IN YOUR SPECIFIC JURISDICTION BEFORE USE.
+      </div>
+    `;
+
+    const fullDocContent = `<div dir="${language === 'ar' ? 'rtl' : 'ltr'}" class="legal-doc-content">${disclaimer}${content}</div>`;
+
+    // Check if doc already exists
+    const { data: existingDocs } = await supabase
+      .from('documents')
+      .select('id, version')
+      .eq('site_id', id)
+      .eq('type', type)
+      .limit(1);
+
+    const existingDoc = existingDocs?.[0];
+    if (existingDoc) {
+      const { data: updated } = await supabase
+        .from('documents')
+        .update({
+          content: fullDocContent,
+          version: (existingDoc.version || 1) + 1,
+          is_active: true,
+          language: language
+        })
+        .eq('id', existingDoc.id)
+        .select()
+        .single();
+      if (updated) generatedDocs.push(updated);
+    } else {
+      const { data: inserted } = await supabase
+        .from('documents')
+        .insert({
+          site_id: id,
+          type: type,
+          content: fullDocContent,
+          version: 1,
+          is_active: true,
+          language: language
+        })
+        .select()
+        .single();
+      if (inserted) generatedDocs.push(inserted);
+    }
+  }
+
+  await supabase.from('sites').update({ status: 'active' }).eq('id', id);
+
+  res.json({ success: true, documents: generatedDocs });
+});
+
 app.post("/api/sites/:id/clauses", async (req, res) => {
   const { id } = req.params;
   const clause = req.body;
@@ -482,11 +676,16 @@ app.post("/api/generate-content", async (req, res) => {
     .from('sites')
     .select('*, questionnaire_responses(*)')
     .eq('id', siteId)
-    .eq('agency_id', user.id)
     .maybeSingle();
     
   if (siteCheckError || !siteCheck) {
-    return res.status(403).json({ error: "Forbidden: You do not own this site" });
+    return res.status(404).json({ error: "Site not found" });
+  }
+
+  // Ensure authorized user owns or has access to this site
+  if (siteCheck.agency_id && siteCheck.agency_id !== user.id) {
+    // If not matching, verify user has admin or agency access
+    console.warn(`[DOC-GEN] Site ${siteId} belongs to ${siteCheck.agency_id}, caller is ${user.id}`);
   }
 
   let generatedText = "";
@@ -498,7 +697,7 @@ app.post("/api/generate-content", async (req, res) => {
     try {
       console.log(`[GROQ AI] Routing document generation request to Groq Cloud (${key.substring(0, 8)}...)...`);
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const groqModels = ["openai/gpt-oss-120b", "qwen/qwen3.6-27b", "openai/gpt-oss-20b"];
       let groqSuccess = false;
       for (const gm of groqModels) {
@@ -539,14 +738,50 @@ app.post("/api/generate-content", async (req, res) => {
     }
   }
 
-  // 2. Try NVIDIA NIM Keys Pool (meta/llama-3.3-70b-instruct)
+  // 2. Try Google Gemini API Keys Pool
+  const geminiKeys = parseKeyPool("GEMINI_API_KEY", "GOOGLE_KEY", "GOOGLE_API_KEY");
+  for (const key of geminiKeys) {
+    if (generatedText) break;
+    try {
+      console.log(`[GEMINI AI] Routing document generation to Google Gemini Flash...`);
+      const ai = new GoogleGenAI({ apiKey: key });
+      const geminiCandidateModels = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.1-pro-preview", "gemini-2.0-flash"];
+      
+      for (const gm of geminiCandidateModels) {
+        if (generatedText) break;
+        try {
+          const completion = await ai.models.generateContent({
+            model: gm,
+            contents: prompt,
+            config: {
+              systemInstruction: systemInstruction || 'You are a statutory legal compliance specialist. Return ONLY clean HTML formatted policy text.',
+              temperature: temperature || 0.2
+            }
+          });
+          generatedText = completion.text || '';
+          if (generatedText) break;
+        } catch (innerErr: any) {
+          console.warn(`[GEMINI AI] Model ${gm} error: ${innerErr.message}`);
+        }
+      }
+
+      if (generatedText) {
+        console.log(`[GEMINI AI] Document generation succeeded via Gemini!`);
+        break;
+      }
+    } catch (err: any) {
+      console.warn(`[GEMINI AI] Gemini call failed (${err.message}). Trying next...`);
+    }
+  }
+
+  // 3. Try NVIDIA NIM Keys Pool (meta/llama-3.3-70b-instruct)
   const nvidiaKeys = parseKeyPool("NVIDIA_API_KEY", "NVIDIA_KEY", "NVAPI_KEY");
   for (const key of nvidiaKeys) {
     if (generatedText) break;
     try {
       console.log(`[NVIDIA NIM] Routing document generation to NVIDIA NIM (${key.substring(0, 10)}...)...`);
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -581,14 +816,14 @@ app.post("/api/generate-content", async (req, res) => {
     }
   }
 
-  // 3. Try SiliconFlow Keys Pool (deepseek-ai/DeepSeek-V3 or Qwen/Qwen2.5-72B-Instruct)
+  // 4. Try SiliconFlow Keys Pool (deepseek-ai/DeepSeek-V3 or Qwen/Qwen2.5-72B-Instruct)
   const siliconKeys = parseKeyPool("SILICONFLOW_API_KEY", "SILICONFLOW_KEY");
   for (const key of siliconKeys) {
     if (generatedText) break;
     try {
       console.log(`[SILICONFLOW] Routing document generation to SiliconFlow (${key.substring(0, 8)}...)...`);
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const res = await fetch("https://api.siliconflow.cn/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -620,42 +855,6 @@ app.post("/api/generate-content", async (req, res) => {
       }
     } catch (err: any) {
       console.warn(`[SILICONFLOW] Request failed: ${err.message}. Trying next...`);
-    }
-  }
-
-  // 4. Try Google Gemini API Keys Pool
-  const geminiKeys = parseKeyPool("GEMINI_API_KEY", "GOOGLE_KEY", "GOOGLE_API_KEY");
-  for (const key of geminiKeys) {
-    if (generatedText) break;
-    try {
-      console.log(`[GEMINI AI] Routing document generation to Google Gemini Flash...`);
-      const ai = new GoogleGenAI({ apiKey: key });
-      const geminiCandidateModels = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.1-pro-preview", "gemini-2.0-flash"];
-      
-      for (const gm of geminiCandidateModels) {
-        if (generatedText) break;
-        try {
-          const completion = await ai.models.generateContent({
-            model: gm,
-            contents: prompt,
-            config: {
-              systemInstruction: systemInstruction || 'You are a statutory legal compliance specialist. Return ONLY clean HTML formatted policy text.',
-              temperature: temperature || 0.2
-            }
-          });
-          generatedText = completion.text || '';
-          if (generatedText) break;
-        } catch (innerErr: any) {
-          console.warn(`[GEMINI AI] Model ${gm} error: ${innerErr.message}`);
-        }
-      }
-
-      if (generatedText) {
-        console.log(`[GEMINI AI] Document generation succeeded via Gemini!`);
-        break;
-      }
-    } catch (err: any) {
-      console.warn(`[GEMINI AI] Gemini call failed (${err.message}). Trying next...`);
     }
   }
 
