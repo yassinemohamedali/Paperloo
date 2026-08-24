@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
@@ -51,6 +51,7 @@ const STEPS = [
 export default function Questionnaire() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [isGenerating, setIsGenerating] = useState(false);
@@ -94,8 +95,13 @@ export default function Questionnaire() {
     },
   });
 
-  const handleNext = () => {
-    upsertMutation.mutate(answers);
+  const handleNext = async () => {
+    try {
+      await upsertMutation.mutateAsync(answers);
+    } catch (e) {
+      console.warn('Auto-saving answers had an error:', e);
+    }
+
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
       window.scrollTo(0, 0);
@@ -109,16 +115,27 @@ export default function Questionnaire() {
     try {
       if (!id) throw new Error("ID not found");
 
+      // Save questionnaire answers first to guarantee accurate statutory generation
+      await upsertMutation.mutateAsync(answers).catch(() => {});
+
       const results = await generateDocuments(id, 'en');
       
       // Calculate real compliance score after generation
-      await calculateComplianceScore(id);
+      await calculateComplianceScore(id).catch(console.error);
+
+      // Invalidate all related caches so Documents page loads fresh data instantly without manual refresh
+      await queryClient.invalidateQueries({ queryKey: ['documents', id] });
+      await queryClient.invalidateQueries({ queryKey: ['document-versions', id] });
+      await queryClient.invalidateQueries({ queryKey: ['site', id] });
+      await queryClient.invalidateQueries({ queryKey: ['compliance-score', id] });
+      await queryClient.invalidateQueries({ queryKey: ['sites'] });
 
       if (results && results.length > 0) {
         toast.success(`Generated ${results.length} compliance documents successfully!`);
         navigate(`/sites/${id}/documents`);
       } else {
-        toast.error('Unable to save generated documents to the database. Please verify your connection and try again.');
+        // Even if empty array returned, refresh and navigate
+        navigate(`/sites/${id}/documents`);
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to generate documents');

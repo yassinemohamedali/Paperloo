@@ -58,11 +58,26 @@ export default function SiteDetail() {
   const { data: documents = [], isLoading: docsLoading } = useQuery<Document[]>({
     queryKey: ['documents', id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('documents').select('*').eq('site_id', id).eq('is_active', true);
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('site_id', id)
+        .order('version', { ascending: false });
       if (error) throw error;
-      return data || [];
+      
+      const docMap = new Map<string, any>();
+      (data || []).forEach((d: any) => {
+        if (!docMap.has(d.type)) {
+          docMap.set(d.type, d);
+        } else if (d.is_active && !docMap.get(d.type)?.is_active) {
+          docMap.set(d.type, d);
+        }
+      });
+      return Array.from(docMap.values()) as any[];
     },
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { data: comments = [] } = useQuery<Comment[]>({

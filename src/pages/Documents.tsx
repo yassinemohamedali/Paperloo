@@ -55,28 +55,61 @@ export default function Documents() {
     enabled: !!id,
   });
 
-  const { data: documents = [], isLoading: docsLoading } = useQuery<Document[]>({
+  const { data: documents = [], isLoading: docsLoading, refetch: refetchDocuments } = useQuery<Document[]>({
     queryKey: ['documents', id],
     queryFn: async () => {
       console.log('Fetching documents for site:', id);
       const { data, error } = await supabase
         .from('documents')
         .select('*')
-        .eq('site_id', id as string);
+        .eq('site_id', id as string)
+        .order('version', { ascending: false });
       
       if (error) {
         console.error('Fetch documents error:', error);
         throw error;
       }
       
-      console.log(`Documents fetch success. Found total: ${data?.length || 0}`);
-      const activeDocs = (data || []).filter((d: any) => d.is_active);
-      console.log(`Active documents: ${activeDocs.length}`);
+      // Deduplicate by doc type and prioritize active / latest documents
+      const docMap = new Map<string, any>();
+      (data || []).forEach((d: any) => {
+        if (!docMap.has(d.type)) {
+          docMap.set(d.type, d);
+        } else if (d.is_active && !docMap.get(d.type)?.is_active) {
+          docMap.set(d.type, d);
+        }
+      });
       
+      const activeDocs = Array.from(docMap.values());
+      console.log(`Documents fetch success. Found total: ${data?.length || 0}, Active unique: ${activeDocs.length}`);
       return activeDocs as any;
     },
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
+
+  // Real-time synchronization for instant updates when documents are generated or restored
+  React.useEffect(() => {
+    if (!id) return;
+    const channel = supabase
+      .channel(`documents-realtime-${id}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'documents',
+        filter: `site_id=eq.${id}`
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['documents', id] });
+        queryClient.invalidateQueries({ queryKey: ['document-versions', id] });
+        queryClient.invalidateQueries({ queryKey: ['site', id] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, queryClient]);
 
   const { data: versions = [] } = useQuery<DocumentVersion[]>({
     queryKey: ['document-versions', id],
