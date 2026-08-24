@@ -1,5 +1,6 @@
 import { supabase } from "@/src/lib/supabase";
 import { config } from "@/src/config/env";
+import { escapeHtml, sanitizeDocHtml } from "@/src/lib/sanitizeHtml";
 
 export const generateDocuments = async (siteId: string, language: string = "en") => {
   return fallbackClientSideGeneration(siteId, language);
@@ -211,7 +212,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.6-flash',
           prompt,
           systemInstruction: 'You are a legal specialist. Return ONLY HTML.',
           temperature: 0.2,
@@ -232,12 +233,12 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
         aiContent = aiContent.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim();
       }
       
-      // Inject custom clauses
+      // Inject custom clauses with strict HTML entity escaping to prevent stored XSS
       const beginningClauses = clauses?.filter(c => c.document_type === type && c.position === 'beginning')
-        .map(c => `<h2>${c.title}</h2><p>${c.content}</p>`).join('') || '';
+        .map(c => `<h2>${escapeHtml(c.title)}</h2><p>${escapeHtml(c.content).replace(/\n/g, '<br/>')}</p>`).join('') || '';
 
       const endClauses = clauses?.filter(c => c.document_type === type && c.position === 'end')
-        .map(c => `<h2>${c.title}</h2><p>${c.content}</p>`).join('') || '';
+        .map(c => `<h2>${escapeHtml(c.title)}</h2><p>${escapeHtml(c.content).replace(/\n/g, '<br/>')}</p>`).join('') || '';
 
       const disclaimer = `
         <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; color: #ef4444; font-weight: bold; font-family: sans-serif;">
@@ -245,7 +246,8 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
         </div>
       `;
 
-      const finalContent = `<div dir="${language === 'ar' ? 'rtl' : 'ltr'}" class="legal-doc-content">${disclaimer}${beginningClauses}${aiContent}${endClauses}</div>`;
+      const rawCombinedContent = `<div dir="${language === 'ar' ? 'rtl' : 'ltr'}" class="legal-doc-content">${disclaimer}${beginningClauses}${aiContent}${endClauses}</div>`;
+      const finalContent = sanitizeDocHtml(rawCombinedContent);
 
       // Save to DB
       console.log(`Checking for existing ${type}...`);

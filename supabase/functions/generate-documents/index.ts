@@ -147,10 +147,32 @@ serve(async (req) => {
     const answers = response?.answers || {}
     const jurisdictions = site.jurisdictions || []
 
+    const escapeHtml = (str: string) => {
+      return (str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
+    const sanitizeDocumentContent = (html: string) => {
+      if (!html) return '';
+      return String(html)
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+        .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+        .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '')
+        .replace(/<link\b[^>]*>/gi, '')
+        .replace(/<meta\b[^>]*>/gi, '')
+        .replace(/\s+on\w+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '')
+        .replace(/javascript:/gi, 'blocked:');
+    };
+
     const injectClauses = (type: string, position: string) => {
       return clauses
         ?.filter(c => c.document_type === type && c.position === position)
-        .map(c => `<div class="custom-clause"><h2>${c.title}</h2><p>${c.content}</p></div>`)
+        .map(c => `<div class="custom-clause"><h2>${escapeHtml(c.title)}</h2><p>${escapeHtml(c.content).replace(/\n/g, '<br/>')}</p></div>`)
         .join('') || '';
     }
 
@@ -169,13 +191,14 @@ serve(async (req) => {
     for (const type of docsToGenerate) {
       const aiContent = await generateDocument(type, site, answers, jurisdictions)
       
-      const finalContent = `
+      const rawContent = `
         <div dir="${language === 'AR' ? 'rtl' : 'ltr'}">
           ${injectClauses(type, 'beginning')}
           ${aiContent}
           ${injectClauses(type, 'end')}
         </div>
       `
+      const finalContent = sanitizeDocumentContent(rawContent)
 
       const { data: existingDoc } = await supabase
         .from('documents')

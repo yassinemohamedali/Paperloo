@@ -1,30 +1,65 @@
 import { config } from '@/src/config/env';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { supabase } from '@/src/lib/supabase';
 import { rateLimitedAuth } from '@/src/lib/supabaseAuthWrapper';
 import { toast } from 'sonner';
 
-const signupSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  agencyName: z.string().min(2, 'Agency name is required'),
-});
-
-type SignupForm = z.infer<typeof signupSchema>;
-
 export default function Signup() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [agencyName, setAgencyName] = useState('');
+  const [formErrors, setFormErrors] = useState<{ email?: string; password?: string; agencyName?: string }>({});
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<SignupForm>({
-    resolver: zodResolver(signupSchema),
-  });
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errors: { email?: string; password?: string; agencyName?: string } = {};
+
+    if (!agencyName || agencyName.trim().length < 2) {
+      errors.agencyName = 'Agency name is required';
+    }
+    if (!email || !email.includes('@')) {
+      errors.email = 'Invalid email address';
+    }
+    if (!password || password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
+    setLoading(true);
+    const { error } = await rateLimitedAuth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        data: {
+          agency_name: agencyName.trim(),
+        },
+      },
+    });
+
+    if (error) {
+      if (error.message.toLowerCase().includes('rate limit')) {
+        toast.error('Email sign up limit reached. Please try again later or use Google Sign In.');
+      } else if (error.message.toLowerCase().includes('disabled')) {
+        toast.error('Email signups are currently disabled in Supabase. Please use Google Login instead.');
+      } else {
+        toast.error(error.message);
+      }
+      setLoading(false);
+    } else {
+      toast.success('Registration successful! Please check your email to verify your account or proceed.');
+      navigate('/onboarding');
+    }
+  };
 
   useEffect(() => {
     const loginWithGithubCreds = async (username: string, token: string) => {
@@ -215,34 +250,6 @@ export default function Signup() {
     }
   };
 
-  const onSubmit = async (formData: SignupForm) => {
-    setLoading(true);
-    const { error } = await rateLimitedAuth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        emailRedirectTo: `${config.appUrl}/auth/callback`,
-        data: {
-          agency_name: formData.agencyName,
-        }
-      }
-    });
-
-    if (error) {
-      if (error.message.toLowerCase().includes('rate limit')) {
-        toast.error('Email limit reached. Please try again in an hour or use Google Login.');
-      } else if (error.message.toLowerCase().includes('disabled')) {
-        toast.error('Email signups are currently disabled in Supabase. Please use Google Login instead.');
-      } else {
-        toast.error(error.message);
-      }
-      setLoading(false);
-    } else {
-      toast.success('Account created! Welcome to Paperloo.');
-      navigate('/dashboard');
-    }
-  };
-
   return (
     <div className="flex min-h-screen w-full bg-black font-mono">
       {/* Left Panel */}
@@ -280,48 +287,63 @@ export default function Signup() {
             <p className="text-muted text-xs tracking-[0.15em]">REQUEST EARLY ACCESS TO THE GOVERNANCE PIPELINE.</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={onSubmit} className="space-y-8">
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">AGENCY NAME</label>
                 <div className="relative group">
                   <input
-                    {...register('agencyName')}
+                    value={agencyName}
+                    onChange={(e) => {
+                      setAgencyName(e.target.value);
+                      if (formErrors.agencyName) setFormErrors((prev) => ({ ...prev, agencyName: undefined }));
+                    }}
                     type="text"
+                    required
                     className="w-full bg-transparent border-b border-white/20 py-3 text-sm focus:border-accent outline-none transition-colors uppercase"
                     placeholder="ACME CREATIVE"
                   />
                   <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-focus-within:w-full" />
                 </div>
-                {errors.agencyName && <p className="text-[10px] text-red-500 mt-1">{errors.agencyName.message}</p>}
+                {formErrors.agencyName && <p className="text-[10px] text-red-500 mt-1">{formErrors.agencyName}</p>}
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">EMAIL ADDRESS</label>
                 <div className="relative group">
                   <input
-                    {...register('email')}
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (formErrors.email) setFormErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
                     type="email"
+                    required
                     className="w-full bg-transparent border-b border-white/20 py-3 text-sm focus:border-accent outline-none transition-colors uppercase"
                     placeholder="paperloo.official@gmail.com"
                   />
                   <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-focus-within:w-full" />
                 </div>
-                {errors.email && <p className="text-[10px] text-red-500 mt-1">{errors.email.message}</p>}
+                {formErrors.email && <p className="text-[10px] text-red-500 mt-1">{formErrors.email}</p>}
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">PASSWORD</label>
                 <div className="relative group">
                   <input
-                    {...register('password')}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (formErrors.password) setFormErrors((prev) => ({ ...prev, password: undefined }));
+                    }}
                     type="password"
+                    required
                     className="w-full bg-transparent border-b border-white/20 py-3 text-sm focus:border-accent outline-none transition-colors"
                     placeholder="••••••••"
                   />
                   <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-focus-within:w-full" />
                 </div>
-                {errors.password && <p className="text-[10px] text-red-500 mt-1">{errors.password.message}</p>}
+                {formErrors.password && <p className="text-[10px] text-red-500 mt-1">{formErrors.password}</p>}
               </div>
             </div>
 

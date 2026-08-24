@@ -87,16 +87,16 @@ export default function Support() {
       });
 
       if (!res.ok) {
-        throw new Error('Groq support network returned an unexpected frame error');
+        throw new Error('AI support network returned an unexpected response');
       }
 
       const data = await res.json();
       setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
     } catch (err: any) {
-      toast.error(err.message || "Failed negotiating with Groq support node.");
+      toast.error(err.message || "Failed negotiating with AI support node.");
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: "ERROR: Communication timeout. Please verify your system state or contact Operations directly using the ticket panel." 
+        content: "ERROR: Communication error with AI support node. Please try again or submit an Operations Ticket." 
       }]);
     } finally {
       setIsSending(false);
@@ -141,14 +141,14 @@ export default function Support() {
           <h1 className="text-3xl font-sans font-black italic uppercase tracking-tighter">Support & Operations Center</h1>
         </div>
         <p className="text-sm text-muted-custom uppercase tracking-widest max-w-2xl">
-          Interact with Groq compliance intelligence or transmit formal support files to Paperloo Operations.
+          Interact with Paperloo AI Compliance Engine with direct site management tools, or file formal tickets with Operations.
         </p>
       </div>
 
       {/* Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         
-        {/* Left Side: Groq-connected Site Vault & Support form */}
+        {/* Left Side: Connected Site Vault & Support form */}
         <div className="space-y-8 lg:col-span-1">
           {/* Sites Vault Box */}
           <div className="bg-surface border border-white/10 p-6 rounded-lg relative overflow-hidden">
@@ -156,15 +156,15 @@ export default function Support() {
             <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/5">
               <div className="flex items-center gap-2">
                 <Globe className="h-4 w-4 text-accent animate-pulse" />
-                <h3 className="text-xs font-sans font-black uppercase tracking-widest">Groq Context Matrix</h3>
+                <h3 className="text-xs font-sans font-black uppercase tracking-widest">Connected Sites Matrix</h3>
               </div>
               <span className="text-[9px] bg-accent/10 text-accent px-2 py-0.5 rounded uppercase font-bold tracking-widest">
-                ACTIVE
+                LIVE ACCESS
               </span>
             </div>
             
             <p className="text-xs text-muted-custom mb-4 uppercase tracking-wider leading-relaxed">
-              Groq AI support has active, automated permission frames allowing immediate analysis of your connected web platforms:
+              The AI assistant has real-time tool access to query, configure banner styling, update parameters, and audit your connected web properties:
             </p>
 
             {sitesLoading ? (
@@ -255,7 +255,7 @@ export default function Support() {
               <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
               <div>
                 <h3 className="text-xs font-sans font-black uppercase tracking-widest">COMPLIANCE ASSISTANT CHAT</h3>
-                <p className="text-[9px] text-muted-custom uppercase tracking-wider">Llama3-8b via Groq Cloud Node</p>
+                <p className="text-[9px] text-muted-custom uppercase tracking-wider">Multi-Provider LLM with Direct Database Tool Calling</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -306,7 +306,7 @@ export default function Support() {
                     <div className="w-1.5 h-1.5 bg-accent rounded-full animate-bounce [animation-delay:-0.15s]" />
                     <div className="w-1.5 h-1.5 bg-accent rounded-full animate-bounce" />
                   </div>
-                  <span className="text-[9px] uppercase tracking-widest font-bold">GROQ DECRYPTING QUERY...</span>
+                  <span className="text-[9px] uppercase tracking-widest font-bold">PROCESSING REQUEST & EXECUTING DATABASE ACTIONS...</span>
                 </div>
               </motion.div>
             )}

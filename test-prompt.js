@@ -21,5 +21,5 @@ const prompt = `Generate a professional, strictly GDPR-compliant Privacy Policy 
 fetch("http://localhost:3000/api/generate-content", {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ prompt, model: "gemini-2.5-flash", systemInstruction: "You are a legal specialist. Return ONLY HTML.", temperature: 0.2 })
+  body: JSON.stringify({ prompt, model: "gemini-2.0-flash", systemInstruction: "You are a legal specialist. Return ONLY HTML.", temperature: 0.2 })
 }).then(res => res.json()).then(data => console.log(data.text)).catch(console.error);

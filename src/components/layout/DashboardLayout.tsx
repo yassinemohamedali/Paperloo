@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/src/store/authStore';
 import { cn } from '@/src/lib/utils';
-import { motion } from 'motion/react';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -188,10 +187,8 @@ export default function DashboardLayout() {
         {/* Floating Support & AI Chat Bubble */}
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
           <Link to="/support">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="group flex items-center gap-3 bg-[#c8f135] text-black px-4 py-3.5 rounded-full font-mono text-xs font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(200,241,53,0.3)] hover:shadow-[0_15px_40px_rgba(200,241,53,0.5)] border border-[#c8f135] transition-all duration-300"
+            <button
+              className="group flex items-center gap-3 bg-[#c8f135] text-black px-4 py-3.5 rounded-full font-mono text-xs font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(200,241,53,0.3)] hover:shadow-[0_15px_40px_rgba(200,241,53,0.5)] border border-[#c8f135] hover:scale-105 active:scale-95 transition-all duration-300"
             >
               <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out whitespace-nowrap block">
                 COMPLIANCE SUPPORT AI
@@ -203,7 +200,7 @@ export default function DashboardLayout() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                 </span>
               </div>
-            </motion.button>
+            </button>
           </Link>
         </div>
       </main>

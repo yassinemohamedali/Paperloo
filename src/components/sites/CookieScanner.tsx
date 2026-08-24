@@ -63,7 +63,7 @@ export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: 'gemini-2.5-flash',
+              model: 'gemini-3.6-flash',
               prompt,
               temperature: 0.2
             })

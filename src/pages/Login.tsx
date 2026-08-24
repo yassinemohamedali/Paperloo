@@ -1,35 +1,40 @@
 import { config } from '@/src/config/env';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { supabase } from '@/src/lib/supabase';
 import { rateLimitedAuth } from '@/src/lib/supabaseAuthWrapper';
 import { toast } from 'sonner';
 
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
-
 export default function Login() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [formErrors, setFormErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-  });
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errors: { email?: string; password?: string } = {};
 
-  const onSubmit = async (data: LoginForm) => {
+    if (!email || !email.includes('@')) {
+      errors.email = 'Invalid email address';
+    }
+    if (!password || password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
     setLoading(true);
     const { error } = await rateLimitedAuth.signInWithPassword({
-      email: data.email,
-      password: data.password,
+      email: email.trim(),
+      password,
     });
 
     if (error) {
@@ -274,34 +279,44 @@ export default function Login() {
             <p className="text-muted text-xs tracking-[0.15em]">ENTER AUTHENTICATION CREDENTIALS TO ACCESS THE CORE ENGINE.</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={onSubmit} className="space-y-8">
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">EMAIL ADDRESS</label>
                 <div className="relative group">
                   <input
-                    {...register('email')}
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (formErrors.email) setFormErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
                     type="email"
+                    required
                     className="w-full bg-transparent border-b border-white/20 py-3 text-sm focus:border-accent outline-none transition-colors uppercase"
                     placeholder="paperloo.official@gmail.com"
                   />
                   <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-focus-within:w-full" />
                 </div>
-                {errors.email && <p className="text-[10px] text-red-500 mt-1">{errors.email.message}</p>}
+                {formErrors.email && <p className="text-[10px] text-red-500 mt-1">{formErrors.email}</p>}
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">PASSWORD</label>
                 <div className="relative group">
                   <input
-                    {...register('password')}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (formErrors.password) setFormErrors((prev) => ({ ...prev, password: undefined }));
+                    }}
                     type="password"
+                    required
                     className="w-full bg-transparent border-b border-white/20 py-3 text-sm focus:border-accent outline-none transition-colors"
                     placeholder="••••••••"
                   />
                   <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-focus-within:w-full" />
                 </div>
-                {errors.password && <p className="text-[10px] text-red-500 mt-1">{errors.password.message}</p>}
+                {formErrors.password && <p className="text-[10px] text-red-500 mt-1">{formErrors.password}</p>}
               </div>
             </div>
 

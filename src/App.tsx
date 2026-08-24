@@ -1,13 +1,12 @@
-import * as React from 'react';
-import { useEffect, lazy, Suspense, Component, ErrorInfo, ReactNode } from 'react';
+import React, { useEffect, lazy, Suspense, Component, ErrorInfo, ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
 import { Toaster } from 'sonner';
-import { motion, AnimatePresence } from 'motion/react';
 import ConsentManager from './components/ConsentManager';
 import AccessibilityWidget from './components/AccessibilityWidget';
+import DashboardLayout from './components/layout/DashboardLayout';
 
 // Lazy load pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -43,9 +42,6 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Support = lazy(() => import('./pages/Support'));
 const AccessibilityCenter = lazy(() => import('./pages/AccessibilityCenter'));
-
-// Layout
-const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -186,81 +182,70 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
-  const location = useLocation();
   return (
-    <motion.div
-      key={location.pathname}
-      initial={{ opacity: 0, y: 5 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -5 }}
-      transition={{ duration: 0.15, ease: 'easeOut' }}
-      className="h-full w-full"
-    >
+    <div className="h-full w-full animate-in fade-in duration-200">
       {children}
-    </motion.div>
+    </div>
   );
 };
 
 const AnimatedRoutes = () => {
-  const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location}>
-        {/* Public Routes */}
-        <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
-        <Route path="/login" element={<PublicRoute><PageTransition><Login /></PageTransition></PublicRoute>} />
-        <Route path="/signup" element={<PublicRoute><PageTransition><Signup /></PageTransition></PublicRoute>} />
-        
-        {/* Public Document View (No Auth) */}
-        <Route path="/docs/:siteId/:type" element={<PageTransition><PublicDocument /></PageTransition>} />
-        <Route path="/client/:accessToken" element={<PageTransition><ClientPortal /></PageTransition>} />
-        <Route path="/certificate/:id" element={<PageTransition><Certificate /></PageTransition>} />
-        <Route path="/auth/callback" element={<PageTransition><AuthCallback /></PageTransition>} />
-        <Route path="/legal" element={<PageTransition><LegalPage /></PageTransition>} />
-        <Route path="/partners" element={<PageTransition><Partners /></PageTransition>} />
-        <Route path="/trust" element={<PageTransition><Trust /></PageTransition>} />
-        <Route path="/docs" element={<PageTransition><Docs /></PageTransition>} />
-        <Route path="/docs/api" element={<PageTransition><ApiReference /></PageTransition>} />
-        <Route path="/status" element={<PageTransition><Status /></PageTransition>} />
-        <Route path="/trust/security" element={<PageTransition><SecurityPolicy /></PageTransition>} />
-        <Route path="/trust/privacy" element={<PageTransition><DataPrivacy /></PageTransition>} />
-        <Route path="/solutions/agencies" element={<PageTransition><SolutionsAgencies /></PageTransition>} />
-        <Route path="/solutions/ecommerce" element={<PageTransition><SolutionsEcommerce /></PageTransition>} />
-        <Route path="/solutions/enterprise" element={<PageTransition><SolutionsEnterprise /></PageTransition>} />
-        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+      <Route path="/login" element={<PublicRoute><PageTransition><Login /></PageTransition></PublicRoute>} />
+      <Route path="/signup" element={<PublicRoute><PageTransition><Signup /></PageTransition></PublicRoute>} />
+      
+      {/* Public Document View (No Auth) */}
+      <Route path="/docs/:siteId/:type" element={<PageTransition><PublicDocument /></PageTransition>} />
+      <Route path="/client/:accessToken" element={<PageTransition><ClientPortal /></PageTransition>} />
+      <Route path="/certificate/:id" element={<PageTransition><Certificate /></PageTransition>} />
+      <Route path="/auth/callback" element={<PageTransition><AuthCallback /></PageTransition>} />
+      <Route path="/legal" element={<PageTransition><LegalPage /></PageTransition>} />
+      <Route path="/partners" element={<PageTransition><Partners /></PageTransition>} />
+      <Route path="/trust" element={<PageTransition><Trust /></PageTransition>} />
+      <Route path="/docs" element={<PageTransition><Docs /></PageTransition>} />
+      <Route path="/docs/api" element={<PageTransition><ApiReference /></PageTransition>} />
+      <Route path="/status" element={<PageTransition><Status /></PageTransition>} />
+      <Route path="/trust/security" element={<PageTransition><SecurityPolicy /></PageTransition>} />
+      <Route path="/trust/privacy" element={<PageTransition><DataPrivacy /></PageTransition>} />
+      <Route path="/solutions/agencies" element={<PageTransition><SolutionsAgencies /></PageTransition>} />
+      <Route path="/solutions/ecommerce" element={<PageTransition><SolutionsEcommerce /></PageTransition>} />
+      <Route path="/solutions/enterprise" element={<PageTransition><SolutionsEnterprise /></PageTransition>} />
+      <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
 
-        {/* Protected Routes */}
-        <Route path="/onboarding" element={<ProtectedRoute><OnboardingGuard><PageTransition><Onboarding /></PageTransition></OnboardingGuard></ProtectedRoute>} />
-        
-        <Route element={<ProtectedRoute><OnboardingGuard><DashboardLayout /></OnboardingGuard></ProtectedRoute>}>
-          <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
-          <Route path="/audit-report" element={<PageTransition><AuditReport /></PageTransition>} />
-          <Route path="/sites" element={<PageTransition><Sites /></PageTransition>} />
-          <Route path="/sites/:id" element={<PageTransition><SiteDetail /></PageTransition>} />
-          <Route path="/sites/:id/cookie-banner" element={<PageTransition><SiteDetail /></PageTransition>} />
-          <Route path="/sites/:id/cookie-scanner" element={<PageTransition><SiteDetail /></PageTransition>} />
-          <Route path="/sites/:id/dsar-inbox" element={<PageTransition><SiteDetail /></PageTransition>} />
-          <Route path="/sites/:id/google-gtm-tags" element={<PageTransition><SiteDetail /></PageTransition>} />
-          <Route path="/sites/:id/gtm-tags" element={<PageTransition><SiteDetail /></PageTransition>} />
-          <Route path="/cookie-banner" element={<Navigate to="/sites" replace />} />
-          <Route path="/cookie-scanner" element={<Navigate to="/sites" replace />} />
-          <Route path="/dsar-inbox" element={<Navigate to="/sites" replace />} />
-          <Route path="/google-gtm-tags" element={<Navigate to="/sites" replace />} />
-          <Route path="/sites/:id/questionnaire" element={<PageTransition><Questionnaire /></PageTransition>} />
-          <Route path="/sites/:id/documents" element={<PageTransition><Documents /></PageTransition>} />
-          <Route path="/alerts" element={<PageTransition><Alerts /></PageTransition>} />
-          <Route path="/regulations" element={<PageTransition><Regulations /></PageTransition>} />
-          <Route path="/billing" element={<PageTransition><Billing /></PageTransition>} />
-          <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
-          <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
-          <Route path="/accessibility-defense" element={<Navigate to="/settings?tab=accessibility" replace />} />
-          <Route path="/accessibility" element={<Navigate to="/settings?tab=accessibility" replace />} />
-        </Route>
+      {/* Protected Routes */}
+      <Route path="/onboarding" element={<ProtectedRoute><OnboardingGuard><PageTransition><Onboarding /></PageTransition></OnboardingGuard></ProtectedRoute>} />
+      
+      <Route element={<ProtectedRoute><OnboardingGuard><DashboardLayout /></OnboardingGuard></ProtectedRoute>}>
+        <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+        <Route path="/audit-report" element={<PageTransition><AuditReport /></PageTransition>} />
+        <Route path="/sites" element={<PageTransition><Sites /></PageTransition>} />
+        <Route path="/sites/:id" element={<PageTransition><SiteDetail /></PageTransition>} />
+        <Route path="/sites/:id/cookie-banner" element={<PageTransition><SiteDetail /></PageTransition>} />
+        <Route path="/sites/:id/cookie-scanner" element={<PageTransition><SiteDetail /></PageTransition>} />
+        <Route path="/sites/:id/dsar-inbox" element={<PageTransition><SiteDetail /></PageTransition>} />
+        <Route path="/sites/:id/google-gtm-tags" element={<PageTransition><SiteDetail /></PageTransition>} />
+        <Route path="/sites/:id/gtm-tags" element={<PageTransition><SiteDetail /></PageTransition>} />
+        <Route path="/cookie-banner" element={<Navigate to="/sites" replace />} />
+        <Route path="/cookie-scanner" element={<Navigate to="/sites" replace />} />
+        <Route path="/dsar-inbox" element={<Navigate to="/sites" replace />} />
+        <Route path="/google-gtm-tags" element={<Navigate to="/sites" replace />} />
+        <Route path="/sites/:id/questionnaire" element={<PageTransition><Questionnaire /></PageTransition>} />
+        <Route path="/sites/:id/documents" element={<PageTransition><Documents /></PageTransition>} />
+        <Route path="/alerts" element={<PageTransition><Alerts /></PageTransition>} />
+        <Route path="/regulations" element={<PageTransition><Regulations /></PageTransition>} />
+        <Route path="/billing" element={<PageTransition><Billing /></PageTransition>} />
+        <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+        <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
+        <Route path="/accessibility-defense" element={<Navigate to="/settings?tab=accessibility" replace />} />
+        <Route path="/accessibility" element={<Navigate to="/settings?tab=accessibility" replace />} />
+      </Route>
 
-        {/* Redirects */}
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
+      {/* Redirects */}
+      <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+    </Routes>
   );
 };
 

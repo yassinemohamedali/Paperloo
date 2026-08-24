@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
 import { ShieldCheck, Download, ExternalLink, Calendar, Award, History } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { sanitizeDocHtml } from '@/src/lib/sanitizeHtml';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -275,7 +276,7 @@ export default function ClientPortal() {
                     </div>
                   </div>
 
-                  <div dangerouslySetInnerHTML={{ __html: doc.content }} />
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeDocHtml(doc.content) }} />
 
                   {/* Print Footer */}
                   <div className="print-only mt-20 pt-4 border-t border-slate-200 text-center text-[10px] text-slate-400">

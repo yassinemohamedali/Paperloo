@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import { generateDocuments } from '@/src/services/aiService';
 import { calculateComplianceScore } from '@/src/lib/compliance';
+import { sanitizeDocHtml } from '@/src/lib/sanitizeHtml';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -710,7 +711,7 @@ export default function Documents() {
                 selectedLanguage === 'ar' && "text-right font-sans"
               )}
             >
-              <div dangerouslySetInnerHTML={{ __html: documents?.find(d => d.id === selectedDoc)?.content || '' }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeDocHtml(documents?.find(d => d.id === selectedDoc)?.content || '') }} />
             </div>
           </div>
         </div>
@@ -831,7 +832,7 @@ export default function Documents() {
                             <span>{v.content?.length || 0} CHARACTERS</span>
                           </div>
                           <div className="bg-white text-black p-6 max-h-60 overflow-y-auto text-xs uppercase tracking-wider leading-relaxed font-sans rounded">
-                            <div dangerouslySetInnerHTML={{ __html: v.content || '' }} />
+                            <div dangerouslySetInnerHTML={{ __html: sanitizeDocHtml(v.content || '') }} />
                           </div>
                         </div>
                       )}

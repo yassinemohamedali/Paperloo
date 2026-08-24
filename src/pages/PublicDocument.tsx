@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
 import { ShieldCheck } from 'lucide-react';
+import { sanitizeDocHtml } from '@/src/lib/sanitizeHtml';
 
 type Document = Database['public']['Tables']['documents']['Row'];
 
@@ -107,7 +108,7 @@ export default function PublicDocument() {
         </div>
 
         <article className="prose prose-slate prose-lg max-w-none prose-headings:font-sans prose-headings:font-extrabold prose-headings:tracking-[0.04em] prose-headings:text-black prose-p:text-gray-600 prose-p:leading-relaxed prose-li:text-gray-600 uppercase text-sm tracking-wider reveal-up" style={{ transitionDelay: '200ms' }}>
-          <div dangerouslySetInnerHTML={{ __html: docData.content }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeDocHtml(docData.content) }} />
         </article>
 
         <footer className="mt-32 pt-12 border-t border-gray-100 text-center space-y-4 pb-20 reveal-up" style={{ transitionDelay: '400ms' }}>
