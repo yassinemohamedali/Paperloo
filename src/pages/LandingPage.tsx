@@ -6,11 +6,8 @@ import {
   ShieldCheck, 
   Activity, 
   Globe, 
-  FileText, 
   CheckCircle2, 
   RefreshCw, 
-  Lock, 
-  Zap, 
   Sparkles, 
   Code, 
   Scale, 
@@ -18,7 +15,6 @@ import {
   ArrowRight, 
   ShieldAlert, 
   Cpu, 
-  Terminal, 
   Copy, 
   Check,
   Search,
@@ -386,183 +382,8 @@ export default function LandingPage() {
               </div>
             </Link>
           </div>
-
-          {/* Client Logos - Liquid Glass Pill */}
-          <div className="mt-20 inline-flex flex-wrap items-center justify-center gap-x-10 gap-y-4 px-8 py-4 rounded-full liquid-glass-item border border-white/20 shadow-xl reveal-up">
-            <span className="text-[10px] sm:text-xs tracking-[0.25em] font-bold uppercase text-white/70">Aether Analytics</span>
-            <div className="w-px h-3 bg-accent/40"></div>
-            <span className="text-[10px] sm:text-xs tracking-[0.25em] font-bold uppercase text-white/70">Quantum Platforms</span>
-            <div className="w-px h-3 bg-accent/40"></div>
-            <span className="text-[10px] sm:text-xs tracking-[0.25em] font-bold uppercase text-white/70">Apex Infrastructure</span>
-          </div>
         </div>
       </section>
-
-      {/* Live Product Demo & Control Center Section (Liquid Glass Theme) */}
-      <section className="bg-black py-24 border-y border-white/10 relative overflow-hidden">
-        {/* Floating Liquid Glow Orbs */}
-        <div className="liquid-glow-orb bg-accent/20 w-[450px] h-[450px] -top-20 -left-20"></div>
-        <div className="liquid-glow-orb bg-purple-600/15 w-[500px] h-[500px] top-1/2 -right-30"></div>
-        <div className="liquid-glow-orb bg-cyan-400/15 w-[400px] h-[400px] -bottom-20 left-1/3"></div>
-
-        <div className="max-w-[1400px] mx-auto px-6 relative z-10">
-          <div className="section-label mb-6 text-accent flex items-center gap-2 bg-accent/10 border border-accent/30 rounded-full px-4 py-1 backdrop-blur-md">
-            <span className="w-2.5 h-2.5 rounded-full bg-accent animate-ping"></span>
-            PAPERLOO COMPLIANCE OPERATING SYSTEM v4.2
-          </div>
-          
-          <div className="relative rounded-3xl liquid-glass-card overflow-hidden reveal-up">
-            {/* Control Bar Header */}
-            <div className="liquid-glass-header px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex gap-2">
-                  <div className="w-3.5 h-3.5 rounded-full bg-red-500/90 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
-                  <div className="w-3.5 h-3.5 rounded-full bg-yellow-500/90 shadow-[0_0_10px_rgba(245,158,11,0.5)]"></div>
-                  <div className="w-3.5 h-3.5 rounded-full bg-emerald-500/90 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                </div>
-                <div className="h-4 w-px bg-white/20 mx-1"></div>
-                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/20 rounded-xl px-4 py-1.5 text-xs text-muted font-mono shadow-inner">
-                  <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-white font-bold tracking-wide">https://app.your-agency.com/compliance-engine</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 text-xs font-mono">
-                <span className="flex items-center gap-2 bg-emerald-500/15 text-emerald-300 border border-emerald-400/40 px-3.5 py-1.5 rounded-full font-bold shadow-[0_0_15px_rgba(16,185,129,0.2)] backdrop-blur-md">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  STATUTORY HEALTH: 100%
-                </span>
-                <span className="bg-white/10 border border-white/20 backdrop-blur-md px-3.5 py-1.5 rounded-full text-white/80 font-bold">
-                  4 REGIMES ACTIVE
-                </span>
-              </div>
-            </div>
-
-            {/* Main Interactive Control Center Grid */}
-            <div className="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 bg-black/40 backdrop-blur-xl">
-              
-              {/* Left Column: Active Legal Documents */}
-              <div className="lg:col-span-5 space-y-4">
-                <div className="flex items-center justify-between border-b border-white/15 pb-3">
-                  <span className="text-xs font-bold tracking-widest text-white/80 uppercase flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-accent" /> Active Disclosures
-                  </span>
-                  <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-0.5 rounded-full backdrop-blur-md">
-                    AUTO-SYNCHRONIZED
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    { title: 'Privacy Policy (GDPR / CCPA / PIPEDA)', ver: 'v2.4.1', status: 'COMPLIANT', time: 'Synced 2m ago', active: true },
-                    { title: 'Terms of Service & EULA', ver: 'v1.9.0', status: 'ACTIVE', time: 'Synced 12m ago', active: true },
-                    { title: 'Cookie Consent Manager & Telemetry', ver: 'v3.2.0', status: 'ENFORCING', time: '1,420 Consents Today', active: true },
-                    { title: 'Data Processing Agreement (DPA + SCCs)', ver: 'v1.4.2', status: 'EXECUTED', time: 'Synced 1h ago', active: true }
-                  ].map((doc, idx) => (
-                    <div key={idx} className="liquid-glass-item p-4 rounded-2xl flex items-center justify-between group cursor-pointer">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2.5">
-                          <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400 shrink-0 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                          <span className="text-sm font-bold text-white group-hover:text-accent transition-colors">{doc.title}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-[10px] text-white/60 font-mono pl-7">
-                          <span>{doc.ver}</span>
-                          <span>•</span>
-                          <span>{doc.time}</span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold tracking-widest text-emerald-300 bg-emerald-500/15 border border-emerald-400/30 px-3 py-1 rounded-full shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
-                        {doc.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Center Column: Global Compliance Metrics */}
-              <div className="lg:col-span-4 space-y-6">
-                <div className="liquid-glass-item p-6 rounded-2xl space-y-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white/80 uppercase tracking-wider flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-accent" /> Regional Matrix
-                    </span>
-                    <span className="text-xs text-accent font-mono font-bold drop-shadow-[0_0_10px_rgba(200,241,53,0.3)]">0 Violations</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { reg: 'EU / UK', law: 'GDPR / UK-GDPR', score: '100%', badge: 'PASS' },
-                      { reg: 'USA', law: 'CCPA / CPRA / VCDPA', score: '100%', badge: 'PASS' },
-                      { reg: 'CANADA', law: 'PIPEDA / Law 25', score: '100%', badge: 'PASS' },
-                      { reg: 'GLOBAL', law: 'APPs / Privacy Act', score: '100%', badge: 'PASS' },
-                    ].map((item, idx) => (
-                      <div key={idx} className="bg-black/40 border border-white/15 p-3.5 rounded-xl space-y-1.5 backdrop-blur-md">
-                        <div className="flex justify-between items-center text-[10px] text-white/60 font-bold">
-                          <span>{item.reg}</span>
-                          <span className="text-emerald-400 font-mono">{item.badge}</span>
-                        </div>
-                        <div className="text-xs font-bold text-white font-mono">{item.law}</div>
-                        <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden p-0.5">
-                          <div className="bg-emerald-400 h-full w-full rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-3 border-t border-white/15 flex items-center justify-between text-xs text-white/70 font-mono">
-                    <span className="flex items-center gap-2 text-white font-semibold">
-                      <Zap className="w-3.5 h-3.5 text-accent" /> Edge Injection CDN:
-                    </span>
-                    <span className="text-emerald-400 font-bold">1.2ms Avg Latency</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column: Live Audit Terminal Stream */}
-              <div className="lg:col-span-3 space-y-4">
-                <div className="liquid-glass-item p-5 rounded-2xl font-mono text-[11px] space-y-3">
-                  <div className="flex items-center justify-between border-b border-white/15 pb-2 text-white/60">
-                    <span className="flex items-center gap-2 text-white font-bold">
-                      <Terminal className="w-3.5 h-3.5 text-accent" /> Live Scanner Log
-                    </span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-                  </div>
-
-                  <div className="space-y-2.5 text-white/70 leading-relaxed">
-                    <p className="text-white/90"><span className="text-accent font-bold">[05:41:02]</span> Continuous DOM scan completed for app.your-agency.com</p>
-                    <p className="text-emerald-300"><span className="text-accent font-bold">[05:41:05]</span> Verified 14 third-party trackers (GA4, Meta, Stripe, Hubspot)</p>
-                    <p className="text-white/90"><span className="text-accent font-bold">[05:41:08]</span> Statutory policies synced to 12 CDN edge nodes</p>
-                    <p className="text-emerald-300"><span className="text-accent font-bold">[05:41:12]</span> All statutory checks passed. Zero legal exposure.</p>
-                  </div>
-
-                  <div className="pt-3 border-t border-white/15 flex items-center justify-between">
-                    <span className="text-[10px] text-white/50">AUTO-SCAN FREQUENCY</span>
-                    <span className="text-[10px] text-accent font-bold">EVERY 24 HOURS</span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Key Value Proposition Bar - Liquid Glass Cards */}
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
-            <div className="p-6 rounded-2xl liquid-glass-item space-y-2">
-              <div className="text-3xl font-black font-sans text-accent drop-shadow-[0_0_12px_rgba(200,241,53,0.3)]">3 MINUTES</div>
-              <p className="text-xs text-white/70 font-mono tracking-wider uppercase">Average setup time for full agency client site protection</p>
-            </div>
-            <div className="p-6 rounded-2xl liquid-glass-item space-y-2">
-              <div className="text-3xl font-black font-sans text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]">0 MANUAL UPDATES</div>
-              <p className="text-xs text-white/70 font-mono tracking-wider uppercase">Policies automatically re-sync when global privacy laws change</p>
-            </div>
-            <div className="p-6 rounded-2xl liquid-glass-item space-y-2">
-              <div className="text-3xl font-black font-sans text-white">100% WHITE-LABEL</div>
-              <p className="text-xs text-white/70 font-mono tracking-wider uppercase">Deliver custom legal portals with your agency logo and domain</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
 
       {/* Services Section */}
       <section id="solutions" className="py-32 px-6 relative overflow-hidden">
