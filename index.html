@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Paperloo | Global Compliance Infrastructure</title>
-    <meta name="description" content="Paperloo provides the underlying legal architecture for automated disclosures and enterprise SaaS governance. Modular clause-based policy generation for global agencies." />
+    <title>Paperloo — SaaS Governance & Global Compliance Infrastructure</title>
+    <meta name="description" content="Paperloo delivers automated statutory legal architecture, real-time cookie consent shields, and continuous compliance monitoring for digital agencies and enterprise SaaS platforms." />
     <meta name="author" content="Paperloo Infrastructure" />
     <meta name="keywords" content="compliance infrastructure, legal automation, GDPR API, consent management, SaaS governance, Paperloo" />
 
@@ -12,12 +12,14 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
 
+    <link rel="canonical" href="https://paperloo.vercel.app/" />
+
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "Paperloo",
-      "url": "https://paperloo.net" 
+      "url": "https://paperloo.vercel.app" 
     }
     </script>
 
@@ -26,30 +28,54 @@
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Paperloo",
-      "alternateName": "Paperloo Infrastructure",
-      "url": "https://paperloo.com",
-      "logo": "https://paperloo.com/logo.png",
+      "alternateName": "Paperloo Infrastructure Inc.",
+      "url": "https://paperloo.vercel.app",
+      "logo": "https://paperloo.vercel.app/logo.png",
       "description": "Enterprise-grade compliance infrastructure for digital agencies and global SaaS platforms.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "548 Market St, Suite 29012",
+        "addressLocality": "San Francisco",
+        "addressRegion": "CA",
+        "postalCode": "94104",
+        "addressCountry": "US"
+      },
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "telephone": "+1-415-555-0199",
+          "email": "compliance@paperloo.com",
+          "contactType": "customer service",
+          "availableLanguage": ["en", "es", "fr"]
+        },
+        {
+          "@type": "ContactPoint",
+          "email": "dpo@paperloo.com",
+          "contactType": "Data Protection Officer",
+          "availableLanguage": ["en"]
+        }
+      ],
       "sameAs": [
         "https://twitter.com/paperloo",
-        "https://linkedin.com/company/paperloo"
+        "https://linkedin.com/company/paperloo",
+        "https://github.com/paperloo"
       ]
     }
     </script>
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://paperloo.com/" />
-    <meta property="og:title" content="Paperloo | Compliance Infrastructure" />
-    <meta property="og:description" content="Automated compliance documentation and legal infrastructure for digital agencies." />
-    <meta property="og:image" content="https://paperloo.com/logo.png" />
+    <meta property="og:url" content="https://paperloo.vercel.app/" />
+    <meta property="og:title" content="Paperloo — SaaS Governance & Global Compliance Infrastructure" />
+    <meta property="og:description" content="Automated compliance documentation, real-time cookie consent shields, and legal governance architecture for digital agencies and enterprise SaaS platforms." />
+    <meta property="og:image" content="https://paperloo.vercel.app/logo.png" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://paperloo.com/" />
-    <meta property="twitter:title" content="Paperloo | Compliance Infrastructure" />
-    <meta property="twitter:description" content="Automated compliance docs for every client site." />
-    <meta property="twitter:image" content="https://paperloo.com/logo.png" />
+    <meta property="twitter:url" content="https://paperloo.vercel.app/" />
+    <meta property="twitter:title" content="Paperloo — SaaS Governance & Global Compliance Infrastructure" />
+    <meta property="twitter:description" content="Automated compliance docs and governance architecture for every client site." />
+    <meta property="twitter:image" content="https://paperloo.vercel.app/logo.png" />
 
     <script>
       // Fix for "Cannot set property fetch of #<Window> which has only a getter"
@@ -102,7 +128,42 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=%VITE_GTM_ID%"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-    <div id="root"></div>
+    <div id="root">
+      <header>
+        <h1>Paperloo: Enterprise SaaS Governance and Automated Compliance Infrastructure</h1>
+        <p>Paperloo provides the underlying legal architecture, automated statutory disclosures, real-time cookie consent shields, and continuous compliance monitoring for digital agencies and modern SaaS platforms.</p>
+      </header>
+      <main>
+        <section>
+          <h2>Continuous SaaS Governance & Multi-Jurisdictional Protection</h2>
+          <p>Protect your software properties across global privacy regulations including GDPR in Europe, CCPA/CPRA in California, PIPEDA in Canada, and the Australian Privacy Principles. When statutes change, our legal synthesis engine updates live disclosures dynamically across all connected domains.</p>
+        </section>
+        <section>
+          <h2>Automated Legal Disclosures & Real-Time Cookie Shield</h2>
+          <p>Generate, version, and publish attorney-vetted Privacy Policies, Terms of Service, End User License Agreements (EULA), and Data Processing Agreements (DPA) tailored directly to your technical data collection patterns and third-party vendors.</p>
+        </section>
+        <section>
+          <h2>Programmatic Access for Developers & Autonomous Agents</h2>
+          <p>Seamlessly integrate compliance checks into continuous deployment pipelines, developer tools, and AI agent workflows via our public REST API, OpenAPI 3.1 specification, and Model Context Protocol (MCP) server.</p>
+          <nav aria-label="Developer and Agent Resources">
+            <ul>
+              <li><a href="/docs">Documentation</a></li>
+              <li><a href="/docs/api">API Reference</a></li>
+              <li><a href="/openapi.json">OpenAPI Specification</a></li>
+              <li><a href="/llms.txt">Agent Instructions (llms.txt)</a></li>
+              <li><a href="/.well-known/mcp">Model Context Protocol (MCP) Server</a></li>
+              <li><a href="/about">About Paperloo</a></li>
+              <li><a href="/contact">Contact Support & DPO</a></li>
+              <li><a href="/privacy">Privacy Notice</a></li>
+              <li><a href="/status">System Status</a></li>
+            </ul>
+          </nav>
+        </section>
+      </main>
+      <footer>
+        <p>Paperloo Infrastructure Inc. — 548 Market St, Suite 29012, San Francisco, CA 94104. Contact: compliance@paperloo.com</p>
+      </footer>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

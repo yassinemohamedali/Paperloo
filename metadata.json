@@ -1,6 +1,6 @@
 {
-  "name": "Paperloo Infrastructure",
-  "description": "Global compliance infrastructure for automated legal disclosures and enterprise SaaS governance.",
+  "name": "Paperloo",
+  "description": "Automated Web Compliance & Legal Policy Management Platform for Digital Agencies",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

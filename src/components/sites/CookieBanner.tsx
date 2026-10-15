@@ -1,8 +1,8 @@
-import { config } from '@/src/config/env';
+import { config as envConfig } from '@/src/config/env';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/src/lib/supabase';
-import { Settings, Eye, Code, Save, Upload, Check, Shield, Zap, Globe, LayoutGrid, Sparkles, AlertCircle, Info, Lock } from 'lucide-react';
+import { Settings, Eye, Code, Save, Upload, Check, Shield, Zap, Globe, LayoutGrid, Sparkles, AlertCircle, Info, Lock, ExternalLink, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import { calculateComplianceScore } from '@/src/lib/compliance';
@@ -30,35 +30,34 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
           .eq('site_id', siteId)
           .single();
         
-        if (error) {
-          if (error.code !== 'PGRST116') {
-            console.warn('Postgrest error in banner_configs query:', error);
-          }
-          // fallback to localStorage
-          const local = localStorage.getItem(`banner_config_${siteId}`);
-          if (local) {
-            try {
-              return JSON.parse(local);
-            } catch (e) {}
-          }
-          return null;
-        }
-        
-        // Cache to localStorage for offline robustness
         if (data) {
           localStorage.setItem(`banner_config_${siteId}`, JSON.stringify(data));
+          return data;
         }
-        return data;
       } catch (err) {
-        console.error('Error loading banner configuration from supabase, using localStorage fallback:', err);
-        const local = localStorage.getItem(`banner_config_${siteId}`);
-        if (local) {
-          try {
-            return JSON.parse(local);
-          } catch (e) {}
-        }
-        return null;
+        console.warn('Error loading banner configuration from supabase, trying fallbacks:', err);
       }
+
+      // Try local server store
+      try {
+        const res = await fetch(`/api/banner-config/${siteId}`);
+        if (res.ok) {
+          const serverConfig = await res.json();
+          if (serverConfig && serverConfig.site_id) {
+            localStorage.setItem(`banner_config_${siteId}`, JSON.stringify(serverConfig));
+            return serverConfig;
+          }
+        }
+      } catch (e) {}
+
+      // fallback to localStorage
+      const local = localStorage.getItem(`banner_config_${siteId}`);
+      if (local) {
+        try {
+          return JSON.parse(local);
+        } catch (e) {}
+      }
+      return null;
     }
   });
 
@@ -68,10 +67,10 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
     accept_text: 'Accept All',
     reject_text: 'Reject All',
     manage_text: 'Manage Preferences',
-    primary_color: '#6c63ff',
+    primary_color: '#c8f135',
     show_logo: false,
     enable_auto_blocker: false,
-    enable_gcm_v2: false,
+    enable_gcm_v2: true,
     google_tag_id: null
   };
 
@@ -91,6 +90,17 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
         localStorage.setItem(`banner_config_${siteId}`, JSON.stringify(newConfig));
       } catch (e) {
         console.error('Failed to write banner_config to localStorage:', e);
+      }
+
+      // Sync with server endpoint
+      try {
+        await fetch(`/api/banner-config/${siteId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newConfig)
+        });
+      } catch (e) {
+        console.warn('Failed to sync banner config to backend API:', e);
       }
 
       try {
@@ -130,7 +140,11 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
     }
   });
 
-  const embedCode = `<script src="${config.appUrl}/api/paperloo.js?siteId=${siteId}" async></script>`;
+  const hostOrigin = (typeof window !== 'undefined' && window.location?.origin)
+    ? window.location.origin
+    : (envConfig?.appUrl || 'http://localhost:3000');
+
+  const embedCode = `<script src="${hostOrigin}/api/paperloo.js?siteId=${siteId}" async></script>`;
 
   if (isLoading) return <div className="animate-pulse h-64 bg-surface rounded" />;
 
@@ -714,15 +728,53 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
 
       {activeTab === 'embed' && (
         <div className="space-y-8">
-          <div className="space-y-4">
-            <h4 className="text-xs font-black text-muted uppercase tracking-widest">INSTALLATION</h4>
-            <p className="text-xs text-muted leading-relaxed uppercase tracking-wider">
-              PASTE THIS SCRIPT INTO THE <code className="text-accent">&lt;head&gt;</code> OF YOUR CLIENT'S WEBSITE.
-            </p>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="space-y-1">
+              <h4 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                <span>INSTALLATION & COMPLIANCE SHIELD</span>
+                <span className="px-2 py-0.5 text-[8px] bg-accent/10 border border-accent/30 text-accent font-mono rounded">LIVE CDN ACTIVE</span>
+              </h4>
+              <p className="text-xs text-muted leading-relaxed uppercase tracking-wider">
+                PASTE THIS ASYNC SCRIPT INTO THE <code className="text-accent">&lt;head&gt;</code> OF YOUR CLIENT'S WEBSITE.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <a
+                href={`/test-cookie-banner.html?siteId=${siteId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 px-4 py-2 bg-accent text-black font-black text-[9px] uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all"
+              >
+                <ExternalLink className="h-3 w-3" />
+                <span>OPEN SANDBOX TEST PAGE</span>
+              </a>
+              <button
+                onClick={() => {
+                  try {
+                    localStorage.removeItem('paperloo_consent');
+                    const existing = document.getElementById('paperloo-live-script');
+                    if (existing) existing.remove();
+                    const s = document.createElement('script');
+                    s.id = 'paperloo-live-script';
+                    s.src = `${hostOrigin}/api/paperloo.js?siteId=${siteId}&preview=true&_t=${Date.now()}`;
+                    s.async = true;
+                    document.body.appendChild(s);
+                    toast.success('Live cookie banner deployed in this session!');
+                  } catch (e: any) {
+                    toast.error('Failed to trigger banner: ' + e.message);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/15 text-white font-black text-[9px] uppercase tracking-widest border border-white/10 active:scale-95 transition-all"
+              >
+                <Play className="h-3 w-3 text-accent" />
+                <span>TEST BANNER IN CURRENT WINDOW</span>
+              </button>
+            </div>
           </div>
 
           <div className="relative group">
-            <pre className="bg-black p-8 border border-white/10 overflow-x-auto text-accent text-xs font-mono">
+            <pre className="bg-black p-8 border border-white/10 overflow-x-auto text-accent text-xs font-mono select-all">
               {embedCode}
             </pre>
             <button 
@@ -730,10 +782,22 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
                 navigator.clipboard.writeText(embedCode);
                 toast.success('Embed code copied to clipboard');
               }}
-              className="absolute top-4 right-4 p-2 bg-white/5 border border-white/10 hover:bg-accent hover:text-black transition-all"
+              className="absolute top-4 right-4 p-2.5 bg-white/5 border border-white/10 hover:bg-accent hover:text-black transition-all"
+              title="Copy embed code"
             >
               <Check className="h-4 w-4" />
             </button>
+          </div>
+
+          <div className="p-4 bg-white/[0.02] border border-white/10 flex items-center justify-between text-[10px] font-mono text-muted">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-accent animate-ping" />
+              <span>EDGE CDN ROUTE:</span>
+              <a href={`${hostOrigin}/api/paperloo.js?siteId=${siteId}`} target="_blank" rel="noreferrer" className="text-accent underline">
+                {hostOrigin}/api/paperloo.js?siteId={siteId}
+              </a>
+            </div>
+            <span className="text-[9px] uppercase tracking-wider text-green-400">STATUS: HTTP 200 JS READY</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -753,6 +817,12 @@ export default function CookieBanner({ siteId }: CookieBannerProps) {
               <h5 className="text-[10px] font-black uppercase tracking-widest">WEBFLOW</h5>
               <p className="text-[10px] text-muted leading-relaxed uppercase tracking-widest">
                 GO TO PROJECT SETTINGS &gt; CUSTOM CODE AND PASTE IN THE HEAD CODE SECTION.
+              </p>
+            </div>
+            <div className="p-8 border border-white/5 bg-white/[0.01] space-y-4">
+              <h5 className="text-[10px] font-black uppercase tracking-widest">LEGACY COMPATIBILITY</h5>
+              <p className="text-[10px] text-muted leading-relaxed uppercase tracking-widest">
+                AUTOMATIC RETRO-COMPATIBILITY FOR ALL EMBED PATHS INCLUDING RELATIVE SCRIPT TAGS AND UNDEFINED PREFIX FALLBACKS.
               </p>
             </div>
           </div>

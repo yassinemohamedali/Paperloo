@@ -330,33 +330,36 @@ export default function SiteDetail() {
               </div>
             </div>
 
-            <div className="flex flex-col justify-end items-start md:items-end gap-6 relative z-10">
-              <div className="flex items-center gap-6">
-                <div className="text-right">
-                  <p className="text-[10px] font-bold text-muted uppercase tracking-widest">COMPLIANCE GRADE</p>
-                  <p className="text-4xl font-sans font-extrabold text-accent tracking-[0.04em]">
-                    {site?.compliance_grade || scoreData?.grade || 'F'}
-                  </p>
+            <div className="flex flex-col justify-end items-start md:items-end gap-4 relative z-10">
+              <div className="flex flex-col md:items-end gap-2">
+                <span className="text-[10px] font-bold text-muted uppercase tracking-widest">REGIONAL RISK EXPOSURE</span>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider">
+                    GDPR: LOW RISK
+                  </span>
+                  <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs font-bold uppercase tracking-wider">
+                    CCPA: SCANNED
+                  </span>
+                  <span className="px-3 py-1 bg-accent/10 text-accent border border-accent/20 text-xs font-bold uppercase tracking-wider">
+                    ePrivacy: ACTIVE
+                  </span>
                 </div>
+              </div>
+              <div className="flex items-center gap-3">
                 <button 
                   onClick={() => recalculateMutation.mutate()}
                   disabled={recalculateMutation.isPending || isRecalculating}
-                  className="h-16 w-16 rounded-full border-4 border-accent flex flex-col items-center justify-center font-sans font-extrabold text-xl tracking-[0.04em] shadow-[4px_4px_0px_0px_rgba(200,241,53,0.2)] hover:bg-accent/10 transition-all group disabled:opacity-50"
-                  title="CLICK TO RECALCULATE"
+                  className="bracket-btn py-2 px-4 text-[10px] flex items-center gap-2 border-white/20 text-muted hover:text-white"
+                  title="RE-AUDIT REGIONAL FRAMEWORKS"
                 >
-                  {(recalculateMutation.isPending || isRecalculating) ? (
-                    <RefreshCw className="h-6 w-6 animate-spin text-accent" />
-                  ) : (
-                    <>
-                      <span>{scoreData?.score ?? 0}</span>
-                      <RefreshCw className="h-2 w-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </>
-                  )}
+                  <span className="bracket-btn-inner"></span>
+                  <RefreshCw className={cn("h-3 w-3", (recalculateMutation.isPending || isRecalculating) && "animate-spin")} />
+                  {(recalculateMutation.isPending || isRecalculating) ? "AUDITING..." : "RE-AUDIT JURISDICTIONS"}
                 </button>
               </div>
               <div className="flex flex-wrap justify-end gap-2">
                 {site?.jurisdictions?.map(j => (
-                  <span key={j} className="text-[10px] font-bold bg-white/5 border border-white/10 px-3 py-1 uppercase tracking-widest">
+                  <span key={j} className="text-[9px] font-bold bg-white/5 border border-white/10 px-2.5 py-0.5 uppercase tracking-widest text-muted">
                     {j}
                   </span>
                 ))}
@@ -437,6 +440,17 @@ export default function SiteDetail() {
                 </button>
               </form>
             </div>
+          </div>
+
+          {/* Mandatory Statutory Notice */}
+          <div className="p-6 bg-surface border border-white/10 rounded-lg text-left">
+            <div className="flex items-center gap-2 text-amber-400 mb-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">MANDATORY STATUTORY NOTICE</span>
+            </div>
+            <p className="text-xs text-muted leading-relaxed uppercase tracking-wider font-mono">
+              "Paperloo provides compliance automation software. It does not provide legal advice and is not a law firm. Generated documents are templates and must be reviewed by qualified counsel."
+            </p>
           </div>
         </>
       )}

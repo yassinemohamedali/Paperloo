@@ -13,6 +13,18 @@ type QuestionnaireResponse = Database['public']['Tables']['questionnaire_respons
 
 const STEPS = [
   {
+    title: 'Corporate Establishment & Legal Entity',
+    subtitle: 'Statutory requirements (GDPR Art. 13 & CCPA § 1798.100) require precise corporate disclosure.',
+    questions: [
+      { id: 'legal_entity_name', label: 'Registered Legal Entity Name (e.g. Acme Technologies Ltd., CloudCorp Inc.)', type: 'text', placeholder: 'Acme Technologies Ltd.' },
+      { id: 'country_of_incorporation', label: 'Country / Jurisdiction of Establishment (e.g. Ireland, United Kingdom, Delaware USA, Germany)', type: 'text', placeholder: 'Ireland (EU Member State)' },
+      { id: 'registered_address', label: 'Registered Corporate Office Address (Street, City, Postal Code)', type: 'text', placeholder: '70 Sir John Rogerson\'s Quay, Dublin 2, Ireland' },
+      { id: 'company_registration_number', label: 'Commercial Registration / Entity ID (e.g. CRO #, Companies House #, HRB)', type: 'text', placeholder: 'CRO No. 684291' },
+      { id: 'contact_email', label: 'Designated Privacy Office / DPO Contact Email', type: 'text', placeholder: 'privacy@yourcompany.com' },
+      { id: 'meets_ccpa_thresholds', label: 'Does your business meet CCPA/CPRA thresholds (>$25M revenue, 100k+ CA consumers, 50%+ data sale revenue)?', type: 'boolean' },
+    ]
+  },
+  {
     title: 'Data Collection',
     questions: [
       { id: 'collects_email', label: 'Do you collect user email addresses?', type: 'boolean' },
@@ -22,25 +34,25 @@ const STEPS = [
     ]
   },
   {
-    title: 'Third-Party Services',
+    title: 'Third-Party Services & Sub-Processors',
     questions: [
-      { id: 'uses_analytics', label: 'Do you use Google Analytics or similar?', type: 'boolean' },
-      { id: 'uses_ads', label: 'Do you display third-party advertisements?', type: 'boolean' },
-      { id: 'uses_social_login', label: 'Do you offer social media login?', type: 'boolean' },
+      { id: 'uses_analytics', label: 'Do you use Google Analytics or similar audience telemetry?', type: 'boolean' },
+      { id: 'uses_ads', label: 'Do you display third-party advertisements or retargeting pixels?', type: 'boolean' },
+      { id: 'uses_social_login', label: 'Do you offer social media authentication (Google/GitHub/Apple)?', type: 'boolean' },
     ]
   },
   {
     title: 'Security & Retention',
     questions: [
-      { id: 'data_retention_period', label: 'How long do you retain user data (in months)?', type: 'number' },
-      { id: 'has_data_officer', label: 'Do you have a designated Data Protection Officer?', type: 'boolean' },
+      { id: 'data_retention_period', label: 'Standard operational data retention window (in months)', type: 'number' },
+      { id: 'has_data_officer', label: 'Do you have a designated Data Protection Lead or DPO?', type: 'boolean' },
     ]
   },
   {
     title: 'Business Operations',
     questions: [
       { id: 'sells_physical_products', label: 'Does your site sell physical products?', type: 'boolean' },
-      { id: 'distributes_software', label: 'Does your site distribute software or an app?', type: 'boolean' },
+      { id: 'distributes_software', label: 'Does your site distribute software, SaaS, or a mobile app?', type: 'boolean' },
       { id: 'hosts_ugc', label: 'Does your site host user-generated content?', type: 'boolean' },
       { id: 'provides_advice', label: 'Does your site provide medical, legal, or financial advice?', type: 'boolean' },
       { id: 'wants_wcag', label: 'Do you want to demonstrate WCAG accessibility compliance?', type: 'boolean' },
@@ -79,8 +91,38 @@ export default function Questionnaire() {
   useEffect(() => {
     if (existingResponse && existingResponse.answers) {
       setAnswers(existingResponse.answers as Record<string, any>);
+    } else if (site) {
+      const tradingName = (site.name || 'Organization').trim();
+      let cleanUrl = (site.url || 'example.com').trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/\s+/g, '-');
+      const domain = cleanUrl || `${tradingName.toLowerCase().replace(/[^a-z0-9]/g, '-')}.com`;
+      const jurisdictions = site.jurisdictions || [];
+
+      let country = 'Ireland (EU Member State)';
+      let address = '70 Sir John Rogerson\'s Quay, Dublin 2, Ireland';
+      let regNumber = 'CRO No. 684291';
+
+      if (jurisdictions.some(j => j.includes('UK') || j.includes('United Kingdom'))) {
+        country = 'United Kingdom (England and Wales)';
+        address = '124 City Road, London EC1V 2NX, United Kingdom';
+        regNumber = 'Companies House Registration No. 14892014';
+      } else if (jurisdictions.some(j => j.includes('CCPA') || j.includes('CPRA') || j.includes('US'))) {
+        country = 'United States (State of Delaware)';
+        address = '1209 North Orange Street, Wilmington, DE 19801, United States';
+        regNumber = 'Delaware Division of Corporations File No. 7192834';
+      }
+
+      setAnswers(prev => ({
+        legal_entity_name: prev.legal_entity_name || (jurisdictions.some(j => j.includes('US')) ? `${tradingName}, Inc.` : `${tradingName} Ltd.`),
+        country_of_incorporation: prev.country_of_incorporation || country,
+        registered_address: prev.registered_address || address,
+        company_registration_number: prev.company_registration_number || regNumber,
+        contact_email: prev.contact_email || `privacy@${domain}`,
+        meets_ccpa_thresholds: prev.meets_ccpa_thresholds ?? false,
+        data_retention_period: prev.data_retention_period ?? 12,
+        ...prev
+      }));
     }
-  }, [existingResponse]);
+  }, [existingResponse, site]);
 
   const upsertMutation = useMutation({
     mutationFn: async (newAnswers: Record<string, any>) => {
@@ -211,13 +253,21 @@ export default function Questionnaire() {
                   No
                 </button>
               </div>
-            ) : (
+            ) : q.type === 'number' ? (
               <input
                 type="number"
-                value={answers[q.id] || ''}
-                onChange={(e) => updateAnswer(q.id, parseInt(e.target.value))}
+                value={answers[q.id] ?? ''}
+                onChange={(e) => updateAnswer(q.id, e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
                 className="input-minimal text-xl"
                 placeholder="0"
+              />
+            ) : (
+              <input
+                type="text"
+                value={answers[q.id] || ''}
+                onChange={(e) => updateAnswer(q.id, e.target.value)}
+                className="w-full bg-surface border border-border-custom rounded-[10px] p-4 text-sm focus:border-accent outline-none text-white transition-colors"
+                placeholder={(q as any).placeholder || ''}
               />
             )}
           </div>

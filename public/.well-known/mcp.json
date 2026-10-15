@@ -1,0 +1,64 @@
+{
+  "name": "paperloo-mcp-server",
+  "version": "1.0.0",
+  "protocolVersion": "2024-11-05",
+  "description": "Model Context Protocol (MCP) server for Paperloo SaaS governance, automated legal disclosures, and compliance auditing.",
+  "capabilities": {
+    "tools": {
+      "listChanged": false
+    },
+    "resources": {
+      "subscribe": false,
+      "listChanged": false
+    }
+  },
+  "endpoints": {
+    "streamableHttp": "https://paperloo.vercel.app/api/mcp",
+    "sse": "https://paperloo.vercel.app/api/mcp/sse"
+  },
+  "tools": [
+    {
+      "name": "verify_compliance",
+      "description": "Audit a web domain or URL for essential statutory compliance indicators (GDPR, CCPA/CPRA, cookie banner, privacy disclosures, WCAG accessibility signals)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "Domain name or URL to scan (e.g. acme.com or https://acme.com)"
+          }
+        },
+        "required": ["domain"]
+      }
+    },
+    {
+      "name": "list_jurisdictions",
+      "description": "Retrieve list of supported global compliance jurisdictions, statutory regulations, and enforcement authorities",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_policy_templates",
+      "description": "List available automated legal document templates (privacy_policy, terms_of_service, cookie_policy, eula, acceptable_use) and required input schema",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Optional policy type filter"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_system_status",
+      "description": "Check real-time health, uptime, and regulatory monitoring synchronization status of Paperloo infrastructure",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

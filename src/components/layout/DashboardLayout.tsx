@@ -170,35 +170,29 @@ export default function DashboardLayout() {
 
           {/* Persistent Legal Safety Footer */}
           <footer className="mt-16 py-8 border-t border-border-custom bg-surface-2/30 rounded-2xl px-6 md:px-10">
-            <div className="max-w-4xl mx-auto space-y-4">
-              <div className="flex items-center gap-3 text-red-500/80">
+            <div className="max-w-4xl mx-auto space-y-3">
+              <div className="flex items-center gap-3 text-amber-400">
                 <AlertCircle className="h-4 w-4" />
-                <h4 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em]">Mandatory Legal Disclosure</h4>
+                <h4 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em]">Mandatory UPL Legal Disclaimer</h4>
               </div>
-              <p className="text-[9px] md:text-[10px] leading-relaxed text-muted-custom uppercase tracking-wider opacity-60">
-                Paperloo.com is an automated AI platform and is not a law firm. We do not provide legal advice, 
-                opinion or recommendations. Use of this service does not create an attorney-client relationship. 
-                All generated documents must be reviewed by qualified legal counsel.
+              <p className="text-[10px] md:text-[11px] leading-relaxed text-muted-custom uppercase tracking-wider font-mono">
+                "Paperloo provides compliance automation software. It does not provide legal advice and is not a law firm. Generated documents are templates and must be reviewed by qualified counsel."
               </p>
             </div>
           </footer>
         </div>
 
-        {/* Floating Support & AI Chat Bubble */}
+        {/* Floating Support & Help Bubble */}
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
           <Link to="/support">
             <button
               className="group flex items-center gap-3 bg-[#c8f135] text-black px-4 py-3.5 rounded-full font-mono text-xs font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(200,241,53,0.3)] hover:shadow-[0_15px_40px_rgba(200,241,53,0.5)] border border-[#c8f135] hover:scale-105 active:scale-95 transition-all duration-300"
             >
               <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out whitespace-nowrap block">
-                COMPLIANCE SUPPORT AI
+                COMPLIANCE HELP DESK
               </span>
               <div className="relative">
-                <LifeBuoy className="h-5 w-5 animate-[spin_8s_linear_infinite]" />
-                <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
+                <LifeBuoy className="h-5 w-5" />
               </div>
             </button>
           </Link>

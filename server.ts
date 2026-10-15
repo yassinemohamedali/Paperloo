@@ -10,6 +10,7 @@ import dns from "dns/promises";
 import net from "net";
 import http from "http";
 import https from "https";
+import { setupAgentPreMiddleware, setupAgentPostMiddleware } from "./src/server/agentReadiness";
 
 dotenv.config();
 
@@ -406,6 +407,9 @@ app.use((req, res, next) => {
 app.set("trust proxy", true);
 app.use(express.json({ limit: '1mb' }));
 app.use(cors());
+
+// Mount Agent Readiness specs, public endpoints, and JSON error interceptor
+setupAgentPreMiddleware(app);
 
 // API Routes
 app.get("/api/health", (req, res) => {
@@ -3134,8 +3138,11 @@ Instructions:
     }
   });
 
+// Mount Agent Readiness Markdown negotiation and Agent-Friendly 404 handler
+setupAgentPostMiddleware(app);
+
 // Vite middleware for development
-if (!process.env.VERCEL && process.env.NODE_ENV !== "production") {
+if (!process.env.VERCEL && process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
   const dynamicImport = new Function('modulePath', 'return import(modulePath)');
   dynamicImport("vite").then(async (vite: any) => {
     const viteServer = await vite.createServer({
@@ -3148,7 +3155,7 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== "production") {
       console.log(`Development Server running on http://localhost:${PORT}`);
     });
   });
-} else if (!process.env.VERCEL) {
+} else if (!process.env.VERCEL && process.env.NODE_ENV !== "test") {
   const distPath = path.join(process.cwd(), 'dist');
   app.use(express.static(distPath));
   app.get('*', (req, res) => {

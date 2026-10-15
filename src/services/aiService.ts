@@ -1,5 +1,11 @@
 import { supabase } from "@/src/lib/supabase";
 import { escapeHtml, sanitizeDocHtml } from "@/src/lib/sanitizeHtml";
+import { 
+  extractCompanyFacts, 
+  generateStatutoryPrivacyPolicy, 
+  buildStatutorySystemInstruction, 
+  RealCompanyFacts 
+} from "@/src/lib/statutoryCorpus";
 
 export const generateDocuments = async (siteId: string, language: string = "en") => {
   try {
@@ -34,183 +40,130 @@ export const generateDocuments = async (siteId: string, language: string = "en")
 // Built-in client-side legal generator fallback to guarantee 100% success rate even if LLM/network fails
 const generateLegalDocFallback = (
   type: string,
-  siteName: string,
-  siteUrl: string,
+  facts: RealCompanyFacts,
   jurisdictions: string[],
   language: string,
   dataList: string,
   thirdPartiesList: string,
-  retention: number | string,
-  dpoContact: string
+  retention: number | string
 ): string => {
   const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const jurisdictionsStr = jurisdictions.length > 0 ? jurisdictions.join(', ') : 'GDPR, CCPA';
+  const jurisdictionsStr = jurisdictions.length > 0 ? jurisdictions.join(', ') : 'GDPR (EU)';
 
   switch (type) {
     case 'privacy_policy':
-      return `
-        <h2>Privacy Policy</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p><strong>${escapeHtml(siteName)}</strong> ("we", "our", or "us") operates the website located at <strong>${escapeHtml(siteUrl)}</strong>. We are committed to safeguarding the privacy and personal data of our users in full compliance with applicable statutory standards (${escapeHtml(jurisdictionsStr)}).</p>
-
-        <h3>1. Scope & Applicable Frameworks</h3>
-        <p>This Privacy Policy outlines our data handling practices under global data protection frameworks including the General Data Protection Regulation (GDPR), California Consumer Privacy Act / CPRA, Brazilian LGPD, South African POPIA, and Australian Privacy Principles (APPs).</p>
-
-        <h3>2. Categories of Personal Data Collected</h3>
-        <p>We process the following categories of personal data collected directly from you or through automated interactions:</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0;">
-          <thead>
-            <tr style="border-bottom: 2px solid rgba(255,255,255,0.2); text-align: left;">
-              <th style="padding: 10px;">Data Category</th>
-              <th style="padding: 10px;">Collected Items</th>
-              <th style="padding: 10px;">Legal Basis / Purpose</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-              <td style="padding: 10px;">Primary Identifiers</td>
-              <td style="padding: 10px;">${escapeHtml(dataList)}</td>
-              <td style="padding: 10px;">Contractual Performance & Customer Service</td>
-            </tr>
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-              <td style="padding: 10px;">Analytics & Telemetry</td>
-              <td style="padding: 10px;">${escapeHtml(thirdPartiesList)}</td>
-              <td style="padding: 10px;">Legitimate Interest (Service Optimization)</td>
-            </tr>
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-              <td style="padding: 10px;">Financial / Transactional</td>
-              <td style="padding: 10px;">Payment transactions, invoices</td>
-              <td style="padding: 10px;">Legal Obligation & Financial Recordkeeping</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>3. Data Retention Schedule</h3>
-        <p>We retain personal information for a maximum period of <strong>${escapeHtml(String(retention))} months</strong> or as long as necessary to fulfill the purposes for which it was collected, resolve disputes, and comply with legal requirements.</p>
-
-        <h3>4. Third-Party Integrations & Sub-Processors</h3>
-        <p>We work with trusted third-party service providers (${escapeHtml(thirdPartiesList)}) who process data solely on our instructions under strict Data Processing Agreements (DPAs) and standard contractual clauses.</p>
-
-        <h3>5. Your Statutory Privacy Rights</h3>
-        <p>Subject to applicable law in your jurisdiction (${escapeHtml(jurisdictionsStr)}), you have the right to:</p>
-        <ul>
-          <li><strong>Access & Portability:</strong> Request a copy of your personal data in a structured, machine-readable format.</li>
-          <li><strong>Rectification:</strong> Request correction of inaccurate or incomplete personal records.</li>
-          <li><strong>Erasure / Deletion:</strong> Request prompt deletion of your personal data ("Right to be Forgotten").</li>
-          <li><strong>Opt-Out of Sale / Sharing:</strong> California and Virginia residents may opt out of data sharing or behavioral advertising.</li>
-          <li><strong>Lodge a Regulatory Complaint:</strong> You may submit complaints to your national or regional data protection authority (e.g., EU DPA, UK ICO, OAIC, or state Attorney General).</li>
-        </ul>
-
-        <h3>6. Data Protection Lead & Contact</h3>
-        <p>To exercise your rights or submit questions regarding this policy, contact our designated privacy officer at <a href="mailto:${escapeHtml(dpoContact)}">${escapeHtml(dpoContact)}</a>.</p>
-      `;
+      return generateStatutoryPrivacyPolicy(facts, jurisdictions);
 
     case 'terms_of_service':
       return `
         <h2>Terms of Service</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>These Terms of Service ("Terms") constitute a legally binding agreement between you and <strong>${escapeHtml(siteName)}</strong> concerning your access to and use of <strong>${escapeHtml(siteUrl)}</strong>.</p>
+        <p><strong>Effective Date:</strong> ${dateStr} | <strong>Version:</strong> 2.0 (Statutory Consumer & Enterprise Framework)</p>
+        <p>These Terms of Service ("Terms") constitute a legally binding agreement between you ("User", "you", or "your") and <strong>${escapeHtml(facts.legalEntityName)}</strong> (trading as <em>"${escapeHtml(facts.tradingName)}"</em>, "we", "us", or "our"), governing access to and usage of the digital service at <strong><a href="${escapeHtml(facts.monitoredUrl)}" target="_blank" rel="noreferrer">${escapeHtml(facts.monitoredUrl)}</a></strong>.</p>
 
-        <h3>1. Acceptance of Terms</h3>
-        <p>By accessing or utilizing our website and associated digital services, you agree to comply with and be bound by these Terms and our Privacy Policy.</p>
+        <h3>1. Acceptance & Contract Formation</h3>
+        <p>By accessing our website, creating an account, or purchasing digital services, you agree to be bound by these Terms and our Privacy Policy. If you are entering into these Terms on behalf of an entity, you warrant that you possess the legal authority to bind that entity.</p>
 
-        <h3>2. User Accounts & Security</h3>
-        <p>Users are responsible for maintaining the confidentiality of their account credentials and for all activities that occur under their account.</p>
+        <h3>2. User Accounts & Credential Security</h3>
+        <p>You agree to provide true, accurate, and complete information upon registration. You are solely responsible for maintaining the confidentiality of your credentials and for all activities occurring under your account. Notify our security team immediately at <a href="mailto:${escapeHtml(facts.privacyEmail)}">${escapeHtml(facts.privacyEmail)}</a> upon discovering unauthorized access.</p>
 
-        <h3>3. Intellectual Property</h3>
-        <p>All software, proprietary algorithms, design marks, trademarks, and content on <strong>${escapeHtml(siteUrl)}</strong> remain the exclusive intellectual property of <strong>${escapeHtml(siteName)}</strong>.</p>
+        <h3>3. Acceptable Use & Prohibited Conduct</h3>
+        <p>You agree not to: (a) probe, scan, or breach system security or authentication measures; (b) reverse engineer or decompile any software component; (c) transmit malicious payloads, trojans, or unauthorized scrapers; or (d) violate applicable statutory laws under ${escapeHtml(jurisdictionsStr)}.</p>
 
-        <h3>4. Limitation of Liability</h3>
-        <p>To the maximum extent permitted by governing law under the jurisdictions of <strong>${escapeHtml(jurisdictionsStr)}</strong>, <strong>${escapeHtml(siteName)}</strong> and its affiliates shall not be liable for any indirect, incidental, punitive, or consequential damages.</p>
+        <h3>4. Intellectual Property Rights</h3>
+        <p>All software, interfaces, graphics, trade secrets, trademarks, and documentation provided on ${escapeHtml(facts.monitoredUrl)} remain the exclusive property of <strong>${escapeHtml(facts.legalEntityName)}</strong> and its licensors, protected under international copyright, patent, and trademark treaties.</p>
 
-        <h3>5. Governing Law & Dispute Resolution</h3>
-        <p>These Terms are governed by and construed in accordance with applicable laws in the designated jurisdiction of registration.</p>
+        <h3>5. Limitation of Liability & Statutory Consumer Warranties</h3>
+        <p>To the maximum extent permitted by applicable law under the governing jurisdiction of <strong>${escapeHtml(facts.countryOfIncorporation)}</strong>, in no event shall <strong>${escapeHtml(facts.legalEntityName)}</strong> or its officers be liable for indirect, incidental, punitive, or consequential damages. Nothing in these Terms shall limit or exclude statutory rights that cannot be waived under applicable mandatory consumer protection laws.</p>
+
+        <h3>6. Governing Law & Dispute Resolution</h3>
+        <p>These Terms and any non-contractual disputes arising hereunder shall be governed by and construed in accordance with the laws of <strong>${escapeHtml(facts.countryOfIncorporation)}</strong>. Disputes shall be submitted to the exclusive jurisdiction of the competent courts in the controller's jurisdiction of establishment, without prejudice to mandatory statutory consumer forum provisions.</p>
       `;
 
     case 'cookie_policy':
       return `
-        <h2>Cookie & Online Tracking Policy</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>This Cookie Policy explains how <strong>${escapeHtml(siteName)}</strong> uses cookies, web beacons, and tracking pixels on <strong>${escapeHtml(siteUrl)}</strong>.</p>
+        <h2>Cookie & Tracking Technology Policy</h2>
+        <p><strong>Effective Date:</strong> ${dateStr} | <strong>Version:</strong> 2.0 (ePrivacy & Consent Mode v2 Standards)</p>
+        <p>This Cookie Policy explains how <strong>${escapeHtml(facts.legalEntityName)}</strong> ("we", "us", or "our") deploys cookies, local storage objects, and similar tracking technologies on <strong><a href="${escapeHtml(facts.monitoredUrl)}" target="_blank" rel="noreferrer">${escapeHtml(facts.monitoredUrl)}</a></strong> in adherence to the ePrivacy Directive (Directive 2002/58/EC as amended), GDPR Article 6, and EDPB Guidelines 05/2020.</p>
 
-        <h3>1. What Are Cookies</h3>
-        <p>Cookies are small text files placed on your device to ensure website functionality, retain session state, and deliver analytical insights.</p>
+        <h3>1. What Are Tracking Technologies?</h3>
+        <p>Cookies are small alphanumeric files placed on your browser or device when accessing web applications. We utilize session cookies (deleted upon browser close) and persistent cookies (retained until statutory expiry or manual clearing) alongside modern browser storage.</p>
 
-        <h3>2. Categories of Cookies Deployed</h3>
+        <h3>2. Cookie Classifications & Deployment Matrix</h3>
         <ul>
-          <li><strong>Strictly Necessary Cookies:</strong> Essential for platform security, load balancing, and authenticated user navigation.</li>
-          <li><strong>Analytics & Performance Cookies (${escapeHtml(thirdPartiesList)}):</strong> Help us understand aggregated visitor trends and optimize loading speeds.</li>
-          <li><strong>Preference & Functional Cookies:</strong> Save custom user settings, theme preferences, and localized configurations.</li>
+          <li><strong>Strictly Necessary Cookies:</strong> Fundamental for load balancing, CSRF security verification, and authenticated sessions. These run under legitimate operational necessity and do not require prior consent under ePrivacy Art. 5(3).</li>
+          <li><strong>Performance & Analytics Cookies:</strong> Measure aggregate traffic telemetry, page interaction speeds, and error diagnostics (${escapeHtml(thirdPartiesList)}). Integrated with <strong>Google Consent Mode v2</strong>: held in a default denied state until you grant affirmative consent.</li>
+          <li><strong>Functional & Interface Cookies:</strong> Remember your user interface theme preferences, language selections, and session state.</li>
+          <li><strong>Targeting & Advertising Cookies:</strong> Disabled by default; deployed only upon explicit opt-in to measure campaign reach.</li>
         </ul>
 
-        <h3>3. Managing Consent & Opting Out</h3>
-        <p>You can adjust your cookie preferences at any time using our on-site Cookie Consent Banner or via your browser's security settings. Disabling essential cookies may impact specific platform features.</p>
+        <h3>3. Dynamic Consent Management & Withdrawal</h3>
+        <p>You can modify or immediately revoke your cookie consent at any time via the persistent floating <strong>Cookie Preferences badge</strong> located at the bottom of the page. You may also configure your web browser (Chrome, Safari, Firefox, Edge) to reject or delete cookies automatically.</p>
       `;
 
     case 'eula':
       return `
         <h2>End User License Agreement (EULA)</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>This End User License Agreement is a legal contract between you and <strong>${escapeHtml(siteName)}</strong> governing the software services delivered via <strong>${escapeHtml(siteUrl)}</strong>.</p>
-
+        <p><strong>Effective Date:</strong> ${dateStr}</p>
+        <p>This End User License Agreement ("Agreement") is a legal agreement between you and <strong>${escapeHtml(facts.legalEntityName)}</strong> concerning your installation and usage of software services deployed on <strong>${escapeHtml(facts.monitoredUrl)}</strong>.</p>
         <h3>1. License Grant</h3>
-        <p>Subject to these terms, <strong>${escapeHtml(siteName)}</strong> grants you a non-exclusive, non-transferable, revocable license to access and use our application.</p>
-
-        <h3>2. Prohibited Restrictions</h3>
-        <p>You shall not reverse engineer, decompile, resell, or distribute the proprietary code without prior written consent.</p>
+        <p>Subject to these terms, <strong>${escapeHtml(facts.legalEntityName)}</strong> grants you a revocable, non-exclusive, non-transferable, limited license to access and utilize the application strictly in accordance with statutory guidelines under ${escapeHtml(facts.countryOfIncorporation)}.</p>
+        <h3>2. Restrictions</h3>
+        <p>You agree not to modify, adapt, translate, reverse engineer, or decompile any portion of the software, or bypass any access-control mechanism.</p>
       `;
 
     case 'acceptable_use':
       return `
         <h2>Acceptable Use Policy</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>This Acceptable Use Policy defines the standards of conduct when interacting with <strong>${escapeHtml(siteName)}</strong> systems.</p>
-
-        <h3>1. Prohibited Activities</h3>
+        <p><strong>Effective Date:</strong> ${dateStr}</p>
+        <p>This Acceptable Use Policy defines permissible usage rules for all services operated by <strong>${escapeHtml(facts.legalEntityName)}</strong> on <strong>${escapeHtml(facts.monitoredUrl)}</strong>.</p>
+        <h3>1. Prohibited Actions</h3>
         <ul>
-          <li>Unauthorized vulnerability scanning, probing, or denial-of-service attempts.</li>
-          <li>Distribution of malicious scripts, botnets, or unsolicited commercial communications (spam).</li>
-          <li>Violating intellectual property rights or transmitting unlawful content.</li>
+          <li>Engaging in denial-of-service (DDoS) attacks, port scanning, or unauthorized penetration testing</li>
+          <li>Distributing unsolicited bulk messages (spam) or hosting illegal material</li>
+          <li>Harvesting personal data without valid statutory legal basis</li>
         </ul>
       `;
 
     case 'disclaimer':
       return `
-        <h2>Legal & Information Disclaimer</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>The information and tools provided by <strong>${escapeHtml(siteName)}</strong> on <strong>${escapeHtml(siteUrl)}</strong> are for general informational purposes only and do not constitute legal, tax, or professional regulatory advice.</p>
+        <h2>Legal & Informational Disclaimer</h2>
+        <p><strong>Effective Date:</strong> ${dateStr}</p>
+        <p>The information and software tools delivered by <strong>${escapeHtml(facts.legalEntityName)}</strong> on <strong>${escapeHtml(facts.monitoredUrl)}</strong> are provided for operational and informational purposes only.</p>
+        <p>All materials are provided "as is" and "as available". While we strive for statutory accuracy, nothing on this digital property constitutes formal, bespoke legal advice, and no attorney-client relationship is created.</p>
       `;
 
     case 'return_policy':
       return `
-        <h2>Refund & Return Policy</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>At <strong>${escapeHtml(siteName)}</strong>, we want to ensure satisfaction with our services. We offer a 14-day refund window on digital subscriptions if requested within the initial billing period. Contact our billing department with your order identifier.</p>
+        <h2>Refund & Cancellation Policy</h2>
+        <p><strong>Effective Date:</strong> ${dateStr}</p>
+        <p>This policy details refund terms for products and digital subscriptions purchased through <strong>${escapeHtml(facts.legalEntityName)}</strong> (${escapeHtml(facts.monitoredUrl)}).</p>
+        <h3>1. Statutory Cooling-Off & Refund Period</h3>
+        <p>Pursuant to statutory consumer protection regulations (including EU Directive 2011/83/EU on Consumer Rights), consumers retain a 14-day statutory withdrawal period for unactivated digital services. For active recurring subscriptions, cancellations take effect at the conclusion of the current billing cycle.</p>
+        <h3>2. Submission Procedure</h3>
+        <p>To request a refund, submit your invoice transaction ID and request details to <a href="mailto:${escapeHtml(facts.privacyEmail)}">${escapeHtml(facts.privacyEmail)}</a>. Approved refunds are credited to the original payment method within 5 to 10 business days.</p>
       `;
 
     case 'accessibility_statement':
       return `
         <h2>Accessibility Statement</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p><strong>${escapeHtml(siteName)}</strong> is committed to digital inclusion and meeting <strong>WCAG 2.1 Level AA</strong> standards across <strong>${escapeHtml(siteUrl)}</strong>.</p>
-
-        <h3>1. Accessibility Features</h3>
+        <p><strong>Effective Date:</strong> ${dateStr}</p>
+        <p><strong>${escapeHtml(facts.legalEntityName)}</strong> is actively committed to ensuring digital accessibility for individuals with disabilities across <strong><a href="${escapeHtml(facts.monitoredUrl)}" target="_blank" rel="noreferrer">${escapeHtml(facts.monitoredUrl)}</a></strong> in conformance with the Web Content Accessibility Guidelines (WCAG 2.1 Level AA), Americans with Disabilities Act (ADA Title III), Section 508 of the Rehabilitation Act, and the European Accessibility Act (EAA EN 301 549).</p>
+        <h3>1. Technical Implementation</h3>
         <ul>
-          <li>Semantic HTML hierarchy with full ARIA landmark support</li>
-          <li>High-contrast visual compliance meeting minimum 4.5:1 ratios</li>
-          <li>Comprehensive keyboard tab navigation and focus indicators</li>
-          <li>Screen reader compatibility (NVDA, VoiceOver, JAWS)</li>
+          <li>Semantic HTML hierarchy and ARIA landmarks for screen reader navigation (NVDA, JAWS, VoiceOver)</li>
+          <li>High-contrast visual palettes with minimum 4.5:1 text-to-background ratio</li>
+          <li>Comprehensive keyboard tab navigation and visible focus states</li>
+          <li>Support for reduced motion and responsive viewport zoom up to 200%</li>
         </ul>
-
-        <h3>2. Alternative Formats SLA</h3>
-        <p>We provide alternative document formats within 48 business hours upon formal request to <a href="mailto:${escapeHtml(dpoContact)}">${escapeHtml(dpoContact)}</a>.</p>
+        <h3>2. Alternative Formats SLA & Escalation</h3>
+        <p>We provide alternative accessible document formats (large print, audio transcript, machine-readable plain text) within <strong>48 business hours</strong> upon formal request to our accessibility team at <a href="mailto:${escapeHtml(facts.privacyEmail)}">${escapeHtml(facts.privacyEmail)}</a>.</p>
       `;
 
     default:
       return `
         <h2>${escapeHtml(type.replace(/_/g, ' ').toUpperCase())}</h2>
         <p>Last updated: ${dateStr}</p>
-        <p>Document for <strong>${escapeHtml(siteName)}</strong> governing operations on <strong>${escapeHtml(siteUrl)}</strong>.</p>
+        <p>Document for <strong>${escapeHtml(facts.legalEntityName)}</strong> governing operations on <strong>${escapeHtml(facts.monitoredUrl)}</strong>.</p>
       `;
   }
 };
@@ -266,11 +219,21 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
   if (answers.uses_social_login || answers.social_login) thirdPartyTrackers.push("Social Login Providers");
   if (answers.uses_ads || answers.ads) thirdPartyTrackers.push("Advertising & Marketing Networks");
 
+  const cleanSiteName = (site.name || 'Company').trim();
+  let cleanSiteUrl = (site.url || 'https://example.com').trim();
+  if (!cleanSiteUrl.startsWith('http://') && !cleanSiteUrl.startsWith('https://')) {
+    cleanSiteUrl = 'https://' + cleanSiteUrl;
+  }
+  cleanSiteUrl = cleanSiteUrl.replace(/\s+/g, '-');
+
   let domain = 'example.com';
   try {
-    domain = site.url ? new URL(site.url.startsWith('http') ? site.url : `https://${site.url}`).hostname.replace('www.', '') : 'example.com';
+    domain = new URL(cleanSiteUrl).hostname.replace(/^www\./, '');
   } catch (e) {
-    domain = site.url || 'example.com';
+    domain = cleanSiteName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.com';
+  }
+  if (!domain || domain.includes(' ') || domain.startsWith('.')) {
+    domain = cleanSiteName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.com';
   }
 
   const retention = answers.data_retention_period ?? answers.retention_period ?? answers.retention ?? answers.data_retention ?? 12;
@@ -293,9 +256,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
   });
 
   const cookieSectionTitle = includesAustralia ? "Cookies and Online Tracking" : "ePrivacy Cookie & Tracking";
-  const dpoContact = answers.has_data_officer !== false 
-    ? "privacy@" + domain
-    : `privacy@${domain}`;
+  const dpoContact = (answers.contact_email || answers.dpo_email || `privacy@${domain}`).trim().replace(/\s+/g, '');
 
   const isOnlyUS = jurisdictions.length > 0 && jurisdictions.every(j => ['CCPA', 'CPRA', 'VCDPA'].includes(j));
 
@@ -313,6 +274,12 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     tableHeader = "Condition for Lawful Processing (POPIA)";
   }
 
+  const hostOrigin = (typeof window !== 'undefined' && window.location?.origin) 
+    ? window.location.origin 
+    : 'https://example.com';
+
+  const facts = extractCompanyFacts(site, answers, hostOrigin);
+
   const langNames: Record<string, string> = {
     en: 'English',
     fr: 'French (Français)',
@@ -329,13 +296,24 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
   // Process all document types concurrently
   const generateSingleDocument = async (type: string) => {
     let docSpecificInstructions = "";
-    if (type === 'privacy_policy' || type === 'cookie_policy') {
+    if (type === 'privacy_policy') {
       docSpecificInstructions = `
-    1. Populate every row in the Data Collection table using the collected data types listed above (${dataList}). The table MUST include a 3rd column mapping each item to its explicit legal ground or purpose, titled "${tableHeader}".
-    2. Hardcode the retention period as exactly "${retention} months". Do not use fallback words like "Standard".
-    3. Include a "${cookieSectionTitle}" section detailing opt-out mechanisms for the Analytics & Trackers listed above. Do NOT use "ePrivacy" terminology if Australia is selected.
-    4. Clearly list all user rights applicable to the selected jurisdictions. Include the right to lodge a complaint with the relevant authority.
-    5. If applicable, explicitly state the transfer mechanisms used.`;
+    1. Structure the Privacy Policy with rigorous GDPR Article 13/14 compliance:
+       - Section 1: Data Controller Identification (Legal Entity Name: ${facts.legalEntityName}, Jurisdiction of Establishment: ${facts.countryOfIncorporation}, Registered Corporate Address: ${facts.registeredAddress}, Registration Number: ${facts.companyRegistrationNumber}, direct privacy email: ${facts.privacyEmail}, link to electronic DSAR portal: ${facts.dsarPortalUrl}).
+       - Section 2: Data Protection Officer (DPO) and Article 27 EU/UK statutory representation. Include explicit DPO appointment assessment under Article 37.
+       - Section 3: Categories of Data & Independent Legal Bases (Article 6(1)). Do NOT conflate contract performance and customer service. Specifically delineate: Contract Performance (Art. 6(1)(b)), Billing & Legal Obligation (Art. 6(1)(c)), Customer Support (Art. 6(1)(b)/(f)), Security/Telemetry (Art. 6(1)(f) legitimate interest per Recital 49), Non-essential analytics (Art. 6(1)(a) consent via banner), Marketing (Art. 6(1)(a) consent).
+       - Section 4: Cookie Governance & Integrated Consent Management Layer: Disclose Strictly Necessary, Performance/Analytics (held blocked by default until consent per Google Consent Mode v2), Functional, and Marketing cookies, with instructions for dynamic consent revocation.
+       - Section 5: Purpose-Differentiated Data Retention Schedule (Art. 5(1)(e) & 13(2)(a)): Differentiate preservation windows (Tax/accounting 6-10 years under commercial code; Account data duration of contract + 3-year limitation; Server security logs 30-90 days; Analytics 14 months; Consent audit trail 3 years). Never use a single blanket 12-month period.
+       - Section 6: Named Third-Party Processors & International Data Transfers (Chapter V, Art. 44-49): Disclose named providers (AWS, Supabase, Stripe, Google Analytics 4, Resend), EU-U.S. Data Privacy Framework (DPF) adequacy finding, European Commission Standard Contractual Clauses (Decision 2021/914), and Schrems II technical/organizational encryption safeguards.
+       - Section 7: Automated Decision-Making & Profiling: Include an explicit negative statement confirming that no automated decision-making or profiling with legal effect takes place under Article 22.
+       - Section 8: Comprehensive Data Subject Rights (Art. 12-22 & 77): Enumerate Access (Art. 15), Rectification (Art. 16), Erasure / Right to be Forgotten (Art. 17), Restriction (Art. 18), Data Portability (Art. 20), Objection (Art. 21), Right to Withdraw Consent (Art. 7(3)) distinctly separated, and Right to Lodge a Complaint with a Supervisory Authority (Art. 77) naming relevant EU DPAs and UK ICO.
+       - Section 9: How to Exercise Rights with Art. 12 One-Month Statutory SLA and live DSAR portal link (${facts.dsarPortalUrl}).
+       - Section 10: Multi-Framework Addenda for selected jurisdictions (${jurisdictions.join(', ')}). Include explicit nexus linking for LGPD and POPIA, and CCPA statutory threshold disclosure under Cal. Civ. Code § 1798.140(d).`;
+    } else if (type === 'cookie_policy') {
+      docSpecificInstructions = `
+    1. Detail all cookie classifications: Strictly Necessary, Performance/Analytics, Functional, and Marketing.
+    2. Detail explicit integration with Google Consent Mode v2 and on-site Consent Management Shield.
+    3. Detail instructions on persistent consent modification and revocation.`;
     } else if (type === 'terms_of_service') {
       docSpecificInstructions = `
     1. Focus on user accounts, acceptable use, intellectual property, limitation of liability, and governing law based on selected jurisdictions (${jurisdictions.join(', ')}).
@@ -344,7 +322,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
       docSpecificInstructions = `
     1. Express definitive compliance commitment to W3C Web Content Accessibility Guidelines (WCAG 2.1 Level AA), Americans with Disabilities Act (ADA Title III), Section 508 of the US Rehabilitation Act, and the European Accessibility Act (EAA EN 301 549).
     2. Outline implemented technical accessibility features: ARIA landmarks, minimum 4.5:1 text contrast ratios, full keyboard tab-navigation support, screen reader compatibility (NVDA, JAWS, VoiceOver), and reduced motion support.
-    3. Include explicit alternative format SLA: Guarantee alternative document formats (large print, plain text, audio transcript) within 48 business hours upon request to ${dpoContact}.
+    3. Include explicit alternative format SLA: Guarantee alternative document formats (large print, plain text, audio transcript) within 48 business hours upon request to ${facts.privacyEmail}.
     4. Provide direct contact information for accessibility escalation and formal reporting.`;
     } else {
       docSpecificInstructions = `
@@ -352,11 +330,16 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     }
 
     const prompt = `Generate a legally robust ${type.replace(/_/g, ' ')} in HTML format tailored to the selected jurisdictions (${jurisdictions.join(', ')}) based strictly on these verified properties:
-    - Company: ${site.name}
+    - Legal Entity: ${facts.legalEntityName} (Trading as "${facts.tradingName}")
+    - Website URL: ${facts.monitoredUrl}
+    - Jurisdiction of Establishment: ${facts.countryOfIncorporation}
+    - Registered Office: ${facts.registeredAddress}
+    - Registration Number: ${facts.companyRegistrationNumber}
     - Collected Data Types: ${dataList}
-    - Retention Period: ${retention} months
+    - Retention Schedule: Statutory purpose-differentiated (accounting 6-10 yrs, account duration+3 yrs, logs 30-90 days, analytics 14 mos)
     - Analytics & Trackers: ${thirdPartiesList}
-    - Designated Privacy Lead/Officer Contact: ${dpoContact}
+    - Designated Privacy Lead/Officer Contact: ${facts.privacyEmail}
+    - Electronic DSAR Portal: ${facts.dsarPortalUrl}
 
     CRITICAL FORMATTING RULES:${docSpecificInstructions}
 
@@ -377,7 +360,7 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
         body: JSON.stringify({
           model: 'gemini-3.6-flash',
           prompt,
-          systemInstruction: 'You are a statutory legal compliance specialist. Return ONLY clean HTML formatted document text.',
+          systemInstruction: buildStatutorySystemInstruction(jurisdictions),
           temperature: 0.2,
           siteId: siteId
         })
@@ -395,14 +378,12 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     if (!aiContent || aiContent.trim().length < 50) {
       aiContent = generateLegalDocFallback(
         type,
-        site.name || 'Company',
-        site.url || 'https://example.com',
+        facts,
         jurisdictions,
         language,
         dataList,
         thirdPartiesList,
-        retention,
-        dpoContact
+        retention
       );
     }
 

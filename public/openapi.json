@@ -1,0 +1,804 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Paperloo Compliance Infrastructure API",
+    "version": "1.0.0",
+    "description": "Programmatic REST API for automated legal disclosures, real-time cookie consent shields, and continuous SaaS compliance governance.",
+    "contact": {
+      "name": "Paperloo Regulatory Support Desk",
+      "email": "compliance@paperloo.com",
+      "url": "https://paperloo.vercel.app/contact"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://paperloo.vercel.app/legal"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://paperloo.vercel.app",
+      "description": "Production Edge API Gateway"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development Environment"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Compliance Verification",
+      "description": "Public domain auditing and statutory checks"
+    },
+    {
+      "name": "Statutory Standards",
+      "description": "Global regulatory frameworks and document schemas"
+    },
+    {
+      "name": "System Health",
+      "description": "Operational uptime and latency monitoring"
+    },
+    {
+      "name": "Agent & MCP Protocol",
+      "description": "Model Context Protocol tools and autonomous agent integration"
+    },
+    {
+      "name": "Document Generation",
+      "description": "Workspace policy synthesis and custom legal clauses"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Check API Gateway Health",
+        "description": "Returns basic operational status of the Paperloo API gateway without authentication.",
+        "tags": ["System Health"],
+        "responses": {
+          "200": {
+            "description": "API Gateway is operational",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status"],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok",
+                      "description": "Service operational indicator"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/status": {
+      "get": {
+        "operationId": "getSystemStatus",
+        "summary": "Get Platform Operational Status & Regulatory Sync",
+        "description": "Returns detailed real-time telemetry including cluster uptime, API response latency, and global regulation sync status.",
+        "tags": ["System Health"],
+        "responses": {
+          "200": {
+            "description": "Detailed platform health telemetry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatusResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compliance/jurisdictions": {
+      "get": {
+        "operationId": "listSupportedJurisdictions",
+        "summary": "List Supported Global Regulatory Jurisdictions",
+        "description": "Returns the roster of global legal frameworks monitored by Paperloo with enforcement authorities and statutory review cycles.",
+        "tags": ["Statutory Standards"],
+        "responses": {
+          "200": {
+            "description": "List of global legal jurisdictions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["jurisdictions", "total_count"],
+                  "properties": {
+                    "total_count": {
+                      "type": "integer",
+                      "description": "Total number of monitored jurisdictions"
+                    },
+                    "jurisdictions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Jurisdiction"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compliance/templates": {
+      "get": {
+        "operationId": "listDocumentTemplates",
+        "summary": "List Available Statutory Policy Templates",
+        "description": "Provides schema definitions, required input variables, and statutory sections for all supported legal document types.",
+        "tags": ["Statutory Standards"],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "Optional filter by document type (e.g., privacy_policy, terms_of_service, cookie_policy)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available compliance document templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["templates"],
+                  "properties": {
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DocumentTemplate"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compliance/verify": {
+      "post": {
+        "operationId": "verifyDomainCompliance",
+        "summary": "Audit Domain or Website Compliance Score",
+        "description": "Accepts a target domain or URL and audits it against essential statutory indicators (cookie banner presence, privacy disclosure, CCPA opt-out, WCAG accessibility signals).",
+        "tags": ["Compliance Verification"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplianceVerifyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Compliance score and gap analysis report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceVerifyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid domain format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Verification execution failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/docs": {
+      "get": {
+        "operationId": "getDeveloperEndpoints",
+        "summary": "Discover All Developer API Resources",
+        "description": "Returns index of all public endpoints, rate limits, authentication requirements, and SDK links.",
+        "tags": ["Statutory Standards"],
+        "responses": {
+          "200": {
+            "description": "Index of developer resources and endpoints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["endpoints", "documentation_url"],
+                  "properties": {
+                    "documentation_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "openapi_spec": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "mcp_server": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "endpoints": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["path", "method", "description", "auth_required"],
+                        "properties": {
+                          "path": { "type": "string" },
+                          "method": { "type": "string" },
+                          "description": { "type": "string" },
+                          "auth_required": { "type": "boolean" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent-instructions": {
+      "get": {
+        "operationId": "getAgentInstructions",
+        "summary": "Get Machine-Readable Agent Guidelines",
+        "description": "Returns prescriptive guidance for AI agents, including best-fit use cases, prohibited jobs, and tool execution examples.",
+        "tags": ["Agent & MCP Protocol"],
+        "responses": {
+          "200": {
+            "description": "Agent instructions and operational guardrails",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["product", "best_fit_use_cases", "when_not_to_use", "mcp_endpoint"],
+                  "properties": {
+                    "product": { "type": "string" },
+                    "best_fit_use_cases": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "when_not_to_use": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "mcp_endpoint": { "type": "string", "format": "uri" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/mcp": {
+      "get": {
+        "operationId": "getMcpManifest",
+        "summary": "Get Model Context Protocol (MCP) Manifest",
+        "description": "Provides the MCP manifest defining available tools, input schemas, and Streamable HTTP endpoints for Claude, ChatGPT, and custom agents.",
+        "tags": ["Agent & MCP Protocol"],
+        "responses": {
+          "200": {
+            "description": "Model Context Protocol manifest and tool schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpManifestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mcp": {
+      "post": {
+        "operationId": "callMcpTool",
+        "summary": "Execute Model Context Protocol (MCP) Tool via Streamable HTTP",
+        "description": "Handles standard JSON-RPC 2.0 protocol invocations (initialize, tools/list, tools/call) for AI agents.",
+        "tags": ["Agent & MCP Protocol"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonRpcRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-RPC 2.0 response payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonRpcResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON-RPC request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/documents/public/{siteId}/{type}": {
+      "get": {
+        "operationId": "getPublicDocument",
+        "summary": "Retrieve Public Compliance Document",
+        "description": "Fetches a live published legal document (e.g. privacy policy) by site ID and document type. Content negotiation supported for HTML and Markdown.",
+        "tags": ["Document Generation"],
+        "parameters": [
+          {
+            "name": "siteId",
+            "in": "path",
+            "required": true,
+            "description": "Unique identifier of the web property",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "description": "Statutory policy type (privacy_policy, terms_of_service, cookie_policy, etc.)",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public document contents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["content", "type", "version"],
+                  "properties": {
+                    "content": { "type": "string" },
+                    "type": { "type": "string" },
+                    "version": { "type": "integer" }
+                  }
+                }
+              },
+              "text/markdown": {
+                "schema": { "type": "string" }
+              },
+              "text/html": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "404": {
+            "description": "Document not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sites/{id}/generate-documents": {
+      "post": {
+        "operationId": "generateComplianceDocuments",
+        "summary": "Generate Full Legal Suite for Monitored Site",
+        "description": "Synthesizes statutory legal documents (Privacy Policy, Terms of Service, Cookie Policy, EULA, etc.) for a registered site based on questionnaire responses. Requires Bearer authentication.",
+        "tags": ["Document Generation"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Unique ID of the registered site",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "language": {
+                    "type": "string",
+                    "default": "en",
+                    "description": "Target language ISO code (en, es, fr, de, ar)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully generated documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "documents"],
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "documents": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized access token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Site not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sites/{id}/clauses": {
+      "post": {
+        "operationId": "createCustomClause",
+        "summary": "Add Custom Legal Clause to Document Suite",
+        "description": "Inserts custom agency or enterprise contractual clauses into specified generated policies. Requires Bearer authentication.",
+        "tags": ["Document Generation"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Target site ID",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["document_type", "content"],
+                "properties": {
+                  "document_type": {
+                    "type": "string",
+                    "description": "Target policy (e.g. privacy_policy, terms_of_service)"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Clause headline"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "Statutory clause text"
+                  },
+                  "position": {
+                    "type": "string",
+                    "enum": ["start", "end", "replace"],
+                    "default": "end"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Clause created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["id"],
+                  "properties": {
+                    "id": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase JWT authentication token"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "RESOURCE_NOT_FOUND",
+                "description": "Machine-readable error identifier"
+              },
+              "message": {
+                "type": "string",
+                "example": "The requested endpoint or resource was not found.",
+                "description": "Human and agent readable explanation"
+              },
+              "status": {
+                "type": "integer",
+                "example": 404,
+                "description": "HTTP status code"
+              },
+              "resolution": {
+                "type": "string",
+                "example": "Verify the endpoint in the OpenAPI specification at /openapi.json.",
+                "description": "Actionable instructions to remediate the error"
+              },
+              "documentation_url": {
+                "type": "string",
+                "format": "uri",
+                "example": "https://paperloo.vercel.app/docs/api",
+                "description": "Link to relevant technical documentation"
+              }
+            }
+          }
+        }
+      },
+      "Jurisdiction": {
+        "type": "object",
+        "required": ["id", "name", "region", "enforcement_body", "statutory_frequency"],
+        "properties": {
+          "id": { "type": "string", "example": "gdpr" },
+          "name": { "type": "string", "example": "General Data Protection Regulation (GDPR)" },
+          "region": { "type": "string", "example": "European Union & United Kingdom" },
+          "enforcement_body": { "type": "string", "example": "European Data Protection Board (EDPB)" },
+          "statutory_frequency": { "type": "string", "example": "Continuous statutory updates" },
+          "key_mandates": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "DocumentTemplate": {
+        "type": "object",
+        "required": ["type", "name", "description", "required_inputs"],
+        "properties": {
+          "type": { "type": "string", "example": "privacy_policy" },
+          "name": { "type": "string", "example": "Comprehensive Privacy Policy" },
+          "description": { "type": "string", "example": "Statutory privacy policy covering GDPR, CCPA, and global mandates" },
+          "required_inputs": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "standard_sections": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "ComplianceVerifyRequest": {
+        "type": "object",
+        "required": ["domain"],
+        "properties": {
+          "domain": {
+            "type": "string",
+            "example": "example.com",
+            "description": "Fully qualified domain name or URL to audit"
+          }
+        }
+      },
+      "ComplianceVerifyResponse": {
+        "type": "object",
+        "required": ["domain", "compliance_score", "grade", "audit_timestamp", "findings", "recommendations"],
+        "properties": {
+          "domain": { "type": "string" },
+          "compliance_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Calculated statutory readiness score (0-100)"
+          },
+          "grade": {
+            "type": "string",
+            "enum": ["A+", "A", "B", "C", "D", "F"],
+            "description": "Compliance letter grade"
+          },
+          "audit_timestamp": { "type": "string", "format": "date-time" },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["check", "status", "severity"],
+              "properties": {
+                "check": { "type": "string" },
+                "status": { "type": "string", "enum": ["passed", "failed", "warning"] },
+                "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+                "details": { "type": "string" }
+              }
+            }
+          },
+          "recommendations": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "SystemStatusResponse": {
+        "type": "object",
+        "required": ["status", "version", "uptime_percentage", "latency_ms", "regulatory_monitors"],
+        "properties": {
+          "status": { "type": "string", "example": "operational" },
+          "version": { "type": "string", "example": "2026.4.1" },
+          "uptime_percentage": { "type": "number", "example": 99.98 },
+          "latency_ms": { "type": "integer", "example": 18 },
+          "regulatory_monitors": {
+            "type": "object",
+            "required": ["gdpr_sync", "ccpa_sync", "pipeda_sync"],
+            "properties": {
+              "gdpr_sync": { "type": "string", "example": "active" },
+              "ccpa_sync": { "type": "string", "example": "active" },
+              "pipeda_sync": { "type": "string", "example": "active" }
+            }
+          }
+        }
+      },
+      "McpManifestResponse": {
+        "type": "object",
+        "required": ["name", "version", "protocolVersion", "capabilities", "tools"],
+        "properties": {
+          "name": { "type": "string", "example": "paperloo-mcp-server" },
+          "version": { "type": "string", "example": "1.0.0" },
+          "protocolVersion": { "type": "string", "example": "2024-11-05" },
+          "capabilities": { "type": "object" },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "description", "inputSchema"],
+              "properties": {
+                "name": { "type": "string" },
+                "description": { "type": "string" },
+                "inputSchema": { "type": "object" }
+              }
+            }
+          }
+        }
+      },
+      "JsonRpcRequest": {
+        "type": "object",
+        "required": ["jsonrpc", "method"],
+        "properties": {
+          "jsonrpc": { "type": "string", "enum": ["2.0"] },
+          "id": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "number" },
+              { "type": "null" }
+            ]
+          },
+          "method": { "type": "string" },
+          "params": { "type": "object" }
+        }
+      },
+      "JsonRpcResponse": {
+        "type": "object",
+        "required": ["jsonrpc"],
+        "properties": {
+          "jsonrpc": { "type": "string", "enum": ["2.0"] },
+          "id": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "number" },
+              { "type": "null" }
+            ]
+          },
+          "result": { "type": "object" },
+          "error": { "type": "object" }
+        }
+      }
+    }
+  }
+}

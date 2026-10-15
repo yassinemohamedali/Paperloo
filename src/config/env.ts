@@ -6,12 +6,15 @@ interface AppConfig {
 }
 
 const getAppUrl = (): string => {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
   if (import.meta.env.VITE_APP_URL) return import.meta.env.VITE_APP_URL;
   // Fallback for Vercel preview deployments if explicitly missing from setup
-  if (window.location.hostname.includes('vercel.app')) {
+  if (typeof window !== 'undefined' && window.location?.hostname?.includes('vercel.app')) {
     return `${window.location.protocol}//${window.location.hostname}`;
   }
-  return 'http://localhost:5173';
+  return 'http://localhost:3000';
 };
 
 export const config: AppConfig = {

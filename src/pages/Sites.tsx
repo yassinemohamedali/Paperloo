@@ -282,7 +282,8 @@ export default function Sites() {
           // Automate continuous deployment: Push banner config script to the GitHub repo!
           if (githubAuth?.token && repo.full_name) {
             try {
-              const bannerScript = `<script src="${config.appUrl}/api/banner/${(newSite as any).id}"></script>`;
+              const hostOrigin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : (config.appUrl || 'http://localhost:3000');
+              const bannerScript = `<script src="${hostOrigin}/api/paperloo.js?siteId=${(newSite as any).id}" async></script>`;
               
               // We'll create a new file specifically for Paperloo compliance injections
               // This proves the active continuous deployment engine

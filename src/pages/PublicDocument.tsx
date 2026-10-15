@@ -111,7 +111,13 @@ export default function PublicDocument() {
           <div dangerouslySetInnerHTML={{ __html: sanitizeDocHtml(docData.content) }} />
         </article>
 
-        <footer className="mt-32 pt-12 border-t border-gray-100 text-center space-y-4 pb-20 reveal-up" style={{ transitionDelay: '400ms' }}>
+        {/* Mandatory UPL Statutory Notice */}
+        <div className="mt-16 p-4 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 text-[10px] leading-relaxed uppercase tracking-wider text-left">
+          <p className="font-bold text-slate-700 mb-1">MANDATORY NOTICE</p>
+          <p>Paperloo provides compliance automation software. It does not provide legal advice and is not a law firm. Generated documents are templates and must be reviewed by qualified counsel.</p>
+        </div>
+
+        <footer className="mt-16 pt-12 border-t border-gray-100 text-center space-y-4 pb-20 reveal-up" style={{ transitionDelay: '400ms' }}>
           <p className="text-xs text-gray-400 font-light tracking-widest uppercase">
             THIS DOCUMENT WAS GENERATED FOR <strong>{siteName}</strong> {isWhiteLabel ? `BY ${brandName}` : 'BY PAPERLOO'}.
           </p>
