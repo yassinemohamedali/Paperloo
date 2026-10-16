@@ -1,0 +1,228 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Paperloo Compliance Infrastructure API",
+    "version": "1.0.0",
+    "description": "Automated website compliance infrastructure and GDPR/CCPA auditing API for AI agents and digital agencies. Provides endpoints to monitor sites, audit domains, generate statutory legal policies, and execute Model Context Protocol (MCP) actions.",
+    "contact": {
+      "name": "Paperloo Compliance Support",
+      "email": "support@paperloo.vercel.app",
+      "url": "https://paperloo.vercel.app/contact"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://paperloo.vercel.app",
+      "description": "Production Paperloo Compliance Infrastructure"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health check endpoint",
+        "description": "Verifies that the Paperloo API server is operational and responsive.",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" }
+                  },
+                  "required": ["status"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compliance/sites": {
+      "get": {
+        "operationId": "listSites",
+        "summary": "List monitored sites",
+        "description": "Lists all monitored websites and their active compliance grades, jurisdictions, and consent banner configurations for the authenticated agency or sandbox account.",
+        "parameters": [
+          {
+            "name": "agency_id",
+            "in": "query",
+            "description": "Optional agency tenant identifier",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of monitored sites successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "sites": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "name": { "type": "string", "example": "ACME Corp" },
+                          "url": { "type": "string", "example": "https://acme.com" },
+                          "compliance_grade": { "type": "string", "example": "A" },
+                          "jurisdictions": { "type": "array", items: { "type": "string" }, "example": ["GDPR (EU)", "CCPA (California)"] }
+                        },
+                        "required": ["id", "name", "url", "compliance_grade"]
+                      }
+                    }
+                  },
+                  "required": ["success", "sites"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized access or missing Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compliance/audit": {
+      "post": {
+        "operationId": "auditSite",
+        "summary": "Run real-time compliance audit",
+        "description": "Performs an automated multi-vector compliance audit on any target URL (checking SSL, cookies, privacy disclosures, GDPR/CCPA readiness, and trackers).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string", "description": "Target website URL to audit", "example": "https://example.com" },
+                  "jurisdictions": { "type": "array", items: { "type": "string" }, "description": "Applicable privacy frameworks", "example": ["GDPR", "CCPA"] }
+                },
+                "required": ["url"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Compliance audit completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "audit_id": { "type": "string", "format": "uuid" },
+                    "score": { "type": "number", "example": 94 },
+                    "grade": { "type": "string", "example": "A" },
+                    "findings": { "type": "array", items: { "type": "string" } }
+                  },
+                  "required": ["success", "score", "grade"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid URL or parameters provided",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sites/{id}/generate-documents": {
+      "post": {
+        "operationId": "generateDocuments",
+        "summary": "Generate legal compliance document suite",
+        "description": "Generates complete, statutory-compliant legal documents (Privacy Policy, Terms of Service, Cookie Policy, EULA, Acceptable Use, Disclaimer, Return Policy, Accessibility Statement) for a registered site.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Unique site UUID",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "language": { "type": "string", "example": "en", "description": "Language code for the generated policy suite" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Legal document suite generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "documents": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "type": { "type": "string", "example": "privacy_policy" },
+                          "version": { "type": "integer", "example": 1 }
+                        }
+                      }
+                    }
+                  },
+                  "required": ["success", "documents"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Site not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": { "type": "string", "example": "Unauthorized: Missing or invalid Bearer token" },
+          "code": { "type": "string", "example": "UNAUTHORIZED" },
+          "resolution": { "type": "string", "example": "Include a valid Bearer token in the Authorization header." }
+        },
+        "required": ["success", "error", "code"]
+      }
+    }
+  }
+}

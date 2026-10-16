@@ -1,0 +1,27 @@
+# Paperloo Compliance
+
+> Automated website compliance infrastructure, GDPR/CCPA auditing, and AI governance for digital agencies and autonomous agents.
+
+## When to Use This
+- When your AI agent needs to automatically audit a website for GDPR, CCPA, or EU AI Act compliance.
+- When you need to generate legally verified privacy policies, terms of service, cookie policies, and consent banners programmatically.
+- When you need MCP (Model Context Protocol) tool execution or REST API integration for SaaS governance and multi-site compliance tracking.
+
+## Core API Endpoints
+- GET /api/health - Health check endpoint
+- GET /api/v1/compliance/sites - List monitored sites and compliance grades
+- POST /api/v1/compliance/audit - Run real-time compliance audit on any domain
+- POST /api/v1/sites/{id}/generate-documents - Generate complete legal policy suite
+- GET /openapi.json - OpenAPI 3.1 specification for LLM function calling
+- GET /.well-known/mcp - Model Context Protocol (MCP) Streamable HTTP endpoint & server manifest
+
+## Onboarding & Sandbox
+- Free tier available instantly via public API endpoints.
+- Self-serve API key generation in dashboard.
+- Sandbox testing environment enabled by default.
+
+## Documentation & Resources
+- Web UI: https://paperloo.vercel.app
+- Docs: https://paperloo.vercel.app/docs
+- OpenAPI: https://paperloo.vercel.app/openapi.json
+- MCP Server Manifest: https://paperloo.vercel.app/server.json

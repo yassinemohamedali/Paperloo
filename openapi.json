@@ -1,0 +1,26 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Paperloo Compliance Infrastructure API",
+    "version": "1.0.0",
+    "description": "Automated website compliance infrastructure and GDPR/CCPA auditing API for AI agents and digital agencies."
+  },
+  "servers": [
+    {
+      "url": "https://paperloo.vercel.app"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health check endpoint",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}
