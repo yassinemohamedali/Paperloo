@@ -425,27 +425,27 @@ function handleMarkdownOrHtml(req: express.Request, res: express.Response, htmlC
   return res.send(htmlContent);
 }
 
-// Homepage Markdown negotiation
+// Homepage Markdown negotiation with Vary: Accept
 app.get("/", (req, res, next) => {
+  res.setHeader("Vary", "Accept");
   const accept = req.headers['accept'] || '';
   if (accept.includes('text/markdown') || accept.includes('text/plain')) {
-    res.setHeader("Vary", "Accept, Accept-Encoding");
     res.setHeader("Content-Type", "text/markdown; charset=utf-8");
-    return res.send(`# Paperloo Compliance Infrastructure\n\nAutomated website compliance infrastructure, GDPR/CCPA auditing, and SaaS governance for digital agencies and autonomous AI agents.\n\n## Developer Resources\n- Documentation: https://paperloo.vercel.app/docs\n- OpenAPI Spec: https://paperloo.vercel.app/openapi.json\n- MCP Manifest: https://paperloo.vercel.app/server.json\n- Agent Instructions: https://paperloo.vercel.app/llms.txt`);
+    return res.send(`# Paperloo SaaS Governance & Compliance Infrastructure\n\nAutomated website compliance infrastructure, GDPR/CCPA auditing, and SaaS governance for digital agencies and autonomous AI agents.\n\n## Developer Resources\n- Documentation: https://paperloo.vercel.app/docs\n- OpenAPI Spec: https://paperloo.vercel.app/openapi.json\n- MCP Manifest: https://paperloo.vercel.app/server.json\n- Agent Instructions: https://paperloo.vercel.app/llms.txt\n- CLI Tool: https://paperloo.vercel.app/cli.sh`);
   }
   next();
 });
 
 // Trust Anchor & Docs Routes with Markdown Negotiation
 app.get("/docs", (req, res) => {
-  const md = `# Paperloo Compliance Documentation\n\nPaperloo provides automated compliance infrastructure and GDPR/CCPA auditing for digital properties.\n\n## Core Endpoints\n- GET /api/health\n- GET /openapi.json\n- POST /api/v1/compliance/audit\n- GET /.well-known/mcp\n\nSee https://paperloo.vercel.app/llms.txt for complete agent guidance.`;
-  const html = `<!DOCTYPE html><html lang="en"><head><title>Documentation | Paperloo</title></head><body style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;"><h1>Paperloo Compliance Documentation</h1><p>Paperloo provides automated compliance infrastructure and GDPR/CCPA auditing for digital properties.</p><ul><li><a href="/openapi.json">OpenAPI Specification</a></li><li><a href="/llms.txt">Agent Instructions (llms.txt)</a></li><li><a href="/server.json">MCP Server Manifest</a></li></ul></body></html>`;
+  const md = `# Paperloo Compliance Documentation\n\nPaperloo provides automated compliance infrastructure and GDPR/CCPA auditing for digital properties.\n\n## Core Endpoints\n- GET /api/health\n- GET /openapi.json\n- POST /api/v1/compliance/audit\n- GET /.well-known/mcp\n- CLI Installer: GET /cli.sh\n\nSee https://paperloo.vercel.app/llms.txt for complete agent guidance.`;
+  const html = `<!DOCTYPE html><html lang="en"><head><title>Documentation | Paperloo</title></head><body style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;"><h1>Paperloo Compliance Documentation</h1><p>Paperloo provides automated compliance infrastructure and GDPR/CCPA auditing for digital properties.</p><ul><li><a href="/openapi.json">OpenAPI Specification with Scoped Permissions</a></li><li><a href="/llms.txt">Agent Instructions (llms.txt)</a></li><li><a href="/server.json">MCP Server Manifest & Resources</a></li><li><a href="/cli.sh">CLI Installer Script</a></li></ul></body></html>`;
   handleMarkdownOrHtml(req, res, html, md);
 });
 
 app.get("/about", (req, res) => {
-  const md = `# About Paperloo\n\nPaperloo is the premier automated website compliance infrastructure and GDPR/CCPA auditing platform. We empower digital agencies and AI agents with real-time compliance governance, consent management, and automated legal document generation.\n\nContact: support@paperloo.vercel.app | https://paperloo.vercel.app`;
-  const html = `<!DOCTYPE html><html lang="en"><head><title>About Us | Paperloo</title></head><body style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;"><h1>About Paperloo</h1><p>Paperloo is the premier automated website compliance infrastructure and GDPR/CCPA auditing platform. We empower digital agencies and AI agents with real-time compliance governance, consent management, and automated legal document generation.</p><p>Contact: support@paperloo.vercel.app</p></body></html>`;
+  const md = `# About Paperloo SaaS Governance\n\nPaperloo is the premier automated website compliance infrastructure and GDPR/CCPA auditing platform. We empower digital agencies and AI agents with real-time compliance governance, consent management, and automated legal document generation.\n\nContact: support@paperloo.vercel.app | https://paperloo.vercel.app`;
+  const html = `<!DOCTYPE html><html lang="en"><head><title>About Us | Paperloo</title></head><body style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;"><h1>About Paperloo SaaS Governance</h1><p>Paperloo is the premier automated website compliance infrastructure and GDPR/CCPA auditing platform. We empower digital agencies and AI agents with real-time compliance governance, consent management, and automated legal document generation.</p><p>Contact: support@paperloo.vercel.app</p></body></html>`;
   handleMarkdownOrHtml(req, res, html, md);
 });
 
@@ -461,15 +461,59 @@ app.get("/privacy", (req, res) => {
   handleMarkdownOrHtml(req, res, html, md);
 });
 
-// OpenAPI Spec Endpoints
+// CLI Tool Installer Endpoint
+app.get("/cli.sh", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.send(`#!/usr/bin/env bash
+# Paperloo Compliance CLI Installer & Runner
+echo "Installing Paperloo Compliance CLI..."
+npm install -g paperloo-cli
+echo "Paperloo CLI installed successfully. Run 'paperloo --help' for commands."
+`);
+});
+
+// OpenAPI Spec with Scoped Permissions & LLM Function Calling Compatibility
 const openApiJson = {
   "openapi": "3.1.0",
   "info": {
     "title": "Paperloo Compliance Infrastructure API",
     "version": "1.0.0",
-    "description": "Automated website compliance infrastructure and GDPR/CCPA auditing API for AI agents and digital agencies."
+    "description": "Automated website compliance infrastructure, SaaS governance, and GDPR/CCPA auditing API for AI agents and digital agencies."
   },
   "servers": [{ "url": "https://paperloo.vercel.app" }],
+  "security": [
+    { "OAuth2Bearer": ["compliance:read", "compliance:write", "sites:manage"] }
+  ],
+  "components": {
+    "securitySchemes": {
+      "OAuth2Bearer": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 Bearer token authentication with least-privilege scoped permissions.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://paperloo.vercel.app/api/oauth/token",
+            "scopes": {
+              "compliance:read": "Read compliance status, audit findings, and reports.",
+              "compliance:write": "Run compliance audits and generate legal policy document suites.",
+              "sites:manage": "Add, update, and delete monitored sites and consent banner configurations."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": { "type": "string", "example": "Unauthorized: Missing or invalid token" },
+          "code": { "type": "string", "example": "UNAUTHORIZED" },
+          "resolution": { "type": "string", "example": "Provide a valid OAuth2 Bearer token with appropriate scopes." }
+        },
+        "required": ["success", "error", "code"]
+      }
+    }
+  },
   "paths": {
     "/api/health": {
       "get": {
@@ -484,6 +528,7 @@ const openApiJson = {
         "operationId": "listSites",
         "summary": "List monitored sites",
         "description": "Lists all monitored websites and compliance grades.",
+        "security": [{ "OAuth2Bearer": ["compliance:read", "sites:manage"] }],
         "responses": { "200": { "description": "Success" } }
       }
     },
@@ -492,6 +537,21 @@ const openApiJson = {
         "operationId": "auditSite",
         "summary": "Run compliance audit",
         "description": "Performs automated multi-vector compliance audit on a target URL.",
+        "security": [{ "OAuth2Bearer": ["compliance:write"] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string", "example": "https://example.com" }
+                },
+                "required": ["url"]
+              }
+            }
+          }
+        },
         "responses": { "200": { "description": "Success" } }
       }
     }
@@ -521,7 +581,7 @@ paths:
           description: OK`);
 });
 
-// MCP Manifest Endpoints
+// MCP Manifest & Full Handshake (Tools & Resources)
 const mcpManifest = {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.yassinemohamedali11/paperloo",
@@ -542,16 +602,107 @@ app.get(["/server.json", "/.well-known/mcp", "/.well-known/mcp.json"], (req, res
 });
 
 app.all("/api/mcp", (req, res) => {
+  const body = req.body || {};
+  const method = body.method;
+  const id = body.id || 1;
+
+  if (method === "initialize") {
+    return res.json({
+      jsonrpc: "2.0",
+      id,
+      result: {
+        serverVersion: "1.0.0",
+        capabilities: {
+          tools: {},
+          resources: {}
+        },
+        protocolVersion: "2025-12-11"
+      }
+    });
+  }
+
+  if (method === "tools/list") {
+    return res.json({
+      jsonrpc: "2.0",
+      id,
+      result: {
+        tools: [
+          { name: "list_sites", description: "Lists monitored sites and compliance grades" },
+          { name: "audit_site", description: "Performs automated compliance audit on a URL" }
+        ]
+      }
+    });
+  }
+
+  if (method === "resources/list") {
+    return res.json({
+      jsonrpc: "2.0",
+      id,
+      result: {
+        resources: [
+          {
+            uri: "paperloo://compliance/standards",
+            name: "Paperloo Compliance Standards & GDPR/CCPA Guidelines",
+            description: "Core regulatory compliance standards enforced by Paperloo",
+            mimeType: "text/markdown"
+          },
+          {
+            uri: "paperloo://api/openapi",
+            name: "Paperloo OpenAPI 3.1 Specification",
+            description: "Machine-readable OpenAPI spec for API integration",
+            mimeType: "application/json"
+          }
+        ]
+      }
+    });
+  }
+
+  if (method === "resources/read") {
+    const uri = body.params?.uri;
+    if (uri === "paperloo://compliance/standards") {
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          contents: [
+            {
+              uri,
+              mimeType: "text/markdown",
+              text: "# Paperloo Compliance Standards\n\nPaperloo enforces GDPR, CCPA, EU AI Act, and WCAG 2.1 AA digital compliance standards across monitored properties."
+            }
+          ]
+        }
+      });
+    }
+    if (uri === "paperloo://api/openapi") {
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(openApiJson)
+            }
+          ]
+        }
+      });
+    }
+    return res.status(404).json({
+      jsonrpc: "2.0",
+      id,
+      error: { code: -32602, message: `Resource not found: ${uri}` }
+    });
+  }
+
   res.json({
     jsonrpc: "2.0",
+    id,
     result: {
       server: "Paperloo Compliance MCP Server",
       version: "1.0.0",
-      capabilities: ["tools", "resources"],
-      tools: [
-        { name: "list_sites", description: "Lists monitored sites" },
-        { name: "audit_site", description: "Runs automated compliance audit" }
-      ]
+      status: "active"
     }
   });
 });
@@ -3329,6 +3480,53 @@ Instructions:
       res.status(500).json({ error: error.message });
     }
   });
+
+// Agent-friendly 404 middleware for unknown paths
+app.use((req, res, next) => {
+  const path = req.path;
+  if (
+    path.startsWith('/@') ||
+    path.startsWith('/src/') ||
+    path.startsWith('/node_modules/') ||
+    path.startsWith('/api/') ||
+    path.startsWith('/docs') ||
+    path.startsWith('/about') ||
+    path.startsWith('/contact') ||
+    path.startsWith('/privacy') ||
+    path.startsWith('/openapi') ||
+    path.startsWith('/server.json') ||
+    path.startsWith('/cli.sh') ||
+    path.startsWith('/llms.txt') ||
+    path.startsWith('/sitemap') ||
+    path.startsWith('/site.webmanifest') ||
+    path.startsWith('/favicon') ||
+    path.startsWith('/assets') ||
+    path === '/' ||
+    path === '/dashboard' ||
+    path === '/sites' ||
+    path === '/documents' ||
+    path === '/compliance' ||
+    path === '/audit' ||
+    path === '/settings' ||
+    path === '/billing' ||
+    path === '/support' ||
+    path === '/login' ||
+    path === '/signup' ||
+    path.includes('.')
+  ) {
+    return next();
+  }
+
+  res.status(404);
+  res.setHeader("Vary", "Accept, Accept-Encoding");
+  const accept = req.headers['accept'] || '';
+  if (accept.includes('text/markdown') || accept.includes('text/plain') || req.path.endsWith('.md')) {
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    return res.send(`# 404 Not Found - Paperloo Compliance\n\nThe requested resource '${req.path}' could not be found on Paperloo Compliance Infrastructure.\n\nPlease review our available developer resources:\n- Documentation: https://paperloo.vercel.app/docs\n- OpenAPI Spec: https://paperloo.vercel.app/openapi.json\n- Agent Instructions: https://paperloo.vercel.app/llms.txt\n- Sitemap: https://paperloo.vercel.app/sitemap.xml`);
+  }
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  return res.send(`<!DOCTYPE html><html lang="en"><head><title>404 Not Found | Paperloo</title></head><body style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:20px;"><h1>404 Not Found</h1><p>The requested resource '${req.path}' could not be found on Paperloo Compliance Infrastructure.</p><p>Please check our <a href="/docs">Documentation</a>, <a href="/openapi.json">OpenAPI Spec</a>, or <a href="/llms.txt">Agent Instructions (llms.txt)</a>.</p></body></html>`);
+});
 
 // Vite middleware for development
 if (!process.env.VERCEL && process.env.NODE_ENV !== "production") {

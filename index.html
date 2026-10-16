@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Paperloo | Automated Website Compliance Infrastructure & GDPR/CCPA Auditing</title>
-    <meta name="description" content="Paperloo provides automated website compliance infrastructure, GDPR/CCPA auditing, and SaaS governance for digital agencies and AI agents." />
+    <title>Paperloo SaaS Governance | Automated Website Compliance Infrastructure & GDPR/CCPA Auditing</title>
+    <meta name="description" content="Paperloo SaaS governance provides automated website compliance infrastructure, GDPR/CCPA auditing, and SaaS governance for digital agencies and AI agents." />
     <meta name="author" content="Paperloo Infrastructure" />
-    <meta name="keywords" content="compliance infrastructure, legal automation, GDPR API, consent management, SaaS governance, Paperloo, privacy policy generator" />
+    <meta name="keywords" content="Paperloo SaaS governance, compliance infrastructure, legal automation, GDPR API, consent management, SaaS governance, Paperloo, privacy policy generator" />
 
     <link rel="canonical" href="https://paperloo.vercel.app/" />
     <link rel="icon" href="/favicon.ico" sizes="any">
@@ -18,6 +18,7 @@
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "Paperloo",
+      "alternateName": "Paperloo SaaS Governance",
       "url": "https://paperloo.vercel.app",
       "description": "Automated website compliance infrastructure and GDPR/CCPA auditing."
     }
@@ -28,10 +29,10 @@
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Paperloo",
-      "alternateName": "Paperloo Compliance Infrastructure",
+      "alternateName": "Paperloo SaaS Governance & Compliance Infrastructure",
       "url": "https://paperloo.vercel.app",
       "logo": "https://paperloo.vercel.app/logo.png",
-      "description": "Enterprise-grade compliance infrastructure for digital agencies and global SaaS platforms.",
+      "description": "Enterprise-grade Paperloo SaaS governance and compliance infrastructure for digital agencies and global SaaS platforms.",
       "contactPoint": {
         "@type": "ContactPoint",
         "telephone": "+1-800-PAPERLOO",
@@ -57,36 +58,88 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://paperloo.vercel.app/" />
-    <meta property="og:title" content="Paperloo | Automated Website Compliance Infrastructure & GDPR/CCPA Auditing" />
-    <meta property="og:description" content="Automated compliance documentation, GDPR/CCPA auditing, and legal infrastructure for digital agencies and AI agents." />
+    <meta property="og:title" content="Paperloo SaaS Governance | Automated Website Compliance Infrastructure" />
+    <meta property="og:description" content="Automated compliance documentation, GDPR/CCPA auditing, and Paperloo SaaS governance for digital agencies and AI agents." />
     <meta property="og:image" content="https://paperloo.vercel.app/logo.png" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://paperloo.vercel.app/" />
-    <meta property="twitter:title" content="Paperloo | Automated Website Compliance Infrastructure" />
+    <meta property="twitter:title" content="Paperloo SaaS Governance | Compliance Infrastructure" />
     <meta property="twitter:description" content="Automated compliance docs and GDPR/CCPA auditing API." />
     <meta property="twitter:image" content="https://paperloo.vercel.app/logo.png" />
+
+    <script>
+      // Fix for "Cannot set property fetch of #<Window> which has only a getter"
+      (function() {
+        try {
+          var originalFetch = window.fetch;
+          Object.defineProperty(window, 'fetch', {
+            get: function() { return originalFetch; },
+            set: function(v) { originalFetch = v; },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          console.warn('Paperloo: Failed to make fetch configurable', e);
+        }
+      })();
+    </script>
+
+    <!-- Google Consent Mode v2 - Strict Compliance Default Settings -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { window.dataLayer.push(arguments); }
+      window.gtag = gtag;
+
+      gtag('consent', 'default', {
+        'ad_storage': 'denied',
+        'analytics_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'personalization_storage': 'denied',
+        'functionality_storage': 'granted',
+        'security_storage': 'granted',
+        'wait_for_update': 500
+      });
+    </script>
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-PAPERLOO');</script>
+    <!-- End Google Tag Manager -->
   </head>
   <body>
-    <div id="root">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PAPERLOO"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    <div id="root"></div>
+
+    <noscript>
       <main style="font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #111;">
-        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 16px; color: #0f172a;">Paperloo Compliance Infrastructure</h1>
-        <p style="font-size: 1.2rem; color: #475569; margin-bottom: 24px;">Automated website compliance infrastructure, GDPR/CCPA auditing, and SaaS governance for digital agencies and autonomous AI agents.</p>
+        <h1>Paperloo SaaS Governance & Compliance Infrastructure</h1>
+        <p>Paperloo SaaS governance provides automated website compliance infrastructure, GDPR/CCPA auditing, and SaaS governance for digital agencies and autonomous AI agents.</p>
         
-        <h2 style="font-size: 1.5rem; font-weight: 700; margin-top: 32px; margin-bottom: 12px;">Core Capabilities & Developer Resources</h2>
-        <ul style="margin-bottom: 24px;">
+        <h2>Core Capabilities & Developer Resources</h2>
+        <ul>
           <li><strong>Real-Time Compliance Auditing:</strong> Automated scanning for GDPR, CCPA, and EU AI Act readiness.</li>
           <li><strong>Modular Policy Generation:</strong> Programmatic creation of privacy policies, terms of service, cookie policies, and EULAs.</li>
-          <li><strong>REST API & OpenAPI 3.1:</strong> Fully published API specification at <a href="/openapi.json">/openapi.json</a>.</li>
-          <li><strong>Model Context Protocol (MCP):</strong> Native tool integration for LLMs and agents via Streamable HTTP at <a href="/server.json">/server.json</a> and <a href="/.well-known/mcp">/.well-known/mcp</a>.</li>
-          <li><strong>Agent Instructions:</strong> Detailed guidance at <a href="/llms.txt">/llms.txt</a>.</li>
+          <li><strong>REST API & OpenAPI 3.1:</strong> Fully published API specification at /openapi.json with scoped permissions.</li>
+          <li><strong>Model Context Protocol (MCP):</strong> Native tool & resource integration for LLMs and agents via Streamable HTTP at /server.json and /.well-known/mcp.</li>
+          <li><strong>CLI Tool:</strong> Official CLI installer available at /cli.sh.</li>
+          <li><strong>Agent Instructions:</strong> Detailed guidance at /llms.txt.</li>
         </ul>
 
-        <h2 style="font-size: 1.5rem; font-weight: 700; margin-top: 32px; margin-bottom: 12px;">Trust Anchors & Governance</h2>
-        <p>Paperloo provides verified enterprise compliance management. Access our documentation at <a href="/docs">/docs</a>, read our <a href="/privacy">Privacy Policy</a>, <a href="/about">About Us</a> page, or contact our compliance team at <a href="/contact">Contact</a>.</p>
+        <h2>Trust Anchors & Governance</h2>
+        <p>Paperloo provides verified enterprise compliance management. Access our documentation at /docs, read our Privacy Policy, About Us page, or contact our compliance team at Contact.</p>
       </main>
-    </div>
+    </noscript>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
