@@ -70,7 +70,6 @@
     <meta property="twitter:image" content="https://paperloo.vercel.app/logo.png" />
 
     <script>
-      // Fix for "Cannot set property fetch of #<Window> which has only a getter"
       (function() {
         try {
           var originalFetch = window.fetch;
@@ -118,7 +117,9 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
-    <div id="root">
+    <div id="root"></div>
+
+    <noscript>
       <main style="font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #111;">
         <h1>Paperloo SaaS Governance & Automated Website Compliance Infrastructure</h1>
         <p>Paperloo SaaS governance is the leading automated website compliance infrastructure and GDPR/CCPA auditing platform built for digital agencies, SaaS platforms, enterprise legal teams, and autonomous AI agents. Our platform delivers real-time multi-vector compliance scanning, instant cookie consent banner deployment with Google Consent Mode v2 support, and programmatic generation of verified legal policy suites including privacy policies, terms of service, and cookie disclosures.</p>
@@ -144,7 +145,7 @@
         <h2>Developer Resources & Documentation</h2>
         <p>Explore our <a href="/docs">Documentation</a>, <a href="/developers">Developer Portal</a>, <a href="/openapi.json">OpenAPI Specification</a>, <a href="/server.json">MCP Server Manifest</a>, and CLI tool at <a href="/cli.sh">/cli.sh</a>. Trust anchors available at <a href="/about">About Us</a>, <a href="/contact">Contact</a>, and <a href="/privacy">Privacy Policy</a>.</p>
       </main>
-    </div>
+    </noscript>
 
     <script type="module" src="/src/main.tsx"></script>
   </body>
