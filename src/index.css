@@ -1,33 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
-@font-face {
-  font-family: 'BubbledotICG-FinePos';
-  src: url('/assets/aeris/aeris-dot-display.woff2') format('woff2');
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 @theme {
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
-  --font-bubbledot: "BubbledotICG-FinePos", "DotGothic16", "Silkscreen", monospace;
-  --font-jetbrains: "JetBrains Mono", monospace;
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
   
   --color-bg: #000000;
-  --color-surface: #121215;
-  --color-surface-2: #18181B;
-  --color-surface-3: #27272A;
-  --color-accent: #10B981;
-  --color-accent-hover: #059669;
-  --color-accent-light: #D1FAE5;
-  --color-muted: #A1A1AA;
-  --color-muted-custom: #71717A;
-  --color-border-custom: #27272A;
-  --color-border-subtle: rgba(255, 255, 255, 0.06);
-  --color-text-custom: #FAFAFA;
+  --color-surface: #111111;
+  --color-surface-2: #1a1a1a;
+  --color-accent: #c8f135;
+  --color-muted: #888888;
+  --color-muted-custom: #888888;
+  --color-border-custom: rgba(255, 255, 255, 0.1);
+  --color-text-custom: #ffffff;
 }
 
 @layer base {
@@ -35,127 +21,123 @@
     @apply border-border-custom;
   }
   html, body {
-    background-color: #000000;
-    color: #FAFAFA;
-    font-family: "JetBrains Mono", monospace;
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply bg-bg text-white font-mono selection:bg-accent selection:text-black antialiased uppercase;
     max-width: 100vw;
+    overflow-x: hidden;
   }
   body {
     position: relative;
     width: 100%;
   }
-}
-
-@keyframes fade-up {
-  0% {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes scale-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-fade-up {
-  animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-fade-in {
-  animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.font-bubbledot {
-  font-family: 'BubbledotICG-FinePos', 'DotGothic16', 'Silkscreen', monospace;
-  font-feature-settings: "tnum";
-}
-
-.font-jetbrains {
-  font-family: 'JetBrains Mono', monospace;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-fade-up,
-  .animate-fade-in,
-  .animate-scale-in {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans uppercase;
+    font-weight: 800;
+    letter-spacing: 0.04em;
   }
 }
 
 @layer utilities {
   .logo {
-    font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-family: "Barlow", sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
-  
   .scan-lines {
-    background: transparent;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.02) 0px,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    background-size: 100% 2px;
   }
 
-  /* Linear/Vercel Precision SaaS Button */
   .bracket-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border border-[#27272A] bg-[#121215] px-3.5 py-1.5 font-sans text-xs font-medium tracking-normal text-[#FAFAFA] shadow-xs transition-all duration-150 hover:border-[#3F3F46] hover:bg-[#18181B] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none;
+    @apply relative border border-white px-8 py-4 font-mono font-bold tracking-[0.15em] transition-all hover:bg-accent/15 active:scale-95;
   }
 
-  .bracket-btn-inner {
-    display: none;
+  .bracket-btn::before,
+  .bracket-btn::after,
+  .bracket-btn-inner::before,
+  .bracket-btn-inner::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: currentColor;
+    border-style: solid;
+    pointer-events: none;
   }
 
-  .bracket-btn-accent {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-600 px-3.5 py-1.5 font-sans text-xs font-medium tracking-normal text-white shadow-xs transition-all duration-150 hover:bg-emerald-500 hover:border-emerald-400 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none;
+  /* Top Left */
+  .bracket-btn::before {
+    top: -1px;
+    left: -1px;
+    border-width: 1px 0 0 1px;
+  }
+
+  /* Bottom Right */
+  .bracket-btn::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 1px 1px 0;
+  }
+
+  /* Top Right */
+  .bracket-btn-inner::before {
+    top: -1px;
+    right: -1px;
+    border-width: 1px 1px 0 0;
+  }
+
+  /* Bottom Left */
+  .bracket-btn-inner::after {
+    bottom: -1px;
+    left: -1px;
+    border-width: 0 0 1px 1px;
   }
 
   .section-label {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 font-sans text-[11px] font-medium text-emerald-400 tracking-normal;
+    @apply inline-flex items-center px-4 py-1 border border-white/20 relative font-mono text-[10px] tracking-[0.2em] text-muted;
   }
 
   .section-label::before,
   .section-label::after {
-    display: none;
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 100%;
+    border-color: white;
+    border-style: solid;
+    top: 0;
+  }
+
+  .section-label::before {
+    left: -1px;
+    border-width: 1px 0 1px 1px;
+  }
+
+  .section-label::after {
+    right: -1px;
+    border-width: 1px 1px 1px 0;
   }
 
   .grid-dots {
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 24px 24px;
+    background-image: radial-gradient(circle, var(--color-border-custom) 1px, transparent 1px);
+    background-size: 30px 30px;
   }
 
   .grid-dots-animated {
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 28px 28px;
+    background-image: radial-gradient(circle, var(--color-border-custom) 1px, transparent 1px);
+    background-size: 30px 30px;
+    animation: drift 60s linear infinite;
   }
 
   .radial-fade {
-    background: radial-gradient(circle at center, rgba(16, 185, 129, 0.02) 0%, transparent 70%);
+    background: radial-gradient(circle at center, transparent 0%, var(--color-bg) 100%);
   }
 
   /* Shimmer effect for skeleton loaders */
@@ -173,8 +155,8 @@
   /* Scroll reveal animations */
   .reveal-up {
     opacity: 0;
-    transform: translateY(12px);
-    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
   }
 
   .reveal-up.active {
@@ -182,75 +164,142 @@
     transform: translateY(0);
   }
 
-  /* High-Precision Dark Enterprise Cards (Linear / Vercel style) */
-  .enterprise-card {
-    background: #09090B;
-    border: 1px solid #27272A;
-    border-radius: 8px;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  .enterprise-card:hover {
-    border-color: #3F3F46;
-  }
-  .enterprise-card-active {
-    border-color: rgba(16, 185, 129, 0.5);
-    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+  /* Headline letter animation */
+  .letter-reveal {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(100%);
+    animation: letterUp 0.5s cubic-bezier(0.2, 0, 0.2, 1) forwards;
   }
 
-  .spatial-glass-card,
-  .liquid-glass-card {
+  /* Liquid Glass & Spatial UI Aesthetics */
+  .spatial-glass-card {
     position: relative;
-    background: #09090B;
-    border: 1px solid #27272A;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-    transition: border-color 0.15s ease;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(200, 241, 53, 0.04) 100%);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 
+      0 30px 60px -15px rgba(0, 0, 0, 0.85),
+      0 10px 25px -5px rgba(0, 0, 0, 0.5),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.8);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+  }
+  .spatial-glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+    transform: skewX(-25deg);
+    transition: left 0.8s ease;
+    pointer-events: none;
+  }
+  .spatial-glass-card:hover::before {
+    left: 150%;
   }
 
-  .spatial-glass-card:hover,
-  .liquid-glass-card:hover {
-    border-color: #334155;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.5);
+  .spatial-glass-hover {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .spatial-glass-hover:hover {
+    transform: translateY(-4px) scale(1.01);
+    border-color: rgba(200, 241, 53, 0.6);
+    box-shadow: 
+      0 20px 45px -10px rgba(200, 241, 53, 0.25),
+      0 12px 25px -5px rgba(0, 0, 0, 0.7),
+      inset 0 1px 2px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .liquid-glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(200, 241, 53, 0.03) 100%);
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 
+      0 30px 60px -12px rgba(0, 0, 0, 0.8),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.6);
   }
 
   .liquid-glass-header {
-    background: #0F172A;
-    border-bottom: 1px solid #1E293B;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
   }
 
   .liquid-glass-item {
     position: relative;
-    background: #0F172A;
-    border: 1px solid #1E293B;
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 
+      0 8px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.3);
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .liquid-glass-item:hover {
-    border-color: #10B981;
-    background: #131E33;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(200, 241, 53, 0.1) 100%);
+    border-color: rgba(200, 241, 53, 0.6);
+    box-shadow: 
+      0 16px 40px rgba(0, 0, 0, 0.7),
+      0 0 25px rgba(200, 241, 53, 0.2),
+      inset 0 1px 2px 0 rgba(255, 255, 255, 0.5);
+    transform: translateY(-3px) scale(1.008);
   }
 
   .spatial-pill {
-    background: rgba(30, 41, 59, 0.7);
-    border: 1px solid #1E293B;
-    border-radius: 9999px;
-    transition: all 0.2s ease;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.4);
+    transition: all 0.3s ease;
   }
   .spatial-pill:hover {
-    background: #1E293B;
-    border-color: #334155;
+    background: linear-gradient(135deg, rgba(200, 241, 53, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border-color: rgba(200, 241, 53, 0.6);
+    box-shadow: 0 0 15px rgba(200, 241, 53, 0.3), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6);
   }
 
   .liquid-glow-orb {
-    display: none;
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    opacity: 0.55;
+    animation: liquidFloat 12s ease-in-out infinite alternate;
   }
 
-  /* Focus ring utility */
-  .focus-ring {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900;
+  @keyframes liquidFloat {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    50% {
+      transform: translate(35px, -25px) scale(1.12);
+    }
+    100% {
+      transform: translate(-25px, 20px) scale(0.92);
+    }
   }
+
+  /* Background gradient shift */
+  .animate-gradient {
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+  }
+}
+
+@keyframes drift {
+  from { background-position: 0 0; }
+  to { background-position: 1000px 1000px; }
 }
 
 @keyframes shimmer {
@@ -258,15 +307,48 @@
   to { background-position: -200% 0; }
 }
 
+@keyframes letterUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 @keyframes fadeInLeft {
   from {
     opacity: 0;
-    transform: translateX(-8px);
+    transform: translateX(-10px);
   }
   to {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 5px rgba(200, 241, 53, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(200, 241, 53, 0.4); }
+  100% { box-shadow: 0 0 5px rgba(200, 241, 53, 0.2); }
+}
+
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -283,125 +365,14 @@
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: #090D16;
+  @apply bg-black;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
-  border-radius: 3px;
+  @apply bg-surface-2;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
-
-/* ==========================================================================
-   Phase 5: Global Enterprise PDF Export & Print Stylesheet
-   ========================================================================== */
-@media print {
-  @page {
-    margin: 1in;
-    size: auto;
-  }
-
-  html, body {
-    background: #FFFFFF !important;
-    background-color: #FFFFFF !important;
-    color: #111827 !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    font-size: 11pt !important;
-    line-height: 1.6 !important;
-    text-transform: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Hide navigation, toolbars, hero backgrounds, interactive buttons */
-  nav,
-  aside,
-  header,
-  footer,
-  .no-print,
-  button,
-  .bracket-btn,
-  .bracket-btn-accent,
-  .grid-dots,
-  .grid-dots-animated,
-  .radial-fade,
-  .shimmer,
-  .spatial-glass-card::before,
-  input,
-  select {
-    display: none !important;
-  }
-
-  .print-only {
-    display: block !important;
-  }
-
-  /* Force high contrast dark charcoal text on white */
-  h1, h2, h3, h4, h5, h6, p, span, li, td, th, blockquote, div {
-    color: #111827 !important;
-    text-shadow: none !important;
-    box-shadow: none !important;
-  }
-
-  h1 {
-    font-size: 20pt !important;
-    font-weight: 800 !important;
-    border-bottom: 2px solid #E2E8F0 !important;
-    padding-bottom: 8pt !important;
-    margin-bottom: 14pt !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  h2 {
-    font-size: 14pt !important;
-    font-weight: 700 !important;
-    margin-top: 18pt !important;
-    margin-bottom: 8pt !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  h3 {
-    font-size: 12pt !important;
-    font-weight: 600 !important;
-    margin-top: 14pt !important;
-    margin-bottom: 6pt !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  /* Prevent page-breaks slicing through legal clauses and signature blocks */
-  .legal-clause,
-  .clause-block,
-  .document-section,
-  article > section,
-  article > div,
-  p,
-  li,
-  table,
-  tr {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .prose {
-    max-width: 100% !important;
-    color: #111827 !important;
-    text-transform: none !important;
-  }
-
-  .prose * {
-    color: #111827 !important;
-  }
-
-  a {
-    color: #111827 !important;
-    text-decoration: underline !important;
-  }
+  @apply bg-accent;
 }

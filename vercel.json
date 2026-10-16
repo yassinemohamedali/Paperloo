@@ -1,19 +1,6 @@
 {
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Vary", "value": "Accept, Accept-Encoding" }
-      ]
-    }
-  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.ts" },
-    { "source": "/.well-known/(.*)", "destination": "/api/index.ts" },
-    { "source": "/openapi.json", "destination": "/api/index.ts" },
-    { "source": "/openapi.yaml", "destination": "/api/index.ts" },
-    { "source": "/llms.txt", "destination": "/api/index.ts" },
-    { "source": "/llms-full.txt", "destination": "/api/index.ts" },
-    { "source": "/((?!assets/|.*\\.[\\w]+$).*)", "destination": "/api/index.ts" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

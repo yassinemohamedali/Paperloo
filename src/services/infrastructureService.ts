@@ -20,12 +20,12 @@ export const ADVANCED_FEATURES: InfrastructureFeature[] = [
     pitch: 'Protect your IP from leaking into public AI training sets without your knowledge.'
   },
   {
-    id: 'hsm-vault',
-    name: 'Hardware Security Module (HSM) Vault',
+    id: 'quantum-vault',
+    name: 'Quantum-Resistant Vault',
     category: 'SECURITY',
     status: 'ENFORCED',
-    logic: 'Infrastructure-level cryptographic key management with FIPS 140-2 Level 3 envelope encryption for sensitive databases.',
-    pitch: 'Protect sensitive client data with dedicated hardware-backed cryptographic key isolation.'
+    logic: 'Infrastructure-level encryption using post-quantum algorithms (Kyber-1024) for lead-gen databases.',
+    pitch: 'Future-proof client data against next-gen decryption threats today.'
   },
   {
     id: 'data-lineage',

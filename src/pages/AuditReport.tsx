@@ -356,18 +356,18 @@ export default function AuditReport() {
                         <h3 className="text-2xl font-black italic tracking-tight">{(score as any).sites?.name}</h3>
                         <p className="text-[9px] text-muted tracking-widest">NODE ID: {score.site_id.substring(0, 12).toUpperCase()} · LAST AUDIT: {new Date(score.updated_at).toLocaleDateString()}</p>
                       </div>
-                      <div className="flex flex-col md:items-end gap-2">
-                        <span className="text-[9px] text-muted font-bold tracking-widest uppercase">REGIONAL COMPLIANCE STATUS</span>
-                        <div className="flex flex-wrap gap-2">
-                          <span className="px-2 py-0.5 text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            GDPR: LOW RISK
-                          </span>
-                          <span className="px-2 py-0.5 text-[9px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                            CCPA: SCANNED
-                          </span>
-                          <span className="px-2 py-0.5 text-[9px] font-bold bg-accent/10 text-accent border border-accent/20">
-                            ePrivacy: ACTIVE
-                          </span>
+                      <div className="flex items-center gap-8">
+                        <div className="text-right">
+                          <p className="text-[9px] text-muted font-bold tracking-widest">NODE SCORE</p>
+                          <p className="text-3xl font-sans font-black italic tracking-tighter text-accent">{score.score}%</p>
+                        </div>
+                        <div className={cn(
+                          "h-12 w-12 border flex items-center justify-center font-sans font-black text-xl italic",
+                          score.grade === 'A' ? "border-green-500 text-green-500" : 
+                          score.grade === 'B' ? "border-blue-500 text-blue-500" :
+                          "border-red-500 text-red-500"
+                        )}>
+                          {score.grade}
                         </div>
                       </div>
                     </div>
@@ -423,17 +423,6 @@ export default function AuditReport() {
                   </div>
               </div>
             </section>
-
-            {/* Mandatory Statutory Notice */}
-            <div className="p-6 bg-surface border border-white/10 rounded-lg text-left">
-              <div className="flex items-center gap-2 text-amber-400 mb-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">MANDATORY STATUTORY NOTICE</span>
-              </div>
-              <p className="text-xs text-muted leading-relaxed uppercase tracking-wider font-mono">
-                "Paperloo provides compliance automation software. It does not provide legal advice and is not a law firm. Generated documents are templates and must be reviewed by qualified counsel."
-              </p>
-            </div>
           </>
         )}
       </main>

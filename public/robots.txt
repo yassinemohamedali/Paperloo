@@ -1,6 +1,4 @@
 User-agent: *
 Allow: /
 
-# Agent Directory & Discovery
 Sitemap: https://paperloo.vercel.app/sitemap.xml
-# Agent Instructions: https://paperloo.vercel.app/llms.txt

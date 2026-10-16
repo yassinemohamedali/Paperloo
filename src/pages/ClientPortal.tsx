@@ -203,29 +203,40 @@ export default function ClientPortal() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 bg-slate-50 p-6 border border-slate-200">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">REGIONAL RISK STATUS</p>
-            <div className="flex flex-wrap gap-2 pt-1">
-              <span className="px-2.5 py-1 text-xs font-bold bg-green-50 text-green-700 border border-green-200">
-                GDPR: LOW RISK
-              </span>
-              <span className="px-2.5 py-1 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                CCPA: SCANNED
-              </span>
-              <span className="px-2.5 py-1 text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                ePrivacy: ACTIVE
+          <div className="flex items-center gap-8 bg-slate-50 p-6 border border-slate-200">
+            <div className="relative h-24 w-24 flex items-center justify-center">
+              <svg className="absolute inset-0 h-full w-full -rotate-90">
+                <circle
+                  cx="48" cy="48" r="44"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  className="text-slate-200"
+                />
+                <circle
+                  cx="48" cy="48" r="44"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  strokeDasharray={276}
+                  strokeDashoffset={276 - (276 * (score?.score || 0)) / 100}
+                  className={cn(
+                    "transition-all duration-1000",
+                    (score?.score || 0) >= 90 ? "text-green-500" :
+                    (score?.score || 0) >= 75 ? "text-blue-500" :
+                    (score?.score || 0) >= 60 ? "text-yellow-500" : "text-red-500"
+                  )}
+                />
+              </svg>
+              <span className="text-3xl font-sans font-extrabold tracking-[0.04em]">
+                {score?.grade || 'F'}
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-1">
-              Prior consent verified · Notices published
-            </p>
+            <div className="space-y-1">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">COMPLIANCE SCORE</p>
+              <p className="text-2xl font-sans font-extrabold tracking-[0.04em]">{score?.score || 0}/100</p>
+            </div>
           </div>
-        </div>
-
-        {/* Mandatory Statutory Notice */}
-        <div className="p-4 bg-slate-100 border border-slate-200 rounded text-slate-600 text-[10px] leading-relaxed uppercase tracking-wider text-left mb-8">
-          <p className="font-bold text-slate-800 mb-1">MANDATORY NOTICE</p>
-          <p>"Paperloo provides compliance automation software. It does not provide legal advice and is not a law firm. Generated documents are templates and must be reviewed by qualified counsel."</p>
         </div>
 
         {/* Documents Section */}

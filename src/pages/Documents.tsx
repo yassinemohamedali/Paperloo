@@ -3,13 +3,12 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
-import { FileText, Copy, ExternalLink, RefreshCw, Eye, Code, X, History, Plus, Trash2, Download, Globe, BookOpen, ShieldCheck } from 'lucide-react';
+import { FileText, Copy, ExternalLink, RefreshCw, Eye, Code, X, History, Plus, Trash2, Download, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import { generateDocuments } from '@/src/services/aiService';
 import { calculateComplianceScore } from '@/src/lib/compliance';
 import { sanitizeDocHtml } from '@/src/lib/sanitizeHtml';
-import { REAL_STATUTORY_AUTHORITIES, REAL_STATUTORY_CLAUSES, StatutoryClauseTemplate } from '@/src/lib/statutoryCorpus';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -44,10 +43,6 @@ export default function Documents() {
   const [showHistory, setShowHistory] = useState<string | null>(null);
   const [previewingVersion, setPreviewingVersion] = useState<DocumentVersion | null>(null);
   const [showClauseModal, setShowClauseModal] = useState<string | null>(null);
-  const [showAuthoritiesModal, setShowAuthoritiesModal] = useState(false);
-  const [clauseTitle, setClauseTitle] = useState('');
-  const [clauseContent, setClauseContent] = useState('');
-  const [clausePosition, setClausePosition] = useState<'beginning' | 'end'>('end');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
 
   const { data: site, isLoading: siteLoading } = useQuery<Site>({
@@ -250,12 +245,8 @@ export default function Documents() {
     },
   });
 
-  const hostOrigin = (typeof window !== 'undefined' && window.location?.origin)
-    ? window.location.origin
-    : (config?.appUrl || 'http://localhost:3000');
-
   const copyEmbedCode = (type: string) => {
-    const code = `<div id="paperloo-badge" data-site="${id}"></div>\n<script src="${hostOrigin}/badge.js"></script>`;
+    const code = `<div id="paperloo-badge" data-site="${id}"></div>\n<script src="${config.appUrl}/badge.js"></script>`;
     navigator.clipboard.writeText(code);
     toast.success('Embed code copied to clipboard');
   };
@@ -507,7 +498,7 @@ export default function Documents() {
             <div class="meta-grid">
               <div class="meta-item">
                 <span class="meta-label">Target Organization</span>
-                <span class="meta-val">${(siteName || 'Organization').trim()} (${(site?.url || '').trim().replace(/\s+/g, '-') || 'https://' + (siteName || 'example').toLowerCase().replace(/[^a-z0-9]/g, '-') + '.com'})</span>
+                <span class="meta-val">${siteName} (${site?.url || 'Monitored Site'})</span>
               </div>
               <div class="meta-item">
                 <span class="meta-label">Document Revision</span>
@@ -621,15 +612,6 @@ export default function Documents() {
               <option key={lang.id} value={lang.id}>{lang.label}</option>
             ))}
           </select>
-          <button 
-            onClick={() => setShowAuthoritiesModal(true)}
-            className="bracket-btn flex items-center gap-2 py-3 px-5 text-accent border-accent/40"
-            title="Inspect authentic statutory statutes, codes, and treatises"
-          >
-            <span className="bracket-btn-inner"></span>
-            <BookOpen className="h-4 w-4" />
-            STATUTORY AUTHORITIES & BOOKS
-          </button>
           <button 
             onClick={() => regenerateMutation.mutate(undefined)}
             disabled={regenerateMutation.isPending}
@@ -900,171 +882,39 @@ export default function Documents() {
       {showClauseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowClauseModal(null)} />
-          <div className="relative bg-surface border border-white/10 w-full max-w-xl p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase">ADD STATUTORY CLAUSE</h3>
-                <p className="text-muted text-[10px] tracking-widest uppercase mt-1">FOR {DOC_TYPES.find(d => d.id === showClauseModal)?.label}</p>
-              </div>
-              <button onClick={() => setShowClauseModal(null)} className="p-2 hover:bg-white/5 rounded-md text-muted hover:text-white">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Quick Pick from Real Statutory Precedents */}
-            <div className="bg-black/50 border border-accent/20 p-4 rounded-md space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-accent flex items-center gap-1.5">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  AUTHENTIC STATUTORY PRECEDENT LIBRARY
-                </label>
-                <span className="text-[9px] text-muted uppercase">REAL STATUTE ANNOTATIONS</span>
-              </div>
-              <select 
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (!val) return;
-                  const found = REAL_STATUTORY_CLAUSES.find(c => c.id === val);
-                  if (found) {
-                    setClauseTitle(found.title);
-                    setClauseContent(found.content);
-                    setClausePosition(found.position);
-                    toast.info(`Loaded statutory precedent: ${found.title}`);
-                  }
-                }}
-                defaultValue=""
-                className="w-full bg-surface border border-white/20 p-2 text-xs focus:border-accent outline-none transition-colors"
-              >
-                <option value="">-- Choose Authentic Precedent (CCPA, GDPR, GPC, Transfers) --</option>
-                {REAL_STATUTORY_CLAUSES.map(clause => (
-                  <option key={clause.id} value={clause.id}>
-                    [{clause.jurisdiction}] {clause.title} ({clause.statutoryReference})
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="relative bg-surface border border-white/10 w-full max-w-lg p-10 shadow-2xl space-y-8">
+            <h3 className="text-3xl font-sans font-extrabold tracking-[0.04em] uppercase">ADD CUSTOM CLAUSE</h3>
             
             <form onSubmit={(e) => {
               e.preventDefault();
-              if (!clauseTitle || !clauseContent) {
-                toast.error('Please provide a title and clause content');
-                return;
-              }
+              const formData = new FormData(e.currentTarget);
               addClauseMutation.mutate({
                 document_type: showClauseModal,
-                title: clauseTitle,
-                content: clauseContent,
-                position: clausePosition,
+                title: formData.get('title') as string,
+                content: formData.get('content') as string,
+                position: formData.get('position') as 'beginning' | 'end',
               });
-            }} className="space-y-5">
-              <div className="space-y-1.5">
+            }} className="space-y-6">
+              <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted">CLAUSE TITLE</label>
-                <input 
-                  value={clauseTitle} 
-                  onChange={(e) => setClauseTitle(e.target.value)}
-                  required 
-                  className="w-full bg-transparent border-b border-white/20 py-2 text-sm focus:border-accent outline-none transition-colors uppercase" 
-                  placeholder="E.G. CCPA 12-MONTH LOOKBACK DISCLOSURE" 
-                />
+                <input name="title" required className="w-full bg-transparent border-b border-white/20 py-2 text-sm focus:border-accent outline-none transition-colors uppercase" placeholder="E.G. REFUND POLICY ADDENDUM" />
               </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted">CONTENT (HTML OR STATUTORY TEXT)</label>
-                  <span className="text-[9px] text-muted">SUPPORTS FORMATTED HTML</span>
-                </div>
-                <textarea 
-                  value={clauseContent}
-                  onChange={(e) => setClauseContent(e.target.value)}
-                  required 
-                  rows={6} 
-                  className="w-full bg-black/60 font-mono border border-white/20 p-3 text-xs focus:border-accent outline-none transition-colors" 
-                  placeholder="ENTER OR SELECT STATUTORY CLAUSE CONTENT..." 
-                />
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted">CONTENT</label>
+                <textarea name="content" required rows={4} className="w-full bg-transparent border border-white/20 p-3 text-sm focus:border-accent outline-none transition-colors uppercase" placeholder="ENTER CLAUSE CONTENT..." />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-muted">DOCUMENT INSERTION POSITION</label>
-                <select 
-                  value={clausePosition} 
-                  onChange={(e) => setClausePosition(e.target.value as 'beginning' | 'end')}
-                  className="w-full bg-black border border-white/20 p-2.5 text-xs focus:border-accent outline-none transition-colors uppercase"
-                >
-                  <option value="beginning">BEGINNING OF DOCUMENT (PRE-AMBLE)</option>
-                  <option value="end">END OF DOCUMENT (STATUTORY ADDENDUM)</option>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted">POSITION</label>
+                <select name="position" className="w-full bg-black border border-white/20 p-3 text-sm focus:border-accent outline-none transition-colors uppercase">
+                  <option value="beginning">BEGINNING</option>
+                  <option value="end">END</option>
                 </select>
               </div>
               <button type="submit" disabled={addClauseMutation.isPending} className="bracket-btn w-full py-3">
                 <span className="bracket-btn-inner"></span>
-                {addClauseMutation.isPending ? 'ADDING TO POLICY...' : 'ADD STATUTORY CLAUSE'}
+                {addClauseMutation.isPending ? 'ADDING...' : 'ADD CLAUSE'}
               </button>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Authorities & Real Books of Law Modal */}
-      {showAuthoritiesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={() => setShowAuthoritiesModal(false)} />
-          <div className="relative bg-surface border border-white/10 w-full max-w-4xl p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-accent" />
-                  <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase">STATUTORY REFERENCE CORPUS & BOOKS OF LAW</h3>
-                </div>
-                <p className="text-muted text-xs tracking-widest uppercase mt-1">AUTHENTIC STATUTES, CODES, REGULATORY TREATISES & REPUTED PRECEDENTS</p>
-              </div>
-              <button onClick={() => setShowAuthoritiesModal(false)} className="p-2 hover:bg-white/5 rounded-md text-muted hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <p className="text-xs text-muted leading-relaxed">
-                Paperloo's built-in legal engine synthesizes and enforces verbatim provisions from international privacy codes, official regulatory bodies, and court precedents. Below are the authoritative statutory references encoded into every generated document:
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {REAL_STATUTORY_AUTHORITIES.map((auth) => (
-                  <div key={auth.id} className="bg-black/60 border border-white/10 p-5 rounded-md space-y-3 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-sm font-bold text-accent tracking-wide uppercase">{auth.framework}</h4>
-                        <span className="text-[9px] bg-white/5 px-2 py-0.5 rounded text-white/70 font-mono">{auth.id.toUpperCase()}</span>
-                      </div>
-                      <p className="text-xs text-white/90 font-medium"><strong>Primary Statute:</strong> {auth.primaryStatute}</p>
-                      <p className="text-[11px] text-muted"><strong>Citation:</strong> <code className="text-accent/90">{auth.citation}</code></p>
-                      <p className="text-[11px] text-muted"><strong>Enforcing Body:</strong> {auth.governingBody}</p>
-                      <p className="text-[11px] text-muted"><strong>Legal Treatise / Authority:</strong> {auth.statutoryBookReference}</p>
-                    </div>
-
-                    <div className="pt-3 border-t border-white/5 space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-white/80">Mandatory Core Principles:</p>
-                      <ul className="text-[11px] text-muted list-disc list-inside space-y-1">
-                        {auth.corePrinciples.slice(0, 3).map((cp, idx) => (
-                          <li key={idx} className="line-clamp-1">{cp}</li>
-                        ))}
-                      </ul>
-                      <a 
-                        href={auth.officialDocUrl} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="inline-flex items-center gap-1.5 text-[10px] text-accent hover:underline uppercase pt-2"
-                      >
-                        <ExternalLink className="h-3 w-3" /> OFFICIAL STATUTE / REGULATION
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-white/10 flex justify-end">
-              <button onClick={() => setShowAuthoritiesModal(false)} className="bracket-btn py-2.5 px-6">
-                <span className="bracket-btn-inner"></span>
-                CLOSE REFERENCE CORPUS
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -1078,7 +928,7 @@ export default function Documents() {
             <p className="text-muted text-xs tracking-[0.15em] uppercase">COPY THIS SNIPPET TO SHOW THE COMPLIANCE BADGE ON THE CLIENT'S SITE.</p>
             
             <div className="bg-black p-6 border border-white/10 font-mono text-[10px] text-accent break-all relative group">
-              <code>{`<div id="paperloo-badge" data-site="${id}"></div>\n<script src="${hostOrigin}/badge.js"></script>`}</code>
+              <code>{`<div id="paperloo-badge" data-site="${id}"></div>\n<script src="${config.appUrl}/badge.js"></script>`}</code>
               <button 
                 onClick={() => copyEmbedCode(showEmbed)}
                 className="absolute right-4 top-4 p-2 bg-surface border border-white/10 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"

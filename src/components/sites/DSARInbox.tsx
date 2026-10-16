@@ -71,13 +71,9 @@ export default function DSARInbox({ siteId }: DSARInboxProps) {
     }
   };
 
-  const hostOrigin = (typeof window !== 'undefined' && window.location?.origin)
-    ? window.location.origin
-    : (config?.appUrl || 'http://localhost:3000');
-
   const embedCode = `<!-- Paperloo DSAR Form -->
 <div id="paperloo-dsar-form"></div>
-<script src="${hostOrigin}/api/paperloo.js?siteId=${siteId}" async></script>`.trim();
+<script src="${config.appUrl}/api/paperloo.js?siteId=${siteId}" async></script>`.trim();
 
   const filteredRequests = requests?.filter(r => {
     if (filter === 'all') return true;

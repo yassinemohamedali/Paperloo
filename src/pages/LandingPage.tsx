@@ -869,22 +869,18 @@ export default function LandingPage() {
             </div>
 
             <div className="space-y-6">
-              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">INFRASTRUCTURE & API</p>
+              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">INFRASTRUCTURE</p>
               <ul className="space-y-4 text-[10px] tracking-[0.15em]">
                 <li><Link to="/docs" className="hover:text-accent transition-colors">DOCUMENTATION</Link></li>
                 <li><Link to="/docs/api" className="hover:text-accent transition-colors">API REFERENCE</Link></li>
-                <li><a href="/openapi.json" target="_blank" rel="noreferrer" className="hover:text-accent transition-colors">OPENAPI 3.1 SPEC</a></li>
-                <li><a href="/.well-known/mcp" target="_blank" rel="noreferrer" className="hover:text-accent transition-colors">MCP SERVER</a></li>
-                <li><a href="/llms.txt" target="_blank" rel="noreferrer" className="hover:text-accent transition-colors">LLMS.TXT DIRECTORY</a></li>
                 <li><Link to="/status" className="hover:text-accent transition-colors">SYSTEM STATUS</Link></li>
+                <li><Link to="/contact" className="hover:text-accent transition-colors">CONTACT US</Link></li>
               </ul>
             </div>
 
             <div className="space-y-6">
-              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">GOVERNANCE & TRUST</p>
+              <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">GOVERNANCE</p>
               <ul className="space-y-4 text-[10px] tracking-[0.15em]">
-                <li><Link to="/about" className="hover:text-accent transition-colors">ABOUT PAPERLOO</Link></li>
-                <li><Link to="/contact" className="hover:text-accent transition-colors">CONTACT OPERATIONS</Link></li>
                 <li><Link to="/trust" className="hover:text-accent transition-colors">TRUST CENTER</Link></li>
                 <li><Link to="/trust/security" className="hover:text-accent transition-colors">SECURITY POLICY</Link></li>
                 <li><Link to="/trust/privacy" className="hover:text-accent transition-colors">DATA PRIVACY</Link></li>
@@ -894,7 +890,7 @@ export default function LandingPage() {
             <div className="space-y-6">
               <p className="text-[10px] tracking-[0.3em] font-bold text-white/40">LEGAL</p>
               <ul className="space-y-4 text-[10px] tracking-[0.15em]">
-                <li><Link to="/privacy" className="hover:text-accent transition-colors">PRIVACY POLICY</Link></li>
+                <li><Link to="/legal" className="hover:text-accent transition-colors">PRIVACY POLICY</Link></li>
                 <li><Link to="/legal" className="hover:text-accent transition-colors">TERMS OF SERVICE</Link></li>
                 <li><Link to="/legal" className="hover:text-accent transition-colors">DISCLAIMER</Link></li>
               </ul>

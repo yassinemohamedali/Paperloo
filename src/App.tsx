@@ -38,10 +38,8 @@ const SecurityPolicy = lazy(() => import('./pages/SecurityPolicy'));
 const DataPrivacy = lazy(() => import('./pages/DataPrivacy'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
-const Contact = lazy(() => import('./pages/Contact'));
-const About = lazy(() => import('./pages/About'));
-const Privacy = lazy(() => import('./pages/Privacy'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Contact = lazy(() => import('./pages/Contact'));
 const Support = lazy(() => import('./pages/Support'));
 const AccessibilityCenter = lazy(() => import('./pages/AccessibilityCenter'));
 
@@ -215,11 +213,7 @@ const AnimatedRoutes = () => {
       <Route path="/solutions/agencies" element={<PageTransition><SolutionsAgencies /></PageTransition>} />
       <Route path="/solutions/ecommerce" element={<PageTransition><SolutionsEcommerce /></PageTransition>} />
       <Route path="/solutions/enterprise" element={<PageTransition><SolutionsEnterprise /></PageTransition>} />
-      <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-      <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
       <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-      <Route path="/developers" element={<PageTransition><ApiReference /></PageTransition>} />
-      <Route path="/api" element={<PageTransition><ApiReference /></PageTransition>} />
 
       {/* Protected Routes */}
       <Route path="/onboarding" element={<ProtectedRoute><OnboardingGuard><PageTransition><Onboarding /></PageTransition></OnboardingGuard></ProtectedRoute>} />
