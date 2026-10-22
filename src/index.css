@@ -21,7 +21,7 @@
     @apply border-border-custom;
   }
   html, body {
-    @apply bg-bg text-white font-mono selection:bg-accent selection:text-black antialiased uppercase;
+    @apply bg-bg text-white font-sans selection:bg-accent selection:text-black antialiased;
     max-width: 100vw;
     overflow-x: hidden;
   }

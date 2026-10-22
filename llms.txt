@@ -1,27 +1,58 @@
-# Paperloo Compliance
+# Paperloo Compliance Infrastructure & Autonomous Agent Hub
 
-> Automated website compliance infrastructure, GDPR/CCPA auditing, and AI governance for digital agencies and autonomous agents.
+> Automated website compliance infrastructure, GDPR/CCPA auditing, Google Consent Mode v2, Google Tag Manager (GTM) sync, and statutory document synthesis for digital agencies and autonomous AI agents.
 
 ## When to Use This
-- When your AI agent needs to automatically audit a website for GDPR, CCPA, or EU AI Act compliance.
-- When you need to generate legally verified privacy policies, terms of service, cookie policies, and consent banners programmatically.
-- When you need MCP (Model Context Protocol) tool execution or REST API integration for SaaS governance and multi-site compliance tracking.
+- When your AI agent needs to automatically register and manage websites (`add_site`, `delete_site`, `list_sites`, `get_site`).
+- When you need to generate legally tailored Privacy Policies, Terms of Service, Cookie Policies, and DPAs from structured questionnaire data (`get_questionnaire_schema`, `generate_docs_questionnaire`, `generate_dpa`).
+- When you need to deploy and configure Google Consent Mode v2 cookie banners with unconsented tracker auto-blocking (`configure_cookie_banner`, `get_cookie_banner_script`).
+- When you need to integrate Google Tag Manager with consent triggers and dataLayer updates (`configure_gtm_integration`, `get_gtm_container_setup`).
+- When you need multi-vector statutory audits and live cookie inspection on any domain (`audit_site`, `scan_cookies`, `verify_compliance`).
 
-## Core API Endpoints
-- GET /api/health - Health check endpoint
-- GET /api/v1/compliance/sites - List monitored sites and compliance grades
-- POST /api/v1/compliance/audit - Run real-time compliance audit on any domain
-- POST /api/v1/sites/{id}/generate-documents - Generate complete legal policy suite
-- GET /openapi.json - OpenAPI 3.1 specification for LLM function calling
-- GET /.well-known/mcp - Model Context Protocol (MCP) Streamable HTTP endpoint & server manifest
+## Model Context Protocol (MCP) Server
+- **Transport:** Streamable HTTP
+- **URL:** `https://paperloo.vercel.app/api/mcp`
+- **Server Manifest:** `https://paperloo.vercel.app/server.json` and `/.well-known/mcp`
+- **Supported Capabilities:** `tools`, `resources`, `prompts`
 
-## Onboarding & Sandbox
-- Free tier available instantly via public API endpoints.
-- Self-serve API key generation in dashboard.
-- Sandbox testing environment enabled by default.
+### 14 Available MCP Tools:
+1. `add_site(name, url, platform, jurisdictions, agency_name)`: Provision and register a website for compliance monitoring.
+2. `delete_site(siteId)`: Remove a site and cleanup audit history and banners.
+3. `list_sites(filter)`: List all monitored sites with compliance grades (A+ to F).
+4. `get_site(siteId)`: Retrieve complete configuration, documents, banner settings, and script snippets.
+5. `get_questionnaire_schema(document_type)`: Return standardized questionnaire schema for automated question gathering.
+6. `generate_docs_questionnaire(...)`: Synthesize bespoke legal policy suites using questionnaire answers.
+7. `audit_site(url, deep_scan)`: Multi-vector compliance audit (GCM v2, SSL, legal links, trackers).
+8. `configure_cookie_banner(...)`: Configure banner theme, position, auto-blocking, and GCM v2 sync.
+9. `get_cookie_banner_script(siteId, framework)`: Generate ready-to-paste embed script.
+10. `configure_gtm_integration(...)`: Link Google Tag Manager with Consent Mode v2 defaults.
+11. `get_gtm_container_setup(siteId, gtm_container_id)`: Return GTM <head> and <body> snippets and trigger recipes.
+12. `scan_cookies(url)`: Inventory cookies and trackers by category (Necessary, Analytics, Marketing).
+13. `generate_dpa(controller_name, processor_name, governing_law, sub_processors)`: Generate GDPR Article 28 DPA contract.
+14. `verify_compliance(siteId)`: Issue cryptographic compliance verification certificate and SVG badge.
 
-## Documentation & Resources
+## Core REST API Endpoints
+All endpoints support OAuth2 Bearer tokens or public sandbox execution:
+- `GET /api/health` - Server health status
+- `GET /api/v1/compliance/sites` - List monitored sites
+- `POST /api/v1/compliance/sites` - Register a new site
+- `GET /api/v1/compliance/sites/:id` - Get site profile and configuration
+- `DELETE /api/v1/compliance/sites/:id` - Delete a site
+- `POST /api/v1/compliance/audit` - Multi-vector compliance audit
+- `GET /api/v1/compliance/questionnaire/schema` - Legal questionnaire structure
+- `POST /api/v1/compliance/generate-docs` - Generate legal documents from questionnaire
+- `POST /api/v1/compliance/banner/configure` - Configure cookie banner
+- `GET /api/v1/compliance/banner/script` - Get cookie banner embed script
+- `POST /api/v1/compliance/gtm/configure` - Configure Google Tag Manager
+- `GET /api/v1/compliance/gtm/setup` - Get GTM container code and trigger guide
+- `POST /api/v1/compliance/cookies/scan` - Scan domain cookies
+- `POST /api/v1/compliance/dpa/generate` - Generate GDPR Data Processing Addendum
+- `GET /api/v1/compliance/verify/:id` - Verify compliance status and get certificate
+- `GET /api/badge.svg` - Live SVG compliance badge
+
+## Documentation & Machine-Readable Specs
 - Web UI: https://paperloo.vercel.app
-- Docs: https://paperloo.vercel.app/docs
-- OpenAPI: https://paperloo.vercel.app/openapi.json
-- MCP Server Manifest: https://paperloo.vercel.app/server.json
+- Documentation: https://paperloo.vercel.app/docs
+- OpenAPI 3.1 Spec: https://paperloo.vercel.app/openapi.json
+- MCP Manifest: https://paperloo.vercel.app/server.json
+- LLM Guidelines: https://paperloo.vercel.app/llms.txt

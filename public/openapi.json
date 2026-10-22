@@ -3,7 +3,7 @@
   "info": {
     "title": "Paperloo Compliance Infrastructure API",
     "version": "1.0.0",
-    "description": "Automated website compliance infrastructure and GDPR/CCPA auditing API for AI agents and digital agencies. Provides endpoints to monitor sites, audit domains, generate statutory legal policies, and execute Model Context Protocol (MCP) actions.",
+    "description": "Automated website compliance infrastructure, SaaS governance, and GDPR/CCPA auditing API for AI agents and digital agencies. Provides endpoints to manage sites, audit domains, synthesize legal documents from questionnaires, and configure Google Consent Mode v2 and Google Tag Manager (GTM).",
     "contact": {
       "name": "Paperloo Compliance Support",
       "email": "support@paperloo.vercel.app",
@@ -15,6 +15,9 @@
       "url": "https://paperloo.vercel.app",
       "description": "Production Paperloo Compliance Infrastructure"
     }
+  ],
+  "security": [
+    { "OAuth2Bearer": ["compliance:read", "compliance:write", "sites:manage"] }
   ],
   "paths": {
     "/api/health": {
@@ -29,9 +32,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": {
-                    "status": { "type": "string", "example": "ok" }
-                  },
+                  "properties": { "status": { "type": "string", "example": "ok" } },
                   "required": ["status"]
                 }
               }
@@ -44,14 +45,14 @@
       "get": {
         "operationId": "listSites",
         "summary": "List monitored sites",
-        "description": "Lists all monitored websites and their active compliance grades, jurisdictions, and consent banner configurations for the authenticated agency or sandbox account.",
+        "description": "Lists all monitored websites and their active compliance grades (A+ to F), jurisdictions, and banner configurations.",
         "parameters": [
           {
-            "name": "agency_id",
+            "name": "filter",
             "in": "query",
-            "description": "Optional agency tenant identifier",
+            "description": "Filter by status: 'all', 'compliant', 'needs_audit'",
             "required": false,
-            "schema": { "type": "string" }
+            "schema": { "type": "string", "default": "all" }
           }
         ],
         "responses": {
@@ -63,44 +64,20 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "sites": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "format": "uuid" },
-                          "name": { "type": "string", "example": "ACME Corp" },
-                          "url": { "type": "string", "example": "https://acme.com" },
-                          "compliance_grade": { "type": "string", "example": "A" },
-                          "jurisdictions": { "type": "array", items: { "type": "string" }, "example": ["GDPR (EU)", "CCPA (California)"] }
-                        },
-                        "required": ["id", "name", "url", "compliance_grade"]
-                      }
-                    }
+                    "total_count": { "type": "integer", "example": 2 },
+                    "sites": { "type": "array", "items": { "type": "object" } }
                   },
                   "required": ["success", "sites"]
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized access or missing Bearer token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
           }
         }
-      }
-    },
-    "/api/v1/compliance/audit": {
+      },
       "post": {
-        "operationId": "auditSite",
-        "summary": "Run real-time compliance audit",
-        "description": "Performs an automated multi-vector compliance audit on any target URL (checking SSL, cookies, privacy disclosures, GDPR/CCPA readiness, and trackers).",
+        "operationId": "addSite",
+        "summary": "Add a new monitored website",
+        "description": "Registers and provisions a new website in the compliance monitoring engine with initial grade, API keys, and embed scripts.",
         "requestBody": {
           "required": true,
           "content": {
@@ -108,8 +85,77 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "url": { "type": "string", "description": "Target website URL to audit", "example": "https://example.com" },
-                  "jurisdictions": { "type": "array", items: { "type": "string" }, "description": "Applicable privacy frameworks", "example": ["GDPR", "CCPA"] }
+                  "name": { "type": "string", "example": "Acme SaaS" },
+                  "url": { "type": "string", "example": "https://acme.com" },
+                  "platform": { "type": "string", "example": "nextjs" },
+                  "jurisdictions": { "type": "array", "items": { "type": "string" }, "example": ["GDPR", "CCPA"] },
+                  "agency_name": { "type": "string", "example": "Apex Digital" }
+                },
+                "required": ["name", "url"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Site registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "site": { "type": "object" },
+                    "apiKey": { "type": "string" },
+                    "embed_script": { "type": "string" }
+                  },
+                  "required": ["success", "site"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compliance/sites/{id}": {
+      "get": {
+        "operationId": "getSite",
+        "summary": "Get site details and compliance metrics",
+        "description": "Retrieves complete configuration, active legal documents, cookie banner settings, and embed snippets for a specific site.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Site details retrieved successfully" },
+          "404": { "description": "Site not found" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSite",
+        "summary": "Delete a monitored site",
+        "description": "Removes a website property and cleans up all associated consent banners, audit records, and cached legal policies.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Site deleted successfully" }
+        }
+      }
+    },
+    "/api/v1/compliance/audit": {
+      "post": {
+        "operationId": "auditSite",
+        "summary": "Run real-time multi-vector compliance audit",
+        "description": "Performs an automated multi-vector compliance audit on any target URL (checking SSL, cookies, GCM v2, legal links, and trackers).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string", "example": "https://example.com" },
+                  "deep_scan": { "type": "boolean", "default": true }
                 },
                 "required": ["url"]
               }
@@ -117,109 +163,250 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Compliance audit completed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "audit_id": { "type": "string", "format": "uuid" },
-                    "score": { "type": "number", "example": 94 },
-                    "grade": { "type": "string", "example": "A" },
-                    "findings": { "type": "array", items: { "type": "string" } }
-                  },
-                  "required": ["success", "score", "grade"]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid URL or parameters provided",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
-              }
-            }
-          }
+          "200": { "description": "Compliance audit completed successfully" }
         }
       }
     },
-    "/api/sites/{id}/generate-documents": {
+    "/api/v1/compliance/questionnaire/schema": {
+      "get": {
+        "operationId": "getQuestionnaireSchema",
+        "summary": "Get compliance questionnaire schema",
+        "description": "Returns the standardized legal questionnaire fields and sections for automated document drafting.",
+        "responses": {
+          "200": { "description": "Schema returned successfully" }
+        }
+      }
+    },
+    "/api/v1/compliance/generate-docs": {
       "post": {
-        "operationId": "generateDocuments",
-        "summary": "Generate legal compliance document suite",
-        "description": "Generates complete, statutory-compliant legal documents (Privacy Policy, Terms of Service, Cookie Policy, EULA, Acceptable Use, Disclaimer, Return Policy, Accessibility Statement) for a registered site.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Unique site UUID",
-            "schema": { "type": "string", "format": "uuid" }
-          }
-        ],
+        "operationId": "generateDocsFromQuestionnaire",
+        "summary": "Synthesize legal document suite from questionnaire",
+        "description": "Generates Privacy Policy, Terms of Service, Cookie Policy, DPA, and AI statements tailored to questionnaire answers.",
         "requestBody": {
-          "required": false,
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "language": { "type": "string", "example": "en", "description": "Language code for the generated policy suite" }
-                }
+                  "company_name": { "type": "string", "example": "Acme Corp" },
+                  "website_url": { "type": "string", "example": "https://acme.com" },
+                  "contact_email": { "type": "string", "example": "privacy@acme.com" },
+                  "physical_address": { "type": "string", "example": "100 Market St, San Francisco, CA" },
+                  "jurisdictions": { "type": "array", "items": { "type": "string" } },
+                  "document_types": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["company_name", "website_url", "contact_email"]
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Legal document suite generated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "documents": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": { "type": "string", "format": "uuid" },
-                          "type": { "type": "string", "example": "privacy_policy" },
-                          "version": { "type": "integer", "example": 1 }
-                        }
-                      }
-                    }
-                  },
-                  "required": ["success", "documents"]
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Site not found",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+          "200": { "description": "Documents synthesized successfully" }
+        }
+      }
+    },
+    "/api/v1/compliance/banner/configure": {
+      "post": {
+        "operationId": "configureCookieBanner",
+        "summary": "Configure cookie consent banner",
+        "description": "Sets banner theme, position, accent color, Google Consent Mode v2 sync, and tracker auto-blocking rules.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "siteId": { "type": "string" },
+                  "theme": { "type": "string", "enum": ["dark", "light", "auto"] },
+                  "position": { "type": "string", "enum": ["bottom", "top", "modal"] },
+                  "enable_gcm_v2": { "type": "boolean" },
+                  "auto_block_trackers": { "type": "boolean" }
+                },
+                "required": ["siteId"]
               }
             }
           }
+        },
+        "responses": {
+          "200": { "description": "Banner configured successfully" }
+        }
+      }
+    },
+    "/api/v1/compliance/banner/script": {
+      "get": {
+        "operationId": "getCookieBannerScript",
+        "summary": "Get cookie banner embed snippet",
+        "description": "Returns ready-to-paste embed script with Google Consent Mode v2 default denial block.",
+        "parameters": [
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "framework", "in": "query", "schema": { "type": "string", "enum": ["html", "react", "nextjs"] } }
+        ],
+        "responses": {
+          "200": { "description": "Snippet generated successfully" }
+        }
+      }
+    },
+    "/api/v1/compliance/gtm/configure": {
+      "post": {
+        "operationId": "configureGtmIntegration",
+        "summary": "Configure Google Tag Manager with Consent Mode v2",
+        "description": "Links GTM container ID with Paperloo consent signals and dataLayer triggers.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "siteId": { "type": "string" },
+                  "gtm_container_id": { "type": "string", "example": "GTM-XXXXXXX" }
+                },
+                "required": ["siteId", "gtm_container_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "GTM configured successfully" }
+        }
+      }
+    },
+    "/api/v1/compliance/gtm/setup": {
+      "get": {
+        "operationId": "getGtmContainerSetup",
+        "summary": "Get GTM container snippets and trigger recipe",
+        "description": "Returns complete <head> and <body> GTM snippets and trigger definitions for GA4, Ads, and Meta Pixel.",
+        "parameters": [
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Setup returned successfully" }
+        }
+      }
+    },
+    "/api/v1/compliance/cookies/scan": {
+      "post": {
+        "operationId": "scanCookies",
+        "summary": "Scan domain for cookies and trackers",
+        "description": "Returns itemized cookie inventory categorized by Necessary, Analytics, and Marketing.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "url": { "type": "string", "example": "https://example.com" } },
+                "required": ["url"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cookies scanned successfully" }
+        }
+      }
+    },
+    "/api/v1/compliance/dpa/generate": {
+      "post": {
+        "operationId": "generateDpa",
+        "summary": "Generate GDPR Article 28 Data Processing Addendum",
+        "description": "Synthesizes a legally binding DPA contract between Data Controller and Processor.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "controller_name": { "type": "string" },
+                  "processor_name": { "type": "string" }
+                },
+                "required": ["controller_name", "processor_name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "DPA generated successfully" }
+        }
+      }
+    },
+    "/api/v1/compliance/verify/{id}": {
+      "get": {
+        "operationId": "verifyCompliance",
+        "summary": "Verify live compliance and issue certificate",
+        "description": "Verifies live consent states and returns a cryptographic certificate and SVG badge snippet.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Compliance verified successfully" }
+        }
+      }
+    },
+    "/api/mcp": {
+      "post": {
+        "operationId": "mcpRpcCall",
+        "summary": "Model Context Protocol JSON-RPC 2.0 Handler",
+        "description": "Executes MCP methods: initialize, ping, tools/list, tools/call, resources/list, resources/read, prompts/list, prompts/get.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": { "type": "string", "example": "2.0" },
+                  "id": { "type": "integer", "example": 1 },
+                  "method": { "type": "string", "example": "tools/list" },
+                  "params": { "type": "object" }
+                },
+                "required": ["jsonrpc", "method"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "JSON-RPC 2.0 response" }
+        }
+      },
+      "get": {
+        "operationId": "getMcpServerInfo",
+        "summary": "Model Context Protocol Server Info & Stream",
+        "description": "Returns MCP server status and capabilities, or establishes SSE stream.",
+        "responses": {
+          "200": { "description": "Server information" }
         }
       }
     }
   },
   "components": {
+    "securitySchemes": {
+      "OAuth2Bearer": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 Bearer token authentication with least-privilege scoped permissions.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://paperloo.vercel.app/api/oauth/token",
+            "scopes": {
+              "compliance:read": "Read compliance status, audit findings, and reports.",
+              "compliance:write": "Run compliance audits and generate legal policy document suites.",
+              "sites:manage": "Add, update, and delete monitored sites and consent banner configurations."
+            }
+          }
+        }
+      }
+    },
     "schemas": {
       "ErrorResponse": {
         "type": "object",
         "properties": {
           "success": { "type": "boolean", "example": false },
-          "error": { "type": "string", "example": "Unauthorized: Missing or invalid Bearer token" },
-          "code": { "type": "string", "example": "UNAUTHORIZED" },
-          "resolution": { "type": "string", "example": "Include a valid Bearer token in the Authorization header." }
+          "error": { "type": "string", "example": "Invalid parameters provided" },
+          "code": { "type": "string", "example": "BAD_REQUEST" },
+          "resolution": { "type": "string", "example": "Check parameter documentation in OpenAPI specification." }
         },
         "required": ["success", "error", "code"]
       }

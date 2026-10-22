@@ -10,6 +10,7 @@ import dns from "dns/promises";
 import net from "net";
 import http from "http";
 import https from "https";
+import { activeSites, MCP_TOOLS, MCP_RESOURCES, MCP_PROMPTS, executeTool, readResource } from "./src/server/mcpRegistry";
 
 dotenv.config();
 
@@ -593,19 +594,24 @@ paths:
           description: OK`);
 });
 
-// MCP Manifest & Full Handshake (Tools & Resources)
+// MCP Manifest & Streamable HTTP Transport
 const mcpManifest = {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.yassinemohamedali11/paperloo",
-  "title": "Paperloo Compliance",
-  "description": "Automated website compliance infrastructure and GDPR/CCPA auditing.",
+  "title": "Paperloo Compliance Infrastructure",
+  "description": "Automated website compliance infrastructure, SaaS governance, and GDPR/CCPA auditing with 14 autonomous agent tools.",
   "version": "1.0.0",
   "remotes": [
     {
       "type": "streamable-http",
       "url": "https://paperloo.vercel.app/api/mcp"
     }
-  ]
+  ],
+  "capabilities": {
+    "tools": { "listChanged": true },
+    "resources": { "subscribe": true, "listChanged": true },
+    "prompts": { "listChanged": true }
+  }
 };
 
 app.get(["/server.json", "/.well-known/mcp", "/.well-known/mcp.json"], (req, res) => {
@@ -613,150 +619,226 @@ app.get(["/server.json", "/.well-known/mcp", "/.well-known/mcp.json"], (req, res
   res.json(mcpManifest);
 });
 
+// Full Model Context Protocol (MCP) Server Endpoint (GET & POST supported)
 app.all("/api/mcp", async (req, res) => {
+  res.setHeader("Vary", "Accept, Content-Type");
+
+  // Handle GET requests (Health, info, or SSE stream)
+  if (req.method === "GET") {
+    const accept = req.headers["accept"] || "";
+    if (accept.includes("text/event-stream")) {
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.write(`event: endpoint\ndata: https://paperloo.vercel.app/api/mcp\n\n`);
+      return;
+    }
+
+    return res.json({
+      name: "io.github.yassinemohamedali11/paperloo",
+      title: "Paperloo Compliance Infrastructure MCP Server",
+      status: "active",
+      protocolVersion: "2025-12-11",
+      capabilities: {
+        tools: { count: MCP_TOOLS.length },
+        resources: { count: MCP_RESOURCES.length },
+        prompts: { count: MCP_PROMPTS.length }
+      },
+      endpoints: {
+        rpc: "https://paperloo.vercel.app/api/mcp",
+        manifest: "https://paperloo.vercel.app/server.json",
+        openapi: "https://paperloo.vercel.app/openapi.json",
+        docs: "https://paperloo.vercel.app/docs"
+      }
+    });
+  }
+
+  // Handle POST (JSON-RPC 2.0)
   const body = req.body || {};
   const method = body.method;
-  const id = body.id || 1;
+  const id = body.id !== undefined ? body.id : 1;
   const params = body.params || {};
 
-  console.log(`[MCP] Request: ${method}`, params);
+  console.log(`[MCP] RPC Call: ${method}`, params);
 
-  if (method === "initialize") {
-    return res.json({
-      jsonrpc: "2.0",
-      id,
-      result: {
-        serverVersion: "1.0.0",
-        capabilities: {
-          tools: {},
-          resources: {}
-        },
-        protocolVersion: "2025-12-11"
-      }
-    });
-  }
-
-  if (method === "tools/list") {
-    return res.json({
-      jsonrpc: "2.0",
-      id,
-      result: {
-        tools: [
-          { 
-            name: "list_sites", 
-            description: "Lists all monitored websites and compliance grades for the authenticated agency.",
-            inputSchema: { type: "object", properties: {} }
+  try {
+    if (method === "initialize") {
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          serverVersion: "1.0.0",
+          protocolVersion: "2025-12-11",
+          capabilities: {
+            tools: {},
+            resources: {},
+            prompts: {}
           },
-          { 
-            name: "audit_site", 
-            description: "Performs an automated multi-vector compliance audit on a target URL.",
-            inputSchema: { 
-              type: "object", 
-              properties: {
-                url: { type: "string", description: "Target website URL" }
-              },
-              required: ["url"]
+          serverInfo: {
+            name: "io.github.yassinemohamedali11/paperloo",
+            version: "1.0.0"
+          }
+        }
+      });
+    }
+
+    if (method === "notifications/initialized") {
+      return res.status(204).end();
+    }
+
+    if (method === "ping") {
+      return res.json({ jsonrpc: "2.0", id, result: {} });
+    }
+
+    if (method === "tools/list") {
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          tools: MCP_TOOLS
+        }
+      });
+    }
+
+    if (method === "tools/call") {
+      const toolName = params.name;
+      const toolArgs = params.arguments || {};
+      const toolResult = await executeTool(toolName, toolArgs);
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(toolResult, null, 2)
             }
-          },
+          ]
+        }
+      });
+    }
+
+    if (method === "resources/list") {
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          resources: MCP_RESOURCES
+        }
+      });
+    }
+
+    if (method === "resources/read") {
+      const uri = params.uri;
+      const resourceData = readResource(uri);
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          contents: [resourceData]
+        }
+      });
+    }
+
+    if (method === "prompts/list") {
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          prompts: MCP_PROMPTS
+        }
+      });
+    }
+
+    if (method === "prompts/get") {
+      const promptName = params.name;
+      const args = params.arguments || {};
+      let messages: any[] = [];
+      if (promptName === "audit-website") {
+        messages = [
           {
-            name: "generate_documents",
-            description: "Generates legal compliance document suite (Privacy Policy, etc.) for a site.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                siteId: { type: "string", description: "Site UUID" },
-                language: { type: "string", description: "Language code" }
-              },
-              required: ["siteId"]
+            role: "user",
+            content: {
+              type: "text",
+              text: `Please audit the compliance of website '${args.url}' for GDPR, CCPA, and Google Consent Mode v2 using the audit_site tool.`
             }
           }
-        ]
-      }
-    });
-  }
-
-  if (method === "tools/call") {
-    const { name, arguments: args } = params;
-    
-    // Simple tool execution wrapper mapping to existing API logic
-    let result;
-    try {
-      if (name === "list_sites") {
-        result = { sites: [{ id: "demo-site-1", name: "Paperloo Sandbox", url: "https://example.com", grade: "A" }] };
-      } else if (name === "audit_site") {
-        result = { audit_id: "audit-" + Date.now(), score: 96, grade: "A", findings: ["No critical issues detected."] };
-      } else if (name === "generate_documents") {
-        result = { success: true, siteId: args.siteId, documents: ["privacy_policy", "terms_of_service"] };
+        ];
+      } else if (promptName === "onboard-new-client-site") {
+        messages = [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Please onboard '${args.company_name}' (${args.website_url}) into Paperloo: add the site, retrieve questionnaire schema, generate the legal document suite, and configure Google Consent Mode v2 with GTM integration.`
+            }
+          }
+        ];
       } else {
-        throw new Error(`Tool ${name} not found`);
+        messages = [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Generate a complete legal compliance suite for '${args.company_name}' (${args.website_url}).`
+            }
+          }
+        ];
       }
-      return res.json({ jsonrpc: "2.0", id, result: { content: [{ type: "text", text: JSON.stringify(result) }] } });
-    } catch (err: any) {
-      return res.json({ jsonrpc: "2.0", id, error: { code: -32603, message: err.message } });
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          description: `Prompt for ${promptName}`,
+          messages
+        }
+      });
     }
-  }
 
-  if (method === "resources/list") {
+    // Default unknown method
     return res.json({
       jsonrpc: "2.0",
       id,
-      result: {
-        resources: [
-          {
-            uri: "paperloo://compliance/standards",
-            name: "Paperloo Compliance Standards & GDPR/CCPA Guidelines",
-            description: "Regulatory standards enforced by Paperloo",
-            mimeType: "text/markdown"
-          },
-          {
-            uri: "paperloo://api/openapi",
-            name: "Paperloo OpenAPI 3.1 Specification",
-            description: "Machine-readable API spec",
-            mimeType: "application/json"
-          }
-        ]
+      error: {
+        code: -32601,
+        message: `Method '${method}' not found. Supported methods: initialize, ping, tools/list, tools/call, resources/list, resources/read, prompts/list, prompts/get.`
+      }
+    });
+  } catch (err: any) {
+    console.error(`[MCP] Error executing method '${method}':`, err);
+    return res.json({
+      jsonrpc: "2.0",
+      id,
+      error: {
+        code: -32603,
+        message: err.message || "Internal MCP Server Error"
       }
     });
   }
-
-  if (method === "resources/read") {
-    const uri = params?.uri;
-    if (uri === "paperloo://compliance/standards") {
-      return res.json({
-        jsonrpc: "2.0",
-        id,
-        result: {
-          contents: [{ uri, mimeType: "text/markdown", text: "# Paperloo Standards\n\nGDPR, CCPA, EU AI Act compliance enforcement." }]
-        }
-      });
-    }
-    if (uri === "paperloo://api/openapi") {
-      return res.json({
-        jsonrpc: "2.0",
-        id,
-        result: {
-          contents: [{ uri, mimeType: "application/json", text: JSON.stringify(openApiJson) }]
-        }
-      });
-    }
-    return res.json({ jsonrpc: "2.0", id, error: { code: -32602, message: `Resource not found: ${uri}` } });
-  }
-
-  res.json({ jsonrpc: "2.0", id, result: { status: "active" } });
 });
 
-// Public API Endpoints for Agent Onboarding & Sandbox
-app.get("/api/v1/compliance/sites", (req, res) => {
-  res.json({
-    success: true,
-    sandbox: true,
-    sites: [
-      { id: "demo-site-1", name: "Paperloo Sandbox Property", url: "https://example.com", compliance_grade: "A", jurisdictions: ["GDPR (EU)", "CCPA (California)"] }
-    ]
-  });
+// REST Endpoints with full parity to MCP Tools
+app.get("/api/v1/compliance/sites", async (req, res) => {
+  const result = await executeTool("list_sites", req.query);
+  res.json(result);
 });
 
-app.post("/api/v1/compliance/audit", (req, res) => {
+app.post("/api/v1/compliance/sites", async (req, res) => {
+  const result = await executeTool("add_site", req.body);
+  res.status(201).json(result);
+});
+
+app.get("/api/v1/compliance/sites/:id", async (req, res) => {
+  const result = await executeTool("get_site", { siteId: req.params.id });
+  res.json(result);
+});
+
+app.delete("/api/v1/compliance/sites/:id", async (req, res) => {
+  const result = await executeTool("delete_site", { siteId: req.params.id });
+  res.json(result);
+});
+
+app.post("/api/v1/compliance/audit", async (req, res) => {
   const { url } = req.body || {};
   if (!url) {
     return res.status(400).json({
@@ -766,33 +848,64 @@ app.post("/api/v1/compliance/audit", (req, res) => {
       resolution: "Provide a valid 'url' property in the JSON request body."
     });
   }
-  res.json({
-    success: true,
-    audit_id: "audit-" + Date.now(),
-    target_url: url,
-    score: 96,
-    grade: "A",
-    jurisdictions_checked: ["GDPR", "CCPA", "EU AI Act"],
-    findings: [
-      "Privacy Policy is accessible and up to date.",
-      "Cookie consent banner active with Google Consent Mode v2.",
-      "SSL certificate valid and secure."
-    ],
-    timestamp: new Date().toISOString()
-  });
+  const result = await executeTool("audit_site", req.body);
+  res.json(result);
 });
 
-// Structured JSON error responses for API routes under /api/
-app.use("/api/", (req, res, next) => {
-  if (!res.headersSent) {
-    return res.status(404).json({
-      success: false,
-      error: `API endpoint not found: ${req.method} ${req.path}`,
-      code: "NOT_FOUND",
-      resolution: "Check API documentation at https://paperloo.vercel.app/docs or /openapi.json for valid endpoints."
-    });
-  }
-  next();
+app.get("/api/v1/compliance/questionnaire/schema", async (req, res) => {
+  const result = await executeTool("get_questionnaire_schema", req.query);
+  res.json(result);
+});
+
+app.post("/api/v1/compliance/generate-docs", async (req, res) => {
+  const result = await executeTool("generate_docs_questionnaire", req.body);
+  res.json(result);
+});
+
+app.post("/api/v1/compliance/banner/configure", async (req, res) => {
+  const result = await executeTool("configure_cookie_banner", req.body);
+  res.json(result);
+});
+
+app.get("/api/v1/compliance/banner/script", async (req, res) => {
+  const result = await executeTool("get_cookie_banner_script", req.query);
+  res.json(result);
+});
+
+app.post("/api/v1/compliance/gtm/configure", async (req, res) => {
+  const result = await executeTool("configure_gtm_integration", req.body);
+  res.json(result);
+});
+
+app.get("/api/v1/compliance/gtm/setup", async (req, res) => {
+  const result = await executeTool("get_gtm_container_setup", req.query);
+  res.json(result);
+});
+
+app.post("/api/v1/compliance/cookies/scan", async (req, res) => {
+  const result = await executeTool("scan_cookies", req.body);
+  res.json(result);
+});
+
+app.post("/api/v1/compliance/dpa/generate", async (req, res) => {
+  const result = await executeTool("generate_dpa", req.body);
+  res.json(result);
+});
+
+app.get("/api/v1/compliance/verify/:id", async (req, res) => {
+  const result = await executeTool("verify_compliance", { siteId: req.params.id });
+  res.json(result);
+});
+
+// Mock badge SVG endpoint
+app.get("/api/badge.svg", (req, res) => {
+  res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
+  res.send(`<svg xmlns="http://www.w3.org/2000/svg" width="220" height="36" viewBox="0 0 220 36">
+  <rect width="220" height="36" rx="6" fill="#111111" stroke="#c8f135" stroke-width="1.5"/>
+  <circle cx="18" cy="18" r="6" fill="#c8f135"/>
+  <text x="34" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" fill="#ffffff">PAPERLOO</text>
+  <text x="105" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600" fill="#c8f135">VERIFIED COMPLIANT</text>
+</svg>`);
 });
 
 
@@ -3518,6 +3631,19 @@ Instructions:
       res.status(500).json({ error: error.message });
     }
   });
+
+// 404 handler for unknown /api/ routes
+app.use("/api/", (req, res, next) => {
+  if (!res.headersSent) {
+    return res.status(404).json({
+      success: false,
+      error: `API endpoint not found: ${req.method} ${req.path}`,
+      code: "NOT_FOUND",
+      resolution: "Check API documentation at https://paperloo.vercel.app/docs or /openapi.json for valid endpoints."
+    });
+  }
+  next();
+});
 
 // Agent-friendly 404 middleware for unknown paths
 app.use((req, res, next) => {

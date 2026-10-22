@@ -25,37 +25,38 @@ import {
 import { useAuthStore } from '@/src/store/authStore';
 import { supabase } from '@/src/lib/supabase';
 import Aurora from '@/src/components/ui/Aurora';
+import AgentToolsConsole from '@/src/components/AgentToolsConsole';
 
 const SERVICES = [
-  { id: '01', name: 'AUTOMATED LEGAL COMPLIANCE ENGINE', description: 'Automatically generate, update, and publish bulletproof Privacy Policies, Terms of Service, and DPAs tailored to your tech stack and target jurisdictions.' },
-  { id: '02', name: 'COMPLETE SAAS & AGENCY LEGAL STACK', description: 'A unified compliance workspace built specifically for SaaS platforms, e-commerce brands, and marketing agencies managing multiple client sites.' },
-  { id: '03', name: 'ZERO-CODE COOKIE & CONSENT MANAGER', description: 'Deploy lightweight cookie banners that auto-block unauthorized trackers, handle opt-outs, and keep you compliant with GDPR & CCPA.' },
-  { id: '04', name: 'REAL-TIME STATUTORY AUTO-UPDATES', description: 'When privacy laws change in Europe, California, or Australia, your legal documents automatically update on your live sites with zero downtime.' },
-  { id: '05', name: '24/7 SITE RISK SCANNING', description: 'Continuous background monitoring scans your sites for missing disclosures, unmapped cookies, and legal vulnerabilities before fines happen.' },
+  { id: '01', name: 'Automated Legal Compliance Engine', description: 'Automatically generate, update, and publish bulletproof Privacy Policies, Terms of Service, and DPAs tailored to your tech stack and target jurisdictions.' },
+  { id: '02', name: 'Complete SaaS & Agency Legal Stack', description: 'A unified compliance workspace built specifically for SaaS platforms, e-commerce brands, and marketing agencies managing multiple client sites.' },
+  { id: '03', name: 'Zero-Code Cookie & Consent Manager', description: 'Deploy lightweight cookie banners that auto-block unauthorized trackers, handle opt-outs, and keep you compliant with GDPR & CCPA.' },
+  { id: '04', name: 'Real-Time Statutory Auto-Updates', description: 'When privacy laws change in Europe, California, or worldwide, your legal documents automatically update on your live sites with zero downtime.' },
+  { id: '05', name: '24/7 Site Risk & Tracker Scanning', description: 'Continuous background monitoring scans your sites for missing disclosures, unmapped cookies, and legal vulnerabilities before fines happen.' },
 ];
 
 const ADVANTAGES = [
-  { title: 'INSTANT 1-CLICK INTEGRATION', content: 'Embed our lightweight script or connect your custom domain to publish legally binding disclosures across all client websites in under 3 minutes.' },
-  { title: 'GLOBAL MULTI-REGION COVERAGE', content: 'Stay 100% protected across GDPR (EU/UK), CCPA/CPRA (California), PIPEDA (Canada), and APPs (Australia) with a single unified platform.' },
-  { title: 'REDUCE LEGAL COSTS BY 90%', content: 'Skip $500/hr attorney fees. Generate customized, lawyer-vetted legal policies engineered specifically for digital businesses and SaaS.' },
-  { title: 'WHITE-LABEL BRANDING FOR AGENCIES', content: 'Remove Paperloo logos and deliver fully customized, client-branded legal portals and compliance badges to boost client trust.' },
-  { title: 'WORKS WITH ANY WEB STACK', content: 'Seamlessly integrates with Webflow, WordPress, React, Next.js, Shopify, custom Node.js backends, and headless CMS platforms.' },
-  { title: 'LIGHTSPEED EDGE PERFORMANCE', content: 'High-speed CDN script loading in under 2ms ensures your page speed, user experience, and Google SEO rankings remain completely unimpacted.' },
+  { title: 'Instant 1-Click Integration', content: 'Embed our lightweight script or connect your custom domain to publish legally binding disclosures across all client websites in under 3 minutes.' },
+  { title: 'Global Multi-Region Coverage', content: 'Stay 100% protected across GDPR (EU/UK), CCPA/CPRA (California), PIPEDA (Canada), and APPs (Australia) with a single unified platform.' },
+  { title: 'Reduce Legal Costs by 90%', content: 'Skip $500/hr attorney fees. Generate customized, lawyer-vetted legal policies engineered specifically for digital businesses and SaaS.' },
+  { title: 'White-Label Branding for Agencies', content: 'Remove Paperloo logos and deliver fully customized, client-branded legal portals and compliance badges to boost client trust.' },
+  { title: 'Works with Any Web Stack', content: 'Seamlessly integrates with Webflow, WordPress, React, Next.js, Shopify, custom Node.js backends, and headless CMS platforms.' },
+  { title: 'Lightspeed Edge Performance', content: 'High-speed CDN script loading in under 2ms ensures your page speed, user experience, and Google SEO rankings remain completely unimpacted.' },
 ];
 
 const PROCESS = [
   { 
-    title: 'AUTOMATED SITE AUDIT', 
+    title: 'Automated Site Audit', 
     subtitle: 'Scan your website to automatically detect third-party scripts, data collection points, and missing legal disclosures.',
     bullets: ['Detect PII & Trackers', 'Map Target Jurisdictions', 'Identify Compliance Gaps'],
   },
   { 
-    title: 'ONE-CLICK POLICY SETUP', 
+    title: 'One-Click Policy Setup', 
     subtitle: 'Generate customized, lawyer-vetted legal policies and embed them on your site using a single line of code.',
     bullets: ['Tailored Agency/SaaS Clauses', 'Custom White-Label Branding', 'Zero-Code Script Embed'],
   },
   { 
-    title: 'AUTONOMOUS PROTECTION', 
+    title: 'Autonomous Protection', 
     subtitle: 'Sit back as Paperloo monitors global legislation changes and updates your live legal policies automatically.',
     bullets: ['Real-Time Law Updates', '24/7 Threat Monitoring', 'Downloadable Audit Reports'],
   },
@@ -341,45 +342,41 @@ export default function LandingPage() {
           <GlobeSVG />
         </div>
 
-        {/* Watermark */}
-        <div aria-hidden="true" className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
-          <span className="text-[25vw] font-sans font-extrabold text-white/[0.02] tracking-[0.04em]">PAPERLOO</span>
-        </div>
-
         <div className="relative z-10 text-center max-w-6xl w-full">
-          <div className="mb-12">
-            <div className="inline-flex items-center gap-3 px-6 py-2 border border-white rounded-full">
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-3 px-5 py-2 border border-white/20 bg-black/40 backdrop-blur-md rounded-full">
               <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-              <span className="text-[10px] tracking-[0.3em] font-bold whitespace-nowrap uppercase">Compliance Infrastructure · Automated</span>
+              <span className="text-[11px] tracking-[0.2em] font-mono font-bold text-accent whitespace-nowrap uppercase">Compliance Infrastructure · Automated</span>
             </div>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-[120px] leading-[0.9] font-sans font-extrabold mb-12 tracking-[0.04em] break-words">
-            <AnimatedHeadline text="GLOBAL DISCLOSURE" /><br />
-            <AnimatedHeadline text="INFRASTRUCTURE." />
+          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-sans font-black mb-8 tracking-tight max-w-5xl mx-auto leading-[1.05] text-white">
+            Global Compliance & <span className="text-accent italic drop-shadow-[0_0_35px_rgba(200,241,53,0.35)]">SaaS Governance</span> Infrastructure
           </h1>
 
-          <p className="text-muted text-xs sm:text-sm md:text-base tracking-[0.12em] max-w-3xl mx-auto mb-16 px-4 uppercase font-semibold leading-relaxed">
-            AUTOMATE LEGAL COMPLIANCE FOR YOUR AGENCY OR SAAS. GENERATE BULLETPROOF PRIVACY POLICIES, TERMS OF SERVICE, AND COOKIE BANNERS IN MINUTES.
+          <p className="text-white/75 text-sm sm:text-base md:text-lg max-w-3xl mx-auto mb-10 font-normal leading-relaxed">
+            Automate legal compliance for digital agencies and autonomous AI agents. Generate attorney-vetted Privacy Policies, Terms of Service, and deploy Google Consent Mode v2 cookie banners with native GTM integration in minutes.
           </p>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-6">
             {user ? (
-              <Link to="/dashboard" className="bracket-btn w-full md:w-auto group py-5 sm:py-4 border-accent text-accent">
+              <Link to="/dashboard" className="bracket-btn w-full sm:w-auto group py-4 px-8 border-accent text-accent font-mono font-bold text-xs uppercase tracking-wider">
                 <span className="bracket-btn-inner"></span>
-                GO TO DASHBOARD
+                Go to Dashboard
               </Link>
             ) : (
-              <Link to="/signup" className="bracket-btn w-full md:w-auto group py-5 sm:py-4">
+              <Link to="/signup" className="bracket-btn w-full sm:w-auto group py-4 px-8 bg-accent text-black font-mono font-bold text-xs uppercase tracking-wider hover:bg-white transition-colors">
                 <span className="bracket-btn-inner"></span>
-                APPLY FOR PILOT PROGRAM
+                Get Started Free
               </Link>
             )}
-            <Link to="/trust" className="bracket-btn w-full md:w-auto border-accent text-accent group py-5 sm:py-4">
+            <a href="#mcp-tools" className="bracket-btn w-full sm:w-auto border-white/30 text-white hover:border-accent hover:text-accent font-mono font-bold text-xs uppercase tracking-wider py-4 px-8">
               <span className="bracket-btn-inner"></span>
-              <div className="flex items-center justify-center gap-2">
-                TRUST CENTER
-              </div>
+              Explore MCP Agent Tools
+            </a>
+            <Link to="/trust" className="bracket-btn w-full sm:w-auto border-white/30 text-white hover:border-accent hover:text-accent font-mono font-bold text-xs uppercase tracking-wider py-4 px-8">
+              <span className="bracket-btn-inner"></span>
+              Trust Center
             </Link>
           </div>
         </div>
@@ -478,6 +475,25 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* MCP & Autonomous Agent Console Section */}
+      <section id="mcp-tools" className="py-24 px-6 bg-black relative border-t border-white/10">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="mb-12 text-center">
+            <div className="section-label mb-3 text-accent inline-block bg-accent/10 border border-accent/20 px-4 py-1.5 rounded-full text-xs font-mono font-bold">
+              MODEL CONTEXT PROTOCOL (MCP) READY
+            </div>
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-sans font-black tracking-tight text-white uppercase">
+              14 Autonomous <span className="text-accent italic drop-shadow-[0_0_20px_rgba(200,241,53,0.3)]">Agent Tools</span>
+            </h2>
+            <p className="text-white/60 text-sm max-w-2xl mx-auto mt-3">
+              Add sites, synthesize policies via questionnaire, configure cookie banners, and manage GTM integration directly through Streamable HTTP at <code className="text-accent font-mono">/api/mcp</code>
+            </p>
+          </div>
+
+          <AgentToolsConsole />
         </div>
       </section>
 
