@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    { "source": "/api/mcp", "destination": "/api/mcp.ts" },
+    { "source": "/mcp", "destination": "/api/mcp.ts" },
+    { "source": "/server.json", "destination": "/server.json" },
+    { "source": "/.well-known/(.*)", "destination": "/.well-known/$1" },
     { "source": "/api/(.*)", "destination": "/api/index.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
