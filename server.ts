@@ -426,6 +426,14 @@ function handleMarkdownOrHtml(req: express.Request, res: express.Response, htmlC
   return res.send(htmlContent);
 }
 
+// If an MCP client sends JSON-RPC directly to root '/', handle it with MCP handler
+app.post("/", (req, res, next) => {
+  if (req.body && (req.body.method || req.body.jsonrpc)) {
+    return handleMcpEndpoint(req, res);
+  }
+  next();
+});
+
 // Homepage Markdown negotiation with Vary: Accept
 app.get("/", (req, res, next) => {
   res.setHeader("Vary", "Accept");
@@ -620,7 +628,7 @@ app.get(["/server.json", "/.well-known/mcp", "/.well-known/mcp.json"], (req, res
 });
 
 // Full Model Context Protocol (MCP) Server Endpoint (GET & POST supported)
-app.all("/api/mcp", async (req, res) => {
+async function handleMcpEndpoint(req: any, res: any) {
   res.setHeader("Vary", "Accept, Content-Type");
 
   // Handle GET requests (Health, info, or SSE stream)
@@ -815,7 +823,8 @@ app.all("/api/mcp", async (req, res) => {
       }
     });
   }
-});
+}
+app.all(["/api/mcp", "/mcp"], handleMcpEndpoint);
 
 // REST Endpoints with full parity to MCP Tools
 app.get("/api/v1/compliance/sites", async (req, res) => {
