@@ -10,7 +10,7 @@ import dns from "dns/promises";
 import net from "net";
 import http from "http";
 import https from "https";
-import { activeSites, MCP_TOOLS, MCP_RESOURCES, MCP_PROMPTS, executeTool, readResource } from "./src/server/mcpRegistry";
+import { activeSites, MCP_TOOLS, MCP_RESOURCES, MCP_PROMPTS, executeTool, readResource } from "./src/server/mcpRegistry.ts";
 
 dotenv.config();
 

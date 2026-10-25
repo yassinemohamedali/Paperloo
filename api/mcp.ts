@@ -5,7 +5,41 @@ import {
   executeTool,
   readResource,
   activeSites
-} from "../src/server/mcpRegistry.ts";
+} from "./mcpRegistry.ts";
+
+async function parseBody(req: any): Promise<any> {
+  if (req.body && typeof req.body === "object") {
+    return req.body;
+  }
+  if (typeof req.body === "string" && req.body.trim()) {
+    try {
+      return JSON.parse(req.body);
+    } catch {
+      return null;
+    }
+  }
+
+  return new Promise((resolve) => {
+    let raw = "";
+    req.on("data", (chunk: any) => {
+      raw += chunk;
+    });
+    req.on("end", () => {
+      if (!raw.trim()) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(raw));
+      } catch {
+        resolve(null);
+      }
+    });
+    req.on("error", () => {
+      resolve({});
+    });
+  });
+}
 
 export default async function handler(req: any, res: any) {
   // 1. Universal CORS Configuration for MCP Playground, Claude Desktop, Cursor, and Agents
@@ -20,7 +54,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).end();
   }
 
-  // 2. Optional Authorization Check (Public by default, tenant-aware if key provided)
+  // 2. Authorization Check: Public by default (No API key required!)
   const authHeader = req.headers["authorization"] || req.headers["x-api-key"];
   let callerInfo = "public_agent";
   if (authHeader) {
@@ -43,7 +77,7 @@ export default async function handler(req: any, res: any) {
       name: "io.github.yassinemohamedali11/paperloo",
       title: "Paperloo Compliance Infrastructure MCP Server",
       status: "active",
-      protocolVersion: "2025-12-11",
+      protocolVersion: "2024-11-05",
       authRequired: false,
       authenticatedCaller: callerInfo,
       capabilities: {
@@ -63,28 +97,23 @@ export default async function handler(req: any, res: any) {
   // 4. Handle POST requests (JSON-RPC 2.0 Streamable HTTP Transport)
   if (req.method === "POST") {
     try {
-      let body = req.body;
-      if (typeof body === "string") {
-        try {
-          body = JSON.parse(body);
-        } catch {
-          return res.status(400).json({
-            jsonrpc: "2.0",
-            id: null,
-            error: {
-              code: -32700,
-              message: "Parse error: Invalid JSON payload."
-            }
-          });
-        }
+      const parsed = await parseBody(req);
+      if (parsed === null) {
+        return res.status(400).json({
+          jsonrpc: "2.0",
+          id: null,
+          error: {
+            code: -32700,
+            message: "Parse error: Invalid JSON payload."
+          }
+        });
       }
 
-      body = body || {};
+      const body = parsed || {};
       const method = body.method;
       const id = body.id !== undefined ? body.id : 1;
       const params = body.params || {};
 
-      // Ensure JSON content type
       res.setHeader("Content-Type", "application/json; charset=utf-8");
 
       // MCP Initialize Handshake
@@ -93,7 +122,7 @@ export default async function handler(req: any, res: any) {
           jsonrpc: "2.0",
           id,
           result: {
-            protocolVersion: params.protocolVersion || "2025-12-11",
+            protocolVersion: params.protocolVersion || "2024-11-05",
             capabilities: {
               tools: { listChanged: true },
               resources: { subscribe: true, listChanged: true },
@@ -109,7 +138,7 @@ export default async function handler(req: any, res: any) {
 
       // Initialized Notification
       if (method === "notifications/initialized") {
-        return res.status(204).end();
+        return res.status(200).json({ jsonrpc: "2.0", id, result: {} });
       }
 
       // Ping
