@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, Database } from '@/src/lib/supabase';
-import { FileText, Copy, ExternalLink, RefreshCw, Eye, Code, X, History, Plus, Trash2, Download, Globe } from 'lucide-react';
+import { FileText, Copy, ExternalLink, RefreshCw, Eye, Code, X, History, Plus, Trash2, Download, Globe, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import { generateDocuments } from '@/src/services/aiService';
@@ -602,11 +602,18 @@ export default function Documents() {
             <h2 className="text-4xl font-sans font-extrabold tracking-[0.04em] uppercase">COMPLIANCE DOCUMENTS</h2>
             <p className="text-muted text-sm tracking-[0.15em] uppercase">MANAGE AND DEPLOY LEGAL DOCUMENTS FOR {site?.name}.</p>
         </div>
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link 
+            to={`/sites/${id}/questionnaire`}
+            className="px-4 py-3 bg-[#c8f135]/10 hover:bg-[#c8f135]/20 border border-[#c8f135]/40 text-[#c8f135] text-xs font-bold rounded-lg transition uppercase flex items-center gap-2"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Questionnaire &amp; Pre-Flight
+          </Link>
           <select 
             value={selectedLanguage}
             onChange={(e) => setSelectedLanguage(e.target.value)}
-            className="bg-surface border border-white/10 p-3 text-xs focus:border-accent outline-none transition-colors uppercase"
+            className="bg-surface border border-white/10 p-3 text-xs focus:border-accent outline-none transition-colors uppercase rounded-lg"
           >
             {LANGUAGES.map(lang => (
               <option key={lang.id} value={lang.id}>{lang.label}</option>

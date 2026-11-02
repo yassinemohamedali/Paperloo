@@ -1,8 +1,5 @@
-/**
- * Paperloo Model Context Protocol (MCP) & Agent Infrastructure
- * Implements MCP Protocol Specification (2025-12-11 / JSON-RPC 2.0)
- * Features 14 Autonomous Tools, Resources, Prompts, and Compliance Engine
- */
+import { scanWebsiteRealTrackers } from './realCookieScanner.ts';
+
 
 export interface MonitoredSite {
   id: string;
@@ -138,8 +135,123 @@ export const activeSites: MonitoredSite[] = [
   }
 ];
 
+// Core 3 Tools Surface (for MCP Rush, MCP Playground & Streamlined Agents)
+export const CORE_3_TOOLS = [
+  {
+    name: "list_sites",
+    description: "Lists all monitored websites, their real-time compliance grades (A+ to F), cookie banner status, GTM container state, and document count.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        filter: {
+          type: "string",
+          description: "Filter sites by status: 'all', 'active', 'compliant', 'needs_audit'",
+          default: "all"
+        }
+      }
+    }
+  },
+  {
+    name: "audit_site",
+    description: "Performs multi-vector automated compliance auditing on a target website URL. Checks cookie banner presence, Google Consent Mode v2 signals, GTM tag firing, legal links, and security headers.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description: "The full website URL to audit"
+        },
+        deep_scan: {
+          type: "boolean",
+          description: "Whether to execute deep DOM inspection and sub-resource tracker verification",
+          default: true
+        }
+      },
+      required: ["url"]
+    }
+  },
+  {
+    name: "generate_documents",
+    description: "Generates tailored legal document suites (Privacy Policy, Terms of Service, Cookie Policy, EULA, Acceptable Use, Disclaimer) assembled from modular statutory clauses grounded in EDPB, CPPA, and ICO regulator guidance.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        siteId: {
+          type: "string",
+          description: "Site UUID to attach generated documents to (optional)"
+        },
+        company_name: {
+          type: "string",
+          description: "Legal entity or company name"
+        },
+        website_url: {
+          type: "string",
+          description: "Public website domain URL"
+        },
+        contact_email: {
+          type: "string",
+          description: "Official legal and privacy contact email"
+        },
+        physical_address: {
+          type: "string",
+          description: "Registered business mailing address",
+          default: "100 Compliance Way, San Francisco, CA 94105"
+        },
+        jurisdictions: {
+          type: "array",
+          items: { type: "string" },
+          description: "Target jurisdictions (e.g. ['GDPR', 'CCPA'])",
+          default: ["GDPR", "CCPA"]
+        },
+        collects_cookies: {
+          type: "boolean",
+          description: "Whether the site uses cookies or browser local storage",
+          default: true
+        },
+        uses_google_analytics: {
+          type: "boolean",
+          description: "Whether Google Analytics 4 or Google Tag Manager is utilized",
+          default: true
+        },
+        uses_meta_pixel: {
+          type: "boolean",
+          description: "Whether Meta (Facebook) advertising pixels are deployed",
+          default: false
+        },
+        processes_payments: {
+          type: "boolean",
+          description: "Whether the site processes payments via Stripe, PayPal, or merchant processors",
+          default: false
+        },
+        has_user_accounts: {
+          type: "boolean",
+          description: "Whether end-users can register accounts or log in",
+          default: false
+        },
+        collects_minors: {
+          type: "boolean",
+          description: "Whether services are accessible to or directed at minors under 13/16",
+          default: false
+        },
+        refund_period_days: {
+          type: "number",
+          description: "Refund policy guarantee window in days (minimum 14 for EU)",
+          default: 14
+        },
+        data_retention_months: {
+          type: "number",
+          description: "Data retention period in months",
+          default: 12
+        }
+      },
+      required: ["company_name", "website_url", "contact_email"]
+    }
+  }
+];
+
 // 1. Tool Schemas Definition
 export const MCP_TOOLS = [
+  ...CORE_3_TOOLS.filter(t => t.name === "generate_documents"),
   {
     name: "add_site",
     description: "Adds and provisions a new website in the Paperloo compliance monitoring registry. Initializes compliance grading, generates script embed tags, and provisions consent defaults.",
@@ -735,6 +847,7 @@ export async function executeTool(name: string, args: any = {}): Promise<any> {
       };
     }
 
+    case "generate_documents":
     case "generate_docs_questionnaire": {
       const siteId = args.siteId || (activeSites[0]?.id || "site_sandbox");
       const company = args.company_name || "Company Inc.";
@@ -893,40 +1006,43 @@ You can update your cookie preferences at any time by clicking the "Cookie Prefe
     }
 
     case "audit_site": {
-      const targetUrl = args.url;
+      const targetUrl = args.url || "https://example.com";
       const isHttps = targetUrl.startsWith("https://");
-      const randomScore = Math.floor(Math.random() * 6) + 93; // 93-98
-      const grade = randomScore >= 95 ? "A+" : "A";
+      const scanResult = await scanWebsiteRealTrackers(targetUrl);
+      const cookies = scanResult.cookie_inventory;
+      const scripts = scanResult.scripts_detected;
+      const marketingCookies = cookies.filter(c => c.category === 'Marketing');
 
-      const findings = [
-        "Verified: Valid SSL/TLS 1.3 certificate with secure modern cipher suite.",
-        "Verified: Google Consent Mode v2 default denial headers (ad_storage, analytics_storage) detected.",
-        "Verified: Required legal disclosure links (Privacy Policy, Terms) identified in DOM structure.",
-        "Verified: HTTP security headers enforced (X-Content-Type-Options: nosniff, Strict-Transport-Security).",
-        "Passed: Zero third-party trackers executed prior to user consent interaction."
-      ];
+      let complianceScore = 100;
+      if (!isHttps) complianceScore -= 20;
+      if (marketingCookies.length > 0) complianceScore -= 15;
+      if (!scanResult.reachable) complianceScore = 30;
+
+      const grade = complianceScore >= 95 ? "A+" : complianceScore >= 85 ? "A" : complianceScore >= 70 ? "B" : "C";
 
       return {
-        success: true,
+        success: scanResult.success,
         audit_id: `aud_${Math.random().toString(36).substring(2, 10)}`,
         target_url: targetUrl,
-        compliance_score: randomScore,
+        compliance_score: complianceScore,
         compliance_grade: grade,
         is_https: isHttps,
         timestamp: new Date().toISOString(),
         tests: {
-          google_consent_mode_v2: "PASSED",
-          cookie_banner_prior_consent: "PASSED",
-          legal_policy_links: "PASSED",
-          gtm_integration: "VERIFIED",
-          ssl_tls_security: "PASSED",
-          unconsented_trackers: "NONE_DETECTED"
+          website_reachable: scanResult.reachable ? "PASSED" : "FAILED",
+          ssl_tls_security: isHttps ? "PASSED" : "WARNING",
+          detected_trackers_count: cookies.length,
+          marketing_trackers: marketingCookies.length,
+          detected_scripts: scripts
         },
-        findings,
-        remediation_recommendations: [
-          "Ensure your GTM container trigger rules require 'paperloo_consent_update' event before firing advertising tags.",
-          "Keep privacy policies updated with annual CCPA review timestamps."
-        ]
+        findings: scanResult.reachable ? [
+          isHttps ? "Verified: HTTPS connection." : "Warning: Target site is not using HTTPS.",
+          cookies.length > 0 ? `Detected ${cookies.length} active cookies/trackers.` : "Verified: No cookies or third-party trackers detected.",
+          scripts.length > 0 ? `Active tracking scripts: ${scripts.join(", ")}` : "No analytics scripts detected in DOM."
+        ] : [
+          `Failed to reach website: ${scanResult.message}`
+        ],
+        cookie_inventory: cookies
       };
     }
 
@@ -1088,73 +1204,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     case "scan_cookies": {
       const url = args.url || "https://example.com";
+      const result = await scanWebsiteRealTrackers(url);
       return {
-        success: true,
-        scanned_url: url,
+        success: result.success,
+        reachable: result.reachable,
+        scanned_url: result.scanned_url,
         scanned_at: new Date().toISOString(),
-        total_cookies_found: 6,
+        total_cookies_found: result.total_cookies_found,
         summary: {
-          necessary: 2,
-          analytics: 2,
-          marketing: 2,
-          unclassified: 0
+          necessary: result.cookie_inventory.filter(c => c.category === 'Necessary').length,
+          analytics: result.cookie_inventory.filter(c => c.category === 'Analytics').length,
+          marketing: result.cookie_inventory.filter(c => c.category === 'Marketing').length,
+          preferences: result.cookie_inventory.filter(c => c.category === 'Preferences').length
         },
-        cookie_inventory: [
-          {
-            name: "pl_consent_state",
-            category: "Necessary",
-            provider: "Paperloo Infrastructure",
-            domain: new URL(url.startsWith("http") ? url : "https://" + url).hostname,
-            expiry: "365 days",
-            purpose: "Stores visitor cookie consent choices across browser sessions.",
-            legal_basis: "GDPR Art. 6(1)(c) Legal Obligation"
-          },
-          {
-            name: "__cf_bm",
-            category: "Necessary",
-            provider: "Cloudflare",
-            domain: ".cloudflare.com",
-            expiry: "30 minutes",
-            purpose: "Enforces rate limiting and bot management protection.",
-            legal_basis: "GDPR Art. 6(1)(f) Legitimate Interests"
-          },
-          {
-            name: "_ga",
-            category: "Analytics",
-            provider: "Google Analytics 4",
-            domain: ".google-analytics.com",
-            expiry: "730 days",
-            purpose: "Distinguishes unique users and calculates session metrics.",
-            legal_basis: "GDPR Art. 6(1)(a) Consent Required"
-          },
-          {
-            name: "_ga_*",
-            category: "Analytics",
-            provider: "Google Analytics 4",
-            domain: ".google-analytics.com",
-            expiry: "730 days",
-            purpose: "Maintains session state for Google Analytics 4.",
-            legal_basis: "GDPR Art. 6(1)(a) Consent Required"
-          },
-          {
-            name: "_fbp",
-            category: "Marketing",
-            provider: "Meta Platforms Ireland Ltd",
-            domain: ".facebook.com",
-            expiry: "90 days",
-            purpose: "Stores and tracks visits across websites for targeted advertising delivery.",
-            legal_basis: "GDPR Art. 6(1)(a) Explicit Consent Required"
-          },
-          {
-            name: "_gcl_au",
-            category: "Marketing",
-            provider: "Google Ads",
-            domain: ".google.com",
-            expiry: "90 days",
-            purpose: "Used by Google AdSense for experimenting with advertisement efficiency across the web.",
-            legal_basis: "GDPR Art. 6(1)(a) Explicit Consent Required"
-          }
-        ]
+        cookie_inventory: result.cookie_inventory,
+        scripts_detected: result.scripts_detected,
+        message: result.message
       };
     }
 

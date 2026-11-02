@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 import { useAuthStore } from '@/src/store/authStore';
+import { LiquidMetalButton } from '@/src/components/ui/liquid-metal-button';
 import { supabase } from '@/src/lib/supabase';
 import Aurora from '@/src/components/ui/Aurora';
 import AgentToolsConsole from '@/src/components/AgentToolsConsole';
@@ -360,24 +361,23 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-6">
             {user ? (
-              <Link to="/dashboard" className="bracket-btn w-full sm:w-auto group py-4 px-8 border-accent text-accent font-mono font-bold text-xs uppercase tracking-wider">
-                <span className="bracket-btn-inner"></span>
-                Go to Dashboard
-              </Link>
+              <div onClick={() => navigate('/dashboard')} className="cursor-pointer">
+                <LiquidMetalButton label="GO TO DASHBOARD" />
+              </div>
             ) : (
-              <Link to="/signup" className="bracket-btn w-full sm:w-auto group py-4 px-8 bg-accent text-black font-mono font-bold text-xs uppercase tracking-wider hover:bg-white transition-colors">
-                <span className="bracket-btn-inner"></span>
-                Get Started Free
-              </Link>
+              <div onClick={() => navigate('/signup')} className="cursor-pointer">
+                <LiquidMetalButton label="GET STARTED FREE" />
+              </div>
             )}
-            <a href="#mcp-tools" className="bracket-btn w-full sm:w-auto border-white/30 text-white hover:border-accent hover:text-accent font-mono font-bold text-xs uppercase tracking-wider py-4 px-8">
-              <span className="bracket-btn-inner"></span>
-              Explore MCP Agent Tools
-            </a>
-            <Link to="/trust" className="bracket-btn w-full sm:w-auto border-white/30 text-white hover:border-accent hover:text-accent font-mono font-bold text-xs uppercase tracking-wider py-4 px-8">
-              <span className="bracket-btn-inner"></span>
-              Trust Center
-            </Link>
+            <div onClick={() => {
+              const el = document.getElementById('mcp-tools');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }} className="cursor-pointer">
+              <LiquidMetalButton label="EXPLORE MCP TOOLS" />
+            </div>
+            <div onClick={() => navigate('/trust')} className="cursor-pointer">
+              <LiquidMetalButton label="TRUST CENTER" />
+            </div>
           </div>
         </div>
       </section>

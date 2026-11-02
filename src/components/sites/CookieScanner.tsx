@@ -59,13 +59,20 @@ export default function CookieScanner({ siteId, siteUrl }: CookieScannerProps) {
           Return ONLY a valid JSON array of objects with fields: name, domain, duration, category (Essential, Analytics, Marketing, Functional), status (Detected). 
           Do NOT include markdown code blocks or any text other than the JSON array.`;
 
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData?.session?.access_token;
+
           const response = await fetch("/api/generate-content", {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({
               model: 'gemini-3.6-flash',
               prompt,
-              temperature: 0.2
+              temperature: 0.2,
+              siteId
             })
           });
 

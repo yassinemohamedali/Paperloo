@@ -10,7 +10,8 @@ import dns from "dns/promises";
 import net from "net";
 import http from "http";
 import https from "https";
-import { activeSites, MCP_TOOLS, MCP_RESOURCES, MCP_PROMPTS, executeTool, readResource } from "./src/server/mcpRegistry.ts";
+import { activeSites, MCP_TOOLS, CORE_3_TOOLS, MCP_RESOURCES, MCP_PROMPTS, executeTool, readResource } from "./src/server/mcpRegistry.ts";
+import { assembleDocumentFromClauses } from "./src/data/clauseLibrary.ts";
 
 dotenv.config();
 
@@ -699,11 +700,12 @@ async function handleMcpEndpoint(req: any, res: any) {
     }
 
     if (method === "tools/list") {
+      const tools = (params.full === true || params.all === true) ? MCP_TOOLS : CORE_3_TOOLS;
       return res.json({
         jsonrpc: "2.0",
         id,
         result: {
-          tools: MCP_TOOLS
+          tools
         }
       });
     }
@@ -997,77 +999,13 @@ app.post("/api/sites/:id/generate-documents", async (req, res) => {
   const generatedDocs = [];
 
   for (const type of docTypes) {
-    let content = "";
-    if (type === 'privacy_policy') {
-      content = `
-        <h2>Privacy Policy</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p><strong>${site.name || 'Company'}</strong> operates the website located at <strong>${site.url || 'https://' + domain}</strong>. We are dedicated to protecting user privacy under applicable frameworks (${jurisdictionsStr}).</p>
-        <h3>1. Categories of Personal Data Collected</h3>
-        <p>Collected Items: ${dataList}</p>
-        <h3>2. Third-Party Sub-Processors & Tracking</h3>
-        <p>Active Services: ${thirdPartiesList}</p>
-        <h3>3. Data Retention Period</h3>
-        <p>Personal data is retained for a maximum duration of <strong>${retention} months</strong>.</p>
-        <h3>4. Statutory Rights</h3>
-        <p>Subject to applicable law, users have the right to access, rectify, port, or request deletion of their personal records by contacting <a href="mailto:${dpoContact}">${dpoContact}</a>.</p>
-      `;
-    } else if (type === 'terms_of_service') {
-      content = `
-        <h2>Terms of Service</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>These terms govern your access to and usage of <strong>${site.url || 'https://' + domain}</strong> operated by <strong>${site.name || 'Company'}</strong>.</p>
-        <h3>1. License & Usage</h3>
-        <p>We grant a limited, revocable license to access our platform in accordance with governing statutes under ${jurisdictionsStr}.</p>
-        <h3>2. Limitation of Liability</h3>
-        <p>To the maximum extent permitted by law, ${site.name || 'Company'} shall not be liable for incidental or consequential damages.</p>
-      `;
-    } else if (type === 'cookie_policy') {
-      content = `
-        <h2>Cookie & Tracking Policy</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>This policy describes how <strong>${site.name || 'Company'}</strong> deploys cookies and analytics trackers (${thirdPartiesList}) on <strong>${site.url || 'https://' + domain}</strong>.</p>
-      `;
-    } else if (type === 'eula') {
-      content = `
-        <h2>End User License Agreement</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>Legal agreement between user and <strong>${site.name || 'Company'}</strong> for software services on <strong>${site.url || 'https://' + domain}</strong>.</p>
-      `;
-    } else if (type === 'acceptable_use') {
-      content = `
-        <h2>Acceptable Use Policy</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>Defines acceptable standards of interaction on <strong>${site.url || 'https://' + domain}</strong>.</p>
-      `;
-    } else if (type === 'disclaimer') {
-      content = `
-        <h2>Legal & Information Disclaimer</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>Content on <strong>${site.url || 'https://' + domain}</strong> is provided for informational purposes only and does not constitute formal legal advice.</p>
-      `;
-    } else if (type === 'return_policy') {
-      content = `
-        <h2>Refund & Return Policy</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p>Refund guidelines and service satisfaction guarantees for <strong>${site.name || 'Company'}</strong>.</p>
-      `;
-    } else if (type === 'accessibility_statement') {
-      content = `
-        <h2>Accessibility Statement</h2>
-        <p>Last updated: ${dateStr}</p>
-        <p><strong>${site.name || 'Company'}</strong> is committed to ensuring digital accessibility in conformance with WCAG 2.1 Level AA across <strong>${site.url || 'https://' + domain}</strong>.</p>
-        <p>Alternative formats available within 48 business hours via <a href="mailto:${dpoContact}">${dpoContact}</a>.</p>
-      `;
-    }
-
-    const disclaimer = `
-      <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; color: #ef4444; font-weight: bold; font-family: sans-serif;">
-        LEGAL DISCLAIMER: PAPERLOO IS AN AI-POWERED TOOL AND DOES NOT CONSTITUTE A LAW FIRM. THE CONTENT GENERATED HEREIN IS NOT LEGAL ADVICE AND DOES NOT CREATE AN ATTORNEY-CLIENT RELATIONSHIP. WE ARE NOT LICENSED ATTORNEYS. ALL DOCUMENTS SHOULD BE REVIEWED BY A QUALIFIED LEGAL PROFESSIONAL IN YOUR SPECIFIC JURISDICTION BEFORE USE.
-      </div>
-    `;
-
-    const fullDocContent = `<div dir="${language === 'ar' ? 'rtl' : 'ltr'}" class="legal-doc-content">${disclaimer}${content}</div>`;
+    const assembled = assembleDocumentFromClauses(
+      type as any,
+      site,
+      answers,
+      answers.scanned_cookies_inventory
+    );
+    const fullDocContent = `<div dir="${language === 'ar' ? 'rtl' : 'ltr'}" class="legal-doc-content">${assembled.html}</div>`;
 
     // Check if doc already exists
     const { data: existingDocs } = await supabase
@@ -1175,24 +1113,18 @@ app.post("/api/generate-content", async (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  if (!siteId) {
-    return res.status(400).json({ error: "siteId is required" });
-  }
-
-  const { data: siteCheck, error: siteCheckError } = await supabase
-    .from('sites')
-    .select('*, questionnaire_responses(*)')
-    .eq('id', siteId)
-    .maybeSingle();
-    
-  if (siteCheckError || !siteCheck) {
-    return res.status(404).json({ error: "Site not found" });
-  }
-
-  // Ensure authorized user owns or has access to this site
-  if (siteCheck.agency_id && siteCheck.agency_id !== user.id) {
-    // If not matching, verify user has admin or agency access
-    console.warn(`[DOC-GEN] Site ${siteId} belongs to ${siteCheck.agency_id}, caller is ${user.id}`);
+  let siteCheck: any = null;
+  if (siteId) {
+    const { data } = await supabase
+      .from('sites')
+      .select('*, questionnaire_responses(*)')
+      .eq('id', siteId)
+      .maybeSingle();
+    siteCheck = data;
+      
+    if (siteCheck && siteCheck.agency_id && siteCheck.agency_id !== user.id) {
+      console.warn(`[AI GEN] Site ${siteId} belongs to ${siteCheck.agency_id}, caller is ${user.id}`);
+    }
   }
 
   let generatedText = "";
@@ -1418,9 +1350,9 @@ app.post("/api/generate-content", async (req, res) => {
   // 4. Autonomous Deterministic Legal Synthesis Engine (Zero-Failure Guarantee)
   if (!generatedText) {
     console.log(`[PAPERLOO SYNTHESIS] Generating high-fidelity statutory document via Built-in Legal Engine...`);
-    const siteName = siteCheck.name || 'Company';
-    const siteUrl = siteCheck.url || 'https://example.com';
-    const jurisdictions: string[] = siteCheck.jurisdictions || ['GDPR'];
+    const siteName = siteCheck?.name || 'Company';
+    const siteUrl = siteCheck?.url || 'https://example.com';
+    const jurisdictions: string[] = siteCheck?.jurisdictions || ['GDPR'];
     const lowerPrompt = (prompt || '').toLowerCase();
 
     const isPrivacy = lowerPrompt.includes('privacy policy');
