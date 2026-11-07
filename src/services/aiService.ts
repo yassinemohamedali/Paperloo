@@ -70,12 +70,32 @@ const fallbackClientSideGeneration = async (siteId: string, language: string) =>
     'privacy_policy',
     'terms_of_service',
     'cookie_policy',
-    'eula',
     'acceptable_use',
-    'disclaimer',
     'return_policy',
     'accessibility_statement'
   ];
+
+  if (answers.distributes_software === true) {
+    docTypes.push('eula');
+  } else {
+    // Drop EULA if site does not distribute downloadable software (per Audit Blocker 4)
+    try {
+      await (supabase.from('documents') as any).delete().eq('site_id', siteId).eq('type', 'eula');
+    } catch (e) {
+      console.warn('Could not clean up EULA:', e);
+    }
+  }
+
+  if (answers.provides_advice === true) {
+    docTypes.push('disclaimer');
+  } else {
+    // Drop advice disclaimer if site does not provide medical/legal/financial advice
+    try {
+      await (supabase.from('documents') as any).delete().eq('site_id', siteId).eq('type', 'disclaimer');
+    } catch (e) {
+      console.warn('Could not clean up disclaimer:', e);
+    }
+  }
 
   // Process all document types concurrently using modular clause library
   const generateSingleDocument = async (type: string) => {

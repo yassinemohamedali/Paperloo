@@ -71,14 +71,14 @@ export default function Certificate() {
           <div className="h-24 w-24 rounded-full bg-accent border-4 border-black flex items-center justify-center mx-auto shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
             <Shield className="h-12 w-12 text-black" />
           </div>
-          <h1 className="text-4xl md:text-6xl font-sans font-extrabold tracking-[0.04em] uppercase">CERTIFICATE OF COMPLIANCE</h1>
-          <p className="text-sm font-bold tracking-[0.2em] text-gray-500 uppercase">VERIFIED BY PAPERLOO COMPLIANCE ENGINE</p>
+          <h1 className="text-4xl md:text-5xl font-sans font-extrabold tracking-[0.04em] uppercase">COMPLIANCE ATTESTATION RECORD</h1>
+          <p className="text-xs font-bold tracking-[0.2em] text-gray-500 uppercase">SELF-ASSESSED COMPLIANCE VIA PAPERLOO ENGINE</p>
         </div>
 
         <div className="w-full h-px bg-black/10" />
 
-        <div className="space-y-6">
-          <p className="text-lg font-medium">THIS IS TO CERTIFY THAT THE WEBSITE</p>
+        <div className="space-y-4">
+          <p className="text-sm font-medium text-gray-600">THIS RECORD ATTESTS DECLARED REGULATORY COVERAGE FOR</p>
           <h2 className="text-3xl md:text-5xl font-sans font-extrabold tracking-[0.04em] uppercase underline decoration-accent decoration-8 underline-offset-8">{site.name}</h2>
           <p className="text-accent font-black tracking-widest text-sm">{site.url}</p>
         </div>
@@ -119,15 +119,20 @@ export default function Certificate() {
           </div>
         </div>
 
-        <div className="pt-12 flex flex-col items-center space-y-4">
+        {/* Disclaimer Notice */}
+        <div className="w-full text-left bg-gray-100 p-4 border border-black/10 text-[9px] text-gray-600 leading-relaxed">
+          <strong>DISCLAIMER:</strong> This attestation record summarizes site compliance self-assessment against selected regulatory frameworks based on user declarations and automated scans. It does not replace independent statutory audits or licensed legal counsel.
+        </div>
+
+        <div className="pt-8 flex flex-col items-center space-y-4">
           <div className="h-20 w-20 relative">
             <div className="absolute inset-0 border-4 border-black rounded-full animate-spin-slow" />
             <div className="absolute inset-2 border-2 border-black/20 rounded-full" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[8px] font-black uppercase tracking-tighter text-center leading-none">OFFICIAL<br/>SEAL</span>
+              <span className="text-[8px] font-black uppercase tracking-tighter text-center leading-none">PAPERLOO<br/>RECORD</span>
             </div>
           </div>
-          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">CERTIFICATE ID: {certificate.id}</p>
+          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">RECORD ID: {certificate.id}</p>
         </div>
 
         <div className="no-print fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-4">

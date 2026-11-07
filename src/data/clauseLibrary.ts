@@ -23,14 +23,14 @@ export interface ModularClause {
   title: string;
   jurisdiction: 'GDPR' | 'CCPA' | 'UK_GDPR' | 'COPPA' | 'GLOBAL';
   guidance: RegulatorGuidance;
-  requiredIf?: (answers: Record<string, any>) => boolean;
+  requiredIf?: (answers: Record<string, any>, context: { site: any; jurisdictions: string[] }) => boolean;
   template: (vars: ClauseVariables) => string;
 }
 
 export interface DetectedCookieItem {
   name: string;
   provider: string;
-  category: 'Necessary' | 'Analytics' | 'Marketing' | 'Preferences';
+  category: 'Necessary' | 'Analytics' | 'Marketing' | 'Preferences' | 'Strictly Necessary' | 'Analytics & Performance' | 'Advertising & Marketing';
   expiry: string;
   purpose: string;
 }
@@ -58,6 +58,7 @@ export interface ClauseVariables {
   hasSubscriptions: boolean;
   refundPeriodDays: number;
   hasUgc: boolean;
+  collectsSensitive: boolean;
   governingLaw: string;
   disputeForum: string;
 }
@@ -96,7 +97,7 @@ export const REGULATOR_CITATIONS: Record<string, RegulatorGuidance> = {
   ICO_DIRECT_MARKETING: {
     authority: 'ICO',
     title: 'ICO Direct Marketing Guidance & PECR Regulation 6',
-    citation: 'UK Data Protection Act 2018 & PECR 2003 reg. 6',
+    citation: 'UK General Data Protection Regulation & Data Protection Act 2018 (DPA 2018) read with PECR 2003 reg. 6',
     summary: 'Prior opt-in consent is strictly required for marketing trackers, analytics pixels, and electronic communications.'
   },
   FTC_COPPA: {
@@ -113,6 +114,62 @@ export const REGULATOR_CITATIONS: Record<string, RegulatorGuidance> = {
   }
 };
 
+/**
+ * Robust site URL sanitizer
+ * Completely strips spaces, %20, and invalid characters, guaranteeing a valid https:// domain
+ */
+export function sanitizeSiteUrl(rawUrl?: string, rawName?: string): { url: string; domain: string } {
+  let str = (rawUrl || rawName || 'example.com').trim();
+  // Strip url encoding (%20) and internal whitespace
+  str = decodeURIComponent(str).replace(/\s+/g, '').replace(/%20/g, '');
+  if (!str.startsWith('http://') && !str.startsWith('https://')) {
+    str = `https://${str}`;
+  }
+  let domain = 'example.com';
+  try {
+    const parsed = new URL(str);
+    domain = parsed.hostname.replace(/^www\./, '');
+  } catch {
+    domain = str.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+  }
+  domain = domain.toLowerCase().replace(/[^a-z0-9.-]/g, '');
+  if (!domain || !domain.includes('.')) {
+    const cleanName = (rawName || 'company').toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+    domain = `${cleanName || 'company'}.com`;
+  }
+  return {
+    url: `https://${domain}`,
+    domain
+  };
+}
+
+/**
+ * Robust domain & contact email sanitizer
+ * Never generates emails with spaces, %20, or invalid hostnames, ensuring mailbox sits on the site's exact domain
+ */
+export function sanitizeEmailAndDomain(siteUrl: string, siteName: string, rawEmail?: string): { email: string; domain: string; siteUrl: string } {
+  const { url: cleanSiteUrl, domain: cleanDomain } = sanitizeSiteUrl(siteUrl, siteName);
+
+  // 1. If explicit valid email provided in questionnaire answers, check if it's well-formed
+  if (rawEmail && typeof rawEmail === 'string') {
+    const trimmed = decodeURIComponent(rawEmail).trim().replace(/\s+/g, '').replace(/%20/g, '');
+    if (trimmed.includes('@') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      return {
+        email: trimmed,
+        domain: cleanDomain,
+        siteUrl: cleanSiteUrl
+      };
+    }
+  }
+
+  // 2. Default to privacy@{cleanDomain}
+  return {
+    email: `privacy@${cleanDomain}`,
+    domain: cleanDomain,
+    siteUrl: cleanSiteUrl
+  };
+}
+
 // --- MODULAR CLAUSE CATALOG ---
 export const CLAUSE_CATALOG: ModularClause[] = [
   // ==========================================
@@ -125,47 +182,95 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     title: 'Statutory Notice & Scope',
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.EDPB_CONSENT,
-    template: (v) => `
+    template: (v) => {
+      // Build dynamic frameworks list strictly based on selected jurisdictions
+      const frameworks: string[] = [];
+      const jLower = v.jurisdictions.map(j => j.toLowerCase());
+      if (jLower.some(j => j.includes('gdpr') || j.includes('eu') || j.includes('eea'))) {
+        frameworks.push('the EU General Data Protection Regulation (Regulation (EU) 2016/679 - GDPR)');
+      }
+      if (jLower.some(j => j.includes('uk'))) {
+        frameworks.push('the UK General Data Protection Regulation read alongside the Data Protection Act 2018 (DPA 2018)');
+      }
+      if (jLower.some(j => j.includes('ccpa') || j.includes('cpra') || j.includes('california'))) {
+        frameworks.push('the California Consumer Privacy Act as amended by the California Privacy Rights Act (Cal. Civ. Code § 1798.100 et seq. - CCPA/CPRA)');
+      }
+      if (jLower.some(j => j.includes('pipeda') || j.includes('canada'))) {
+        frameworks.push('the Personal Information Protection and Electronic Documents Act (PIPEDA)');
+      }
+      if (frameworks.length === 0) {
+        frameworks.push('applicable statutory data protection legislation');
+      }
+
+      return `
 <h2>Privacy Policy & Statutory Data Protection Notice</h2>
-<p class="doc-meta"><strong>Effective Date:</strong> ${v.dateStr} | <strong>Version:</strong> 3.0 Production Verified</p>
-<p>This Privacy Policy governs the processing of personal data by <strong>${v.companyName}</strong> ("Company", "we", "us", or "our") across our digital properties, including <strong>${v.siteUrl}</strong> (the "Service"). We are committed to transparency, data minimization, and adherence to international statutory privacy frameworks, including the EU General Data Protection Regulation (GDPR), the California Consumer Privacy Act as amended by the CPRA (CCPA/CPRA), the UK Data Protection Act 2018 (UK GDPR), and applicable regional laws (${v.jurisdictionsStr}).</p>
+<p class="doc-meta"><strong>Effective Date:</strong> ${v.dateStr} | <strong>Governing Frameworks:</strong> ${v.jurisdictionsStr}</p>
+<p>This Privacy Policy governs the processing of personal data by <strong>${v.companyName}</strong> ("Company", "we", "us", or "our") across our digital properties, including <strong>${v.siteUrl}</strong> (the "Service"). We are committed to transparency, purpose limitation, and strict adherence to statutory privacy frameworks applicable to our operations, specifically ${frameworks.join(', ')}.</p>
 <div class="regulatory-reference-card">
-  <span class="ref-badge">Regulatory Grounding</span>
-  <p><strong>EDPB Guidelines 05/2020:</strong> Information is presented in a concise, transparent, intelligible, and easily accessible format, using clear and plain language pursuant to GDPR Article 12.</p>
-</div>`
+  <span class="ref-badge">Statutory Transparency Standard</span>
+  <p><strong>EDPB Guidelines 05/2020 &amp; GDPR Art. 12:</strong> Information is presented in a concise, transparent, intelligible, and easily accessible format, using clear and plain language.</p>
+</div>`;
+    }
   },
   {
     id: 'pp-data-inventory',
     docType: 'privacy_policy',
     section: 'Data Categories',
-    title: 'Categories of Personal Data Collected',
+    title: 'Categories of Personal Data Collected & Statutory Retention Schedule',
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.CPPA_PURPOSE_LIMITATION,
     template: (v) => `
-<h3>1. Categories of Personal Data We Collect</h3>
-<p>In accordance with the principle of data minimization (GDPR Art. 5(1)(c) and Cal. Code Regs. tit. 11 § 7002), we collect only the personal information reasonably necessary and proportionate to fulfill specific business operations:</p>
+<h3>1. Categories of Personal Data We Collect &amp; Retention Standards</h3>
+<p>In accordance with data minimization standards (GDPR Art. 5(1)(c), Cal. Code Regs. tit. 11 § 7002), we collect only personal information reasonably necessary and proportionate for disclosed operational purposes. Data is retained according to differentiated statutory retention periods:</p>
 <table class="compliance-table">
   <thead>
     <tr>
       <th>Data Category</th>
       <th>Specific Elements Collected</th>
       <th>Lawful Basis / Business Purpose</th>
-      <th>Retention Duration</th>
+      <th>Statutory Retention Schedule</th>
     </tr>
   </thead>
   <tbody>
-    ${v.collectedDataCategories.map(cat => `
     <tr>
-      <td><strong>${cat}</strong></td>
-      <td>${cat.includes('Financial') ? 'Billing token, masked card digits, transaction history' :
-            cat.includes('Location') ? 'IP-derived geolocation, regional country code' :
-            cat.includes('Account') ? 'Account username, hashed credentials, session auth tokens' :
-            'Directly submitted identifiers (name, email address)'}</td>
-      <td>${cat.includes('Financial') ? 'Performance of Contract (GDPR Art. 6(1)(b)) & Statutory Tax Compliance' :
-            cat.includes('Location') ? 'Legitimate Interest (Service localization & fraud prevention)' :
-            'Contractual Performance & Customer Relationship Management'}</td>
-      <td>${v.retentionMonths} months from last active engagement</td>
-    </tr>`).join('')}
+      <td><strong>Identifiers (Email &amp; Contact)</strong></td>
+      <td>Email address, telephone number, communication records</td>
+      <td>Performance of Contract (GDPR Art. 6(1)(b)) &amp; Customer Support Notifications</td>
+      <td>Retained for active account lifecycle or until opt-out/deletion request (+30 days)</td>
+    </tr>
+    <tr>
+      <td><strong>Personal Details (Full Name)</strong></td>
+      <td>First name, last name, user display identity</td>
+      <td>Contractual Identification &amp; Account Identity Verification (GDPR Art. 6(1)(b))</td>
+      <td>Retained for active account lifecycle + 90 days following formal account closure</td>
+    </tr>
+    ${v.collectedDataCategories.some(c => c.includes('Financial') || c.includes('Payment')) ? `
+    <tr>
+      <td><strong>Financial &amp; Transaction Records</strong></td>
+      <td>PCI-DSS tokenized payment IDs, masked card digits, transaction ledger, invoices</td>
+      <td>Performance of Contract (GDPR Art. 6(1)(b)) &amp; Compliance with Statutory Legal/Tax Obligations (GDPR Art. 6(1)(c))</td>
+      <td>7 years (statutory fiscal, accounting, and tax compliance obligations)</td>
+    </tr>` : ''}
+    <tr>
+      <td><strong>Technical &amp; Security Logs</strong></td>
+      <td>IP address, browser user-agent header, request timestamps, authentication tokens</td>
+      <td>Legitimate Interests in Cyber Defense &amp; Service Availability (GDPR Art. 6(1)(f))</td>
+      <td>30 to 90 days on automated rolling purge cycles</td>
+    </tr>
+    ${v.collectedDataCategories.some(c => c.includes('Location') || c.includes('Geolocation')) ? `
+    <tr>
+      <td><strong>Geolocation Telemetry</strong></td>
+      <td>IP-derived country and regional city-level coordinates</td>
+      <td>Legitimate Interests (service localization, regional fraud detection)</td>
+      <td>Up to 14 months rolling aggregation window</td>
+    </tr>` : ''}
+    ${v.trackersList ? `
+    <tr>
+      <td><strong>Marketing &amp; Cookie Identifiers</strong></td>
+      <td>Aggregated visitor analytics IDs (_ga), advertising attribution tags</td>
+      <td>Freely-Given Consent (GDPR Art. 6(1)(a); PECR reg. 6; ePrivacy Directive)</td>
+      <td>Retained until consent is revoked, plus 30 days for suppression list maintenance</td>
+    </tr>` : ''}
   </tbody>
 </table>`
   },
@@ -173,42 +278,57 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     id: 'pp-gdpr-rights',
     docType: 'privacy_policy',
     section: 'Data Subject Rights',
-    title: 'GDPR & UK GDPR Data Subject Rights (Articles 15–22)',
+    title: 'GDPR Data Subject Rights (Articles 15–22)',
     jurisdiction: 'GDPR',
     guidance: REGULATOR_CITATIONS.EDPB_CONSENT,
-    requiredIf: (a) => !a.jurisdictions || a.jurisdictions.some((j: string) => j.includes('GDPR') || j.includes('EU') || j.includes('UK')),
+    requiredIf: (a, ctx) => ctx.jurisdictions.some((j: string) => /gdpr|eu|eea/i.test(j)),
     template: (v) => `
-<h3>2. European & UK Data Subject Rights</h3>
-<p>If you reside within the European Economic Area (EEA), United Kingdom, or Switzerland, you possess absolute statutory rights under GDPR Articles 15 through 22 and the UK Data Protection Act 2018:</p>
+<h3>2. European Data Subject Rights (GDPR Articles 15–22)</h3>
+<p>If you reside within the European Economic Area (EEA), you possess statutory data subject rights under Regulation (EU) 2016/679 (GDPR), subject to lawful statutory exemptions (such as GDPR Art. 17(3) for legal compliance or Art. 21 for compelling legitimate grounds):</p>
 <ul>
-  <li><strong>Right of Access (Art. 15):</strong> You have the right to obtain confirmation as to whether your personal data is processed, alongside a complete copy of such data.</li>
-  <li><strong>Right to Rectification (Art. 16):</strong> You may request the correction of inaccurate or incomplete personal records without undue delay.</li>
-  <li><strong>Right to Erasure / "Right to be Forgotten" (Art. 17):</strong> You may demand deletion of your personal data where it is no longer necessary for original purposes or where consent is withdrawn.</li>
-  <li><strong>Right to Restriction of Processing (Art. 18):</strong> You have the right to freeze processing while data accuracy or lawful basis is contested.</li>
-  <li><strong>Right to Data Portability (Art. 20):</strong> You have the right to receive your personal information in a structured, commonly used, and machine-readable format (JSON/CSV).</li>
-  <li><strong>Right to Object (Art. 21):</strong> You may object at any time to processing based on legitimate interests or direct marketing profiling.</li>
-  <li><strong>Right to Withdraw Consent (Art. 7(3)):</strong> Where processing relies upon consent, you may revoke consent at any time as easily as it was given.</li>
+  <li><strong>Right of Access (Art. 15):</strong> Obtain confirmation as to whether your personal data is processed, alongside a copy of such data.</li>
+  <li><strong>Right to Rectification (Art. 16):</strong> Request correction of inaccurate or incomplete personal records without undue delay.</li>
+  <li><strong>Right to Erasure ("Right to be Forgotten", Art. 17):</strong> Request deletion of personal data where it is no longer necessary for original purposes, subject to Art. 17(3) statutory exemptions.</li>
+  <li><strong>Right to Restriction of Processing (Art. 18):</strong> Request temporary limitation of processing while data accuracy or lawful basis is contested.</li>
+  <li><strong>Right to Data Portability (Art. 20):</strong> Receive your personal information in a structured, commonly used, and machine-readable format.</li>
+  <li><strong>Right to Object (Art. 21):</strong> Object at any time to processing based on legitimate interests or direct marketing profiling.</li>
+  <li><strong>Right to Withdraw Consent (Art. 7(3)):</strong> Where processing is predicated on consent, revoke consent at any time without affecting prior lawful processing.</li>
 </ul>
-<p>To exercise any statutory right, contact our Data Protection Officer at <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a>. We respond to all verified requests within thirty (30) calendar days without fee.</p>`
+<p><strong>Statutory Response Timeline:</strong> To exercise your rights, submit a request to our Data Protection Lead at <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a>. In accordance with GDPR Article 12(3), we respond to all verified data subject requests within <strong>one (1) calendar month</strong> of receipt. That period may be extended by up to two (2) further months where necessary, taking into account request complexity and volume, with written notice provided within the initial month.</p>`
+  },
+  {
+    id: 'pp-uk-gdpr-rights',
+    docType: 'privacy_policy',
+    section: 'Data Subject Rights',
+    title: 'UK Data Subject Rights (UK GDPR & DPA 2018)',
+    jurisdiction: 'UK_GDPR',
+    guidance: REGULATOR_CITATIONS.ICO_DIRECT_MARKETING,
+    requiredIf: (a, ctx) => ctx.jurisdictions.some((j: string) => /uk/i.test(j)),
+    template: (v) => `
+<h3>2.1. United Kingdom Data Subject Rights</h3>
+<p>For individuals residing in the United Kingdom, processing of personal data is governed by the UK General Data Protection Regulation (UK GDPR) read alongside the Data Protection Act 2018 (DPA 2018). You possess equivalent statutory data subject rights as described above, enforceable through the UK Information Commissioner's Office (ICO). Verified requests are processed within one (1) calendar month by contacting <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a>.</p>`
   },
   {
     id: 'pp-ccpa-rights',
     docType: 'privacy_policy',
     section: 'California Consumer Rights',
-    title: 'CCPA / CPRA Notice at Collection & "Do Not Sell or Share"',
+    title: 'California Consumer Privacy Rights (CCPA / CPRA Disclosures)',
     jurisdiction: 'CCPA',
     guidance: REGULATOR_CITATIONS.CPPA_OPT_OUT_SPI,
-    requiredIf: (a) => !a.jurisdictions || a.jurisdictions.some((j: string) => j.includes('CCPA') || j.includes('California')),
+    requiredIf: (a, ctx) => ctx.jurisdictions.some((j: string) => /ccpa|cpra|california/i.test(j)),
     template: (v) => `
 <h3>3. California Consumer Privacy Rights (CCPA / CPRA Disclosures)</h3>
 <p>Under the California Consumer Privacy Act as amended by the California Privacy Rights Act (Cal. Civ. Code § 1798.100 et seq.):</p>
 <div class="regulatory-callout">
   <h4>Notice of Right to Opt-Out of Sale and Sharing</h4>
-  <p><strong>We do NOT sell personal data for monetary consideration.</strong> However, under CPRA definitions, deploying third-party analytics pixels or behavioral advertising tags may be deemed "sharing" for cross-context behavioral advertising.</p>
-  <p>You have the absolute right to direct us not to sell or share your personal information. You may submit an opt-out request at our dedicated portal or by emailing <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a> with the subject line "CCPA Do Not Sell/Share".</p>
+  <p><strong>We do not sell personal data for monetary compensation.</strong> However, under CPRA statutory definitions, deploying third-party analytics pixels or behavioral advertising tags may be deemed a "sale" or "share" for cross-context behavioral advertising.</p>
+  <p>California consumers have the right to direct businesses not to sell or share their personal information. You may submit an opt-out request at our dedicated portal or by emailing <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a> with the subject line "CCPA Opt-Out".</p>
 </div>
-<p><strong>Recognition of Global Privacy Control (GPC):</strong> In strict conformance with Cal. Code Regs. tit. 11 § 7025, our web properties automatically detect and honor browser-level Global Privacy Control (GPC) opt-out preference signals without requiring manual submission.</p>
-<p><strong>Limitation of Sensitive Personal Information:</strong> We do not use or disclose Sensitive Personal Information (SPI) for any purpose other than providing the core services requested by the consumer (Cal. Civ. Code § 1798.121; Cal. Code Regs. tit. 11 § 7027).</p>`
+<p><strong>Recognition of Global Privacy Control (GPC):</strong> In accordance with Cal. Code Regs. tit. 11 § 7025, when our web properties receive a recognized browser-level Global Privacy Control (GPC) opt-out preference signal via standard HTTP request headers or DOM signals, our consent system treats the signal as a valid consumer opt-out of cross-context behavioral advertising and personal data sales/shares for that browser session.</p>
+${v.collectsSensitive ? `
+<p><strong>Limitation of Sensitive Personal Information:</strong> We collect and process Sensitive Personal Information (SPI) solely for the necessary business purposes permitted under Cal. Code Regs. tit. 11 § 7027(m). You possess the statutory right to limit the use and disclosure of your Sensitive Personal Information under Cal. Civ. Code § 1798.121 by contacting <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a>.</p>` : `
+<p><strong>No Collection of Sensitive Personal Information:</strong> We do not collect or process Sensitive Personal Information (as defined in Cal. Civ. Code § 1798.140(ae)). Consequently, the statutory right to limit under Cal. Civ. Code § 1798.121 and Cal. Code Regs. tit. 11 § 7027 is not applicable to our operations.</p>`}
+<p><strong>Statutory Response Timeline:</strong> Pursuant to Cal. Civ. Code § 1798.130(a)(2), we confirm receipt of verifiable consumer requests within ten (10) business days and provide a substantive response within forty-five (45) calendar days (extendable once by an additional 45 days where reasonably necessary, with written notification).</p>`
   },
   {
     id: 'pp-coppa-minors',
@@ -218,7 +338,7 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     jurisdiction: 'COPPA',
     guidance: REGULATOR_CITATIONS.FTC_COPPA,
     template: (v) => v.hasMinors ? `
-<h3>4. Children's Data & Verifiable Parental Consent</h3>
+<h3>4. Children's Data &amp; Verifiable Parental Consent</h3>
 <p>Our Service provides features that may be accessible to minors under the age of ${v.minorsAgeLimit}. In compliance with the Children's Online Privacy Protection Act (COPPA, 16 C.F.R. Part 312) and GDPR Article 8:</p>
 <ul>
   <li>We obtain verifiable parental consent prior to collecting personal data from children under age 13 (or 16 in applicable EU member states).</li>
@@ -236,7 +356,7 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.EDPB_TRANSFERS,
     template: (v) => `
-<h3>5. Cross-Border Data Transfers & Safeguards</h3>
+<h3>5. Cross-Border Data Transfers &amp; Safeguards</h3>
 <p>Where personal data originates in the EEA, UK, or Switzerland and is transferred to servers located in third countries (e.g. the United States), we implement robust statutory safeguards pursuant to GDPR Chapter V:</p>
 <ul>
   <li><strong>EU-US Data Privacy Framework (DPF):</strong> Transfers to certified US service providers operate under the European Commission's Adequacy Decision of July 10, 2023.</li>
@@ -252,7 +372,7 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.CPPA_PURPOSE_LIMITATION,
     template: (v) => `
-<h3>6. Authorized Sub-Processors & Service Providers</h3>
+<h3>6. Authorized Sub-Processors &amp; Service Providers</h3>
 <p>We engage vetted third-party service providers bound by executed Data Processing Agreements (DPAs) with strict confidentiality and audit commitments (GDPR Art. 28):</p>
 <table class="compliance-table">
   <thead>
@@ -278,19 +398,19 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     id: 'pp-contact-dpo',
     docType: 'privacy_policy',
     section: 'Supervisory Authority & Contact',
-    title: 'Data Protection Officer & Supervisory Authority Inquiries',
+    title: 'Data Protection Lead & Supervisory Authority Inquiries',
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.EDPB_CONSENT,
     template: (v) => `
-<h3>7. Data Protection Officer & Supervisory Authority</h3>
-<p>For questions, statutory notices, or to exercise your rights, contact our Data Protection Team:</p>
+<h3>7. Data Protection Lead &amp; Supervisory Authority</h3>
+<p>For questions, statutory notices, or to exercise your rights, contact our Data Protection Lead:</p>
 <div class="contact-dpo-box">
-  <p><strong>Designated Privacy Officer:</strong> ${v.dpoName || 'Compliance Office'}</p>
+  <p><strong>Designated Privacy Lead:</strong> ${v.dpoName || 'Compliance Office'}</p>
   <p><strong>Direct Inquiries:</strong> <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a></p>
   <p><strong>Corporate Address:</strong> ${v.companyAddress}</p>
   <p><strong>Competent Lead Supervisory Authority:</strong> ${v.supervisoryAuthority}</p>
 </div>
-<p>European and UK residents have the statutory right to lodge a formal complaint with their national data protection authority if they consider that our processing violates applicable data protection regulations.</p>`
+<p>European and UK residents retain the statutory right to lodge a formal complaint with their national data protection authority if they consider that our processing violates applicable data protection regulations.</p>`
   },
 
   // ==========================================
@@ -306,8 +426,8 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     template: (v) => `
 <h2>Terms of Service & User Agreement</h2>
 <p class="doc-meta"><strong>Effective Date:</strong> ${v.dateStr} | <strong>Governing Jurisdiction:</strong> ${v.governingLaw}</p>
-<p>These Terms of Service ("Terms") constitute a legally binding agreement between you ("User", "you") and <strong>${v.companyName}</strong> ("Company", "we", "us") governing your access to and use of <strong>${v.siteUrl}</strong> and associated software, services, and APIs (collectively, the "Platform").</p>
-<p>BY ACCESSING OR USING OUR PLATFORM, YOU CONFIRM THAT YOU ARE AT LEAST 18 YEARS OF AGE (OR THE AGE OF MAJORITY IN YOUR RESIDENCE) AND AGREE TO BE BOUND BY THESE TERMS.</p>`
+<p>These Terms of Service ("Terms") constitute a legally binding agreement between you ("User", "you") and <strong>${v.companyName}</strong> ("Company", "we", "us") governing your access to and use of our website located at <strong>${v.siteUrl}</strong> (the "Site") and all associated services, software, APIs, features, and content (collectively, the "Platform" or the "Site").</p>
+<p><strong>Age Requirement:</strong> You must be at least 18 years of age, or the legal age of majority in your jurisdiction, to enter into binding contracts. If you are between the ages of 13 and 17 (or 16 and 17 in the EEA), you may only access and use the Platform with the verifiable consent and active supervision of your parent or legal guardian who agrees to be bound by these Terms. The Platform is strictly not intended for or directed to children under 13 years of age (or under 16 in jurisdictions subject to GDPR Article 8 unless parental authorization is provided).</p>`
   },
   {
     id: 'tos-accounts',
@@ -318,7 +438,7 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     guidance: REGULATOR_CITATIONS.CPPA_PURPOSE_LIMITATION,
     requiredIf: (a) => a.has_accounts !== false,
     template: (v) => `
-<h3>1. Account Registration & Security</h3>
+<h3>Account Registration & Security</h3>
 <p>To utilize specific features of the Platform, you must create a registered account. You agree to:</p>
 <ul>
   <li>Provide accurate, current, and complete registration information.</li>
@@ -336,7 +456,7 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     guidance: REGULATOR_CITATIONS.EU_WITHDRAWAL,
     requiredIf: (a) => a.has_subscriptions !== false || a.sells_physical_products || a.collects_payment,
     template: (v) => `
-<h3>2. Subscriptions, Fees & Automatic Renewal</h3>
+<h3>Subscriptions, Fees & Automatic Renewal</h3>
 <p>Certain services require a paid subscription. By purchasing a subscription:</p>
 <ul>
   <li><strong>Continuous Billing:</strong> You authorize us (via our PCI-DSS compliant payment processor) to bill your designated payment method on a recurring cycle (monthly or annually) until cancelled.</li>
@@ -353,12 +473,12 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.EU_WITHDRAWAL,
     template: (v) => `
-<h3>3. Refund Policy & EU Statutory Right of Withdrawal</h3>
-<p>Our refund policies reflect customer satisfaction commitments and statutory requirements:</p>
+<h3>Refund Policy & EU Statutory Right of Withdrawal</h3>
+<p>Our cancellation and refund provisions reflect both mandatory statutory consumer rights and our commercial satisfaction commitments:</p>
 <ul>
-  <li><strong>General Refund Policy:</strong> We offer a <strong>${v.refundPeriodDays}-day money-back guarantee</strong> for initial purchases if our service fails to meet documented specifications.</li>
-  <li><strong>EEA / UK Statutory 14-Day Withdrawal Right:</strong> In accordance with the EU Consumer Rights Directive (Directive 2011/83/EU), consumers residing in the EEA or UK possess a statutory right to withdraw from distance contracts within fourteen (14) days of purchase without penalty.</li>
-  <li><strong>Digital Content Waiver:</strong> If you explicitly consent to the immediate performance of digital services or immediate download of digital deliverables before the 14-day withdrawal period expires, you acknowledge that your statutory right of withdrawal is waived once access has commenced.</li>
+  <li><strong>EEA / EU / UK Statutory 14-Day Right of Withdrawal:</strong> Under Directive 2011/83/EU on Consumer Rights (and equivalent UK consumer regulations), consumers habitually residing in the European Economic Area or United Kingdom possess an unconditional statutory right to cancel and withdraw from distance contracts within fourteen (14) calendar days from the date of conclusion of the contract without providing any reason and without penalty. If you validly exercise this statutory right, we will reimburse all payments received from you without undue delay and in any event within fourteen (14) calendar days of receiving your withdrawal notice.</li>
+  <li><strong>Digital Content & Immediate SaaS Provisioning Waiver:</strong> Under Article 16(m) of Directive 2011/83/EU, the statutory right of withdrawal does not apply to the supply of digital content not supplied on a tangible medium or immediate online SaaS provisioning if performance has begun. Crucially, this waiver is <em>not automatic</em>: it applies only if, prior to purchase completion during the checkout process: (i) you have provided your explicit prior consent to commence performance immediately during the 14-day statutory withdrawal period, and (ii) you have affirmatively acknowledged that you will thereby lose your right of withdrawal once digital provisioning has begun. Where performance has commenced with your express consent prior to withdrawal, any refund shall be proportional only to the unused portion of the service.</li>
+  <li><strong>Commercial Satisfaction Guarantee:</strong> Separate and distinct from the unconditional statutory withdrawal right above, we offer a <strong>${v.refundPeriodDays}-day money-back guarantee</strong> for initial subscription purchases if our service fails to meet documented operational specifications. To request a refund under our commercial guarantee, contact our support team at <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a>.</li>
 </ul>`
   },
   {
@@ -370,9 +490,37 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     guidance: REGULATOR_CITATIONS.CPPA_PURPOSE_LIMITATION,
     requiredIf: (a) => a.hosts_ugc === true,
     template: (v) => `
-<h3>4. User-Generated Content (UGC) & Intellectual Property</h3>
+<h3>User-Generated Content (UGC) & Intellectual Property</h3>
 <p>Users retain ownership of any content, text, data, or media submitted to the Platform ("User Content"). However, by submitting User Content, you grant ${v.companyName} a worldwide, non-exclusive, royalty-free, transferable license to host, display, and reproduce such content solely for operating the Platform.</p>
 <p><strong>DMCA Copyright Policy:</strong> We comply with the Digital Millennium Copyright Act (17 U.S.C. § 512). If you believe your copyrighted work is infringed, submit a formal takedown notice to our designated Copyright Agent at <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a> with identification of the copyrighted work and contact credentials.</p>`
+  },
+  {
+    id: 'tos-suspension',
+    docType: 'terms_of_service',
+    section: 'Termination & Suspension',
+    title: 'Account Suspension, Termination & Closure',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EU_WITHDRAWAL,
+    template: (v) => `
+<h3>Account Suspension, Termination & Closure</h3>
+<p>Both you and ${v.companyName} retain specific rights regarding account termination and service discontinuation:</p>
+<ul>
+  <li><strong>Termination by User:</strong> You may close your account and terminate these Terms at any time by navigating to your account settings or contacting <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a>. Termination takes effect at the conclusion of your current billing period.</li>
+  <li><strong>Ordinary Termination by Company:</strong> We may terminate your account or discontinue the Platform for convenience by providing you with at least fourteen (14) calendar days advance written notice via email, with a pro-rata refund of any prepaid fees for unexpired subscription periods.</li>
+  <li><strong>Suspension or Immediate Termination for Cause:</strong> We may suspend or terminate your access immediately only upon: (i) material breach of these Terms or the Acceptable Use Policy; (ii) engagement in fraudulent, unlawful, or security-compromising activities; or (iii) failure to cure a remediable breach within seven (7) days of written notice. Where suspension occurs, we will provide a clear written explanation of the grounds for suspension.</li>
+  <li><strong>Data Retrieval & Export:</strong> Except where prohibited by law or urgent security concerns, you will be granted a reasonable opportunity (not less than thirty (30) days following notice) to retrieve and export your customer data prior to account deletion. Suspension or termination for cause does not prejudice any non-waivable statutory consumer withdrawal rights accrued prior to the breach.</li>
+</ul>`
+  },
+  {
+    id: 'tos-modifications',
+    docType: 'terms_of_service',
+    section: 'Modifications',
+    title: 'Modifications to Terms of Service',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EDPB_CONSENT,
+    template: (v) => `
+<h3>Modifications to Terms</h3>
+<p>We reserve the right to modify these Terms to reflect changes in our services, applicable statutes, or regulatory requirements. We will notify you of any material changes at least thirty (30) days before they take effect by email to your registered address and via a prominent announcement on the Platform. If you do not agree to the amended terms, you may terminate your account without penalty prior to the effective date. Your continued access to or use of the Platform after the effective date constitutes your agreement to the updated Terms.</p>`
   },
   {
     id: 'tos-liability',
@@ -382,10 +530,16 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.CPPA_PURPOSE_LIMITATION,
     template: (v) => `
-<h3>5. Limitation of Liability & Warranty Disclaimer</h3>
-<p>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.</p>
-<p>IN NO EVENT SHALL ${v.companyName}, ITS OFFICERS, DIRECTORS, OR AGENTS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES (INCLUDING LOSS OF PROFITS, DATA, USE, OR GOODWILL) ARISING OUT OF OR IN CONNECTION WITH YOUR ACCESS TO OR USE OF THE PLATFORM.</p>
-<p>OUR TOTAL AGGREGATE LIABILITY ARISING FROM ALL CLAIMS SHALL BE LIMITED TO THE AMOUNT PAID BY YOU TO THE COMPANY IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM OR ONE HUNDRED US DOLLARS ($100), WHICHEVER IS GREATER.</p>`
+<h3>Limitation of Liability & Warranty Disclaimer</h3>
+<p>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT, SUBJECT ALWAYS TO MANDATORY CONSUMER PROTECTIONS.</p>
+<p><strong>MANDATORY STATUTORY CARVE-OUTS:</strong> NOTHING IN THESE TERMS SHALL OPERATE TO EXCLUDE OR LIMIT EITHER PARTY'S LIABILITY FOR:</p>
+<ul>
+  <li>(A) DEATH OR PERSONAL INJURY CAUSED BY NEGLIGENCE;</li>
+  <li>(B) FRAUD OR FRAUDULENT MISREPRESENTATION;</li>
+  <li>(C) GROSS NEGLIGENCE OR INTENTIONAL/WILLFUL MISCONDUCT; OR</li>
+  <li>(D) ANY STATUTORY RIGHTS OR NON-WAIVABLE LEGAL GUARANTEES AFFORDED TO CONSUMERS UNDER APPLICABLE LAW, INCLUDING MANDATORY CONFORMITY GUARANTEES UNDER DIRECTIVE (EU) 2019/770 ON CONTRACTS FOR THE SUPPLY OF DIGITAL CONTENT AND SERVICES.</li>
+</ul>
+<p>SUBJECT TO THE FOREGOING CARVE-OUTS AND APPLICABLE CONSUMER STATUTES, IN NO EVENT SHALL ${v.companyName}, ITS OFFICERS, DIRECTORS, OR AGENTS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES (INCLUDING LOSS OF PROFITS, DATA, OR GOODWILL), AND TOTAL AGGREGATE LIABILITY FOR ALL CLAIMS SHALL BE LIMITED TO THE AMOUNT PAID BY YOU TO THE COMPANY IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM OR ONE HUNDRED US DOLLARS ($100), WHICHEVER IS GREATER.</p>`
   },
   {
     id: 'tos-governing-law',
@@ -395,9 +549,13 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.CPPA_PURPOSE_LIMITATION,
     template: (v) => `
-<h3>6. Governing Law & Dispute Resolution</h3>
-<p>These Terms and any dispute arising out of or related hereto shall be governed by and construed in accordance with the laws of <strong>${v.governingLaw}</strong>, without regard to conflicts of law principles.</p>
-<p>Any legal suit, action, or proceeding shall be instituted exclusively in the competent courts located in <strong>${v.disputeForum}</strong>, and each party irrevocably submits to the jurisdiction of such courts.</p>`
+<h3>Governing Law & Dispute Resolution</h3>
+<p>These Terms and any dispute arising out of or related hereto shall be governed by and construed in accordance with the laws of <strong>${v.governingLaw}</strong>, without regard to conflicts of law principles, subject to mandatory consumer conflict rules.</p>
+<div class="regulatory-reference-card">
+  <span class="ref-badge">Consumer Mandatory Protections (Rome I Regulation)</span>
+  <p><strong>FOR CONSUMERS RESIDING IN THE EUROPEAN UNION, EEA, OR THE UNITED KINGDOM:</strong> Under Article 6 of Regulation (EC) No 593/2008 (Rome I), the choice of governing law shall not have the result of depriving you of the protection afforded to you by provisions that cannot be derogated from by agreement under the law of the country where you have your habitual residence. You may bring proceedings against ${v.companyName} either in the courts of ${v.disputeForum} or in the competent courts of your member state of habitual residence.</p>
+  <p>The European Commission provides an online dispute resolution platform for consumer complaints, accessible at <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">https://ec.europa.eu/consumers/odr</a>.</p>
+</div>`
   },
 
   // ==========================================
@@ -422,13 +580,13 @@ export const CLAUSE_CATALOG: ModularClause[] = [
   {
     id: 'cookie-inventory-table',
     docType: 'cookie_policy',
-    section: 'Live Inventory',
-    title: 'Audit-Verified Cookie & Tracker Inventory',
+    section: 'Cookie Inventory',
+    title: 'Cookie & Tracking Technologies Inventory',
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.ICO_DIRECT_MARKETING,
     template: (v) => `
-<h3>1. Live Audited Cookie Inventory</h3>
-<p>The following table lists the active cookies and trackers identified during our compliance scan of <strong>${v.siteUrl}</strong>:</p>
+<h3>Cookie & Tracking Technologies Inventory</h3>
+<p>The following table lists the active cookies and tracking technologies deployed on <strong>${v.siteUrl}</strong>:</p>
 <table class="compliance-table">
   <thead>
     <tr>
@@ -444,7 +602,7 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     <tr>
       <td><code>${c.name}</code></td>
       <td>${c.provider}</td>
-      <td><span class="category-badge cat-${c.category.toLowerCase()}">${c.category}</span></td>
+      <td><span class="category-badge cat-${c.category.toLowerCase().replace(/[^a-z]/g, '-')}">${c.category}</span></td>
       <td>${c.expiry}</td>
       <td>${c.purpose}</td>
     </tr>`).join('')}
@@ -459,7 +617,7 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.EDPB_CONSENT,
     template: (v) => `
-<h3>2. Managing Your Cookie Preferences</h3>
+<h3>Managing Your Cookie Preferences</h3>
 <p>When you first visit our site, our Cookie Banner allows you to accept or decline cookies by category:</p>
 <ul>
   <li><strong>Strictly Necessary:</strong> Always active. Essential for authentication, security, and session management.</li>
@@ -479,15 +637,16 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     title: 'End User License Agreement (EULA)',
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.CPPA_PURPOSE_LIMITATION,
+    requiredIf: (a) => a.distributes_software === true,
     template: (v) => `
 <h2>End User License Agreement (EULA)</h2>
 <p class="doc-meta"><strong>Effective Date:</strong> ${v.dateStr}</p>
 <p>This End User License Agreement ("EULA") is a legal agreement between you and <strong>${v.companyName}</strong> regarding software, client libraries, and applications provided through <strong>${v.siteUrl}</strong>.</p>
-<h3>1. Grant of License</h3>
+<h3>Grant of License</h3>
 <p>We grant you a revocable, non-exclusive, non-transferable, limited license to download, install, and execute the Software strictly in accordance with this Agreement.</p>
-<h3>2. Restrictions</h3>
+<h3>Restrictions</h3>
 <p>You agree not to, and you will not permit others to: (a) license, sell, rent, lease, or distribute the Software; (b) reverse engineer, decompile, or disassemble any portion of the Software; (c) modify, translate, or create derivative works based upon the Software; (d) remove or obscure any proprietary copyright notices.</p>
-<h3>3. Telemetry & Analytics</h3>
+<h3>Telemetry & Analytics</h3>
 <p>The Software may collect technical telemetry and diagnostic crash data to maintain stability. Such telemetry is anonymized and processed in accordance with our Privacy Policy.</p>`
   },
 
@@ -505,7 +664,7 @@ export const CLAUSE_CATALOG: ModularClause[] = [
 <h2>Acceptable Use Policy (AUP)</h2>
 <p class="doc-meta"><strong>Effective Date:</strong> ${v.dateStr}</p>
 <p>This Acceptable Use Policy defines prohibited activities when accessing <strong>${v.siteUrl}</strong> and services operated by <strong>${v.companyName}</strong>.</p>
-<h3>1. Prohibited Actions</h3>
+<h3>Prohibited Actions</h3>
 <p>You may not use our Platform to:</p>
 <ul>
   <li>Violate any local, national, or international law, statute, or regulation.</li>
@@ -514,8 +673,8 @@ export const CLAUSE_CATALOG: ModularClause[] = [
   <li>Distribute unsolicited commercial communications, malware, trojans, or phishing payloads.</li>
   <li>Infringe upon intellectual property, privacy, or proprietary rights of third parties.</li>
 </ul>
-<h3>2. Enforcement & Suspension</h3>
-<p>We reserve the right to immediately suspend or terminate access for any account found in violation of this Policy without prior notice or refund liability.</p>`
+<h3>Enforcement, Notice & Remediation</h3>
+<p>We investigate suspected violations of this Policy. If we determine that a violation has occurred, we will issue a written warning describing the violation and, where practicable, afford a cure period of not less than seven (7) days. We reserve the right to suspend or restrict access where urgent security risks or severe unlawful acts occur. Any suspension or termination shall be conducted in accordance with the termination procedures in our Terms of Service and without prejudice to statutory consumer rights, including the right to refund of unperformed services or statutory withdrawal rights under Directive 2011/83/EU where applicable.</p>`
   },
 
   // ==========================================
@@ -528,19 +687,166 @@ export const CLAUSE_CATALOG: ModularClause[] = [
     title: 'General & Professional Advice Disclaimer',
     jurisdiction: 'GLOBAL',
     guidance: REGULATOR_CITATIONS.CPPA_PURPOSE_LIMITATION,
+    requiredIf: (a) => a.provides_advice === true,
     template: (v) => `
 <h2>Legal & Professional Information Disclaimer</h2>
 <p class="doc-meta"><strong>Effective Date:</strong> ${v.dateStr}</p>
 <p>The information provided by <strong>${v.companyName}</strong> on <strong>${v.siteUrl}</strong> is for general informational and educational purposes only.</p>
-<h3>1. No Legal, Medical, or Financial Advice</h3>
+<h3>No Legal, Medical, or Financial Advice</h3>
 <p>All materials and software tools are provided in good faith. However, we make no representation or warranty of any kind regarding completeness, accuracy, or suitability. Content published on the Platform does not constitute formal legal, financial, or medical advice and does not establish any attorney-client or professional fiduciary relationship.</p>
-<h3>2. External Links Disclaimer</h3>
+<h3>External Links Disclaimer</h3>
 <p>The Site may contain links to third-party websites or content. Such external links are not investigated or monitored by us for accuracy or completeness, and we do not endorse or assume liability for third-party information.</p>`
+  },
+
+  // ==========================================
+  // RETURN & REFUND POLICY CLAUSES
+  // ==========================================
+  {
+    id: 'rp-header',
+    docType: 'return_policy',
+    section: 'Overview & Statutory Framework',
+    title: 'Return, Refund & Cancellation Policy Notice',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EU_WITHDRAWAL,
+    template: (v) => `
+<h2>Return, Refund & Cancellation Policy</h2>
+<p class="doc-meta"><strong>Effective Date:</strong> ${v.dateStr} | <strong>Compliance Standards:</strong> EU Consumer Rights Directive (Directive 2011/83/EU) & Digital Content Directive (EU) 2019/770</p>
+<p>This Return, Refund &amp; Cancellation Policy governs digital services, subscriptions, and purchases made through <strong>${v.siteUrl}</strong>, operated by <strong>${v.companyName}</strong>.</p>`
+  },
+  {
+    id: 'rp-statutory-withdrawal',
+    docType: 'return_policy',
+    section: 'Statutory Right of Withdrawal',
+    title: 'Statutory 14-Day Right of Withdrawal (EEA & UK)',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EU_WITHDRAWAL,
+    template: (v) => `
+<h3>Statutory 14-Day Right of Withdrawal (EEA & UK Consumers)</h3>
+<p>If you are a consumer habitually residing in the European Economic Area (EEA) or the United Kingdom, you possess an unconditional statutory right to cancel and withdraw from your contract within fourteen (14) calendar days from the date of purchase without giving any reason and without incurring any penalty.</p>
+<p>To exercise your statutory right of withdrawal, you must notify us of your clear decision prior to the expiration of the 14-day period. You may do so by contacting us at <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a> or using the Model Withdrawal Form below.</p>
+<p>Upon receipt of your withdrawal notice, we will reimburse all payments received from you without undue delay and in any event within fourteen (14) calendar days using the same payment method as was used for the initial transaction.</p>`
+  },
+  {
+    id: 'rp-digital-exceptions',
+    docType: 'return_policy',
+    section: 'Digital Content Exceptions',
+    title: 'Digital Content & SaaS Performance Exceptions',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EU_WITHDRAWAL,
+    template: (v) => `
+<h3>Digital Content & SaaS Performance Exceptions</h3>
+<p>Under Article 16(m) of Directive 2011/83/EU, the right of withdrawal is waived for digital content not supplied on a tangible medium or immediate online SaaS provisioning only when all of the following conditions are met:</p>
+<ul>
+  <li>You provided express prior consent at checkout to begin service provisioning immediately during the 14-day cancellation window; and</li>
+  <li>You explicitly acknowledged during purchase that you lose your right of withdrawal once immediate digital provisioning or access commences.</li>
+</ul>
+<p>If you begin using digital services during the withdrawal period with prior consent, and subsequently cancel before completion, you will only be charged a proportional amount corresponding to the services performed up to the moment of cancellation.</p>`
+  },
+  {
+    id: 'rp-commercial-guarantee',
+    docType: 'return_policy',
+    section: 'Commercial Satisfaction Guarantee',
+    title: 'Commercial Money-Back Guarantee',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EU_WITHDRAWAL,
+    template: (v) => `
+<h3>Commercial Money-Back Satisfaction Guarantee</h3>
+<p>Separate from your statutory withdrawal rights, ${v.companyName} provides a <strong>${v.refundPeriodDays}-day commercial satisfaction guarantee</strong>. If our platform or digital deliverables fail to conform to documented technical specifications or service descriptions, you may request a full refund within ${v.refundPeriodDays} calendar days of initial purchase by contacting our support team at <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a> with your order reference.</p>`
+  },
+  {
+    id: 'rp-process',
+    docType: 'return_policy',
+    section: 'Model Withdrawal Form',
+    title: 'Refund Procedure & Model Statutory Form',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EU_WITHDRAWAL,
+    template: (v) => `
+<h3>Refund Request Procedure & Model Withdrawal Form</h3>
+<p>To submit a cancellation or refund request, send an email to <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a> with your account email and transaction ID. You may optionally use the following model text:</p>
+<div class="model-withdrawal-box" style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.2); padding: 1.25rem; border-radius: 6px; font-family: monospace; font-size: 0.8125rem; line-height: 1.6;">
+  To: ${v.companyName} (${v.dpoEmail})<br/>
+  I hereby give notice that I withdraw from my contract for the provision of the following service: [Insert Service / Plan Name]<br/>
+  Ordered on: [Insert Date] / Received on: [Insert Date]<br/>
+  Consumer Name: [Insert Name]<br/>
+  Consumer Address: [Insert Address]<br/>
+  Consumer Email: [Insert Email]<br/>
+  Date: [Insert Date]
+</div>`
+  },
+
+  // ==========================================
+  // ACCESSIBILITY STATEMENT CLAUSES
+  // ==========================================
+  {
+    id: 'as-header',
+    docType: 'accessibility_statement',
+    section: 'Commitment & Standards',
+    title: 'Digital Accessibility Commitment & Conformance Standard',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EDPB_CONSENT,
+    template: (v) => `
+<h2>Website Accessibility Statement</h2>
+<p class="doc-meta"><strong>Last Updated:</strong> ${v.dateStr} | <strong>Conformance Standard:</strong> Web Content Accessibility Guidelines (WCAG) 2.1 Level AA</p>
+<p><strong>${v.companyName}</strong> is committed to ensuring digital accessibility for individuals with disabilities when using <strong>${v.siteUrl}</strong>. We continually apply relevant accessibility standards to improve user experience for everyone, in alignment with the European Accessibility Act (Directive (EU) 2019/882), Section 508 of the US Rehabilitation Act, and Title III of the Americans with Disabilities Act (ADA).</p>`
+  },
+  {
+    id: 'as-measures',
+    docType: 'accessibility_statement',
+    section: 'Technical Measures',
+    title: 'Accessibility Measures & Conformance Status',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EDPB_CONSENT,
+    template: (v) => `
+<h3>Accessibility Measures & Conformance Status</h3>
+<p>We take the following organizational and technical measures to ensure accessibility across our platform:</p>
+<ul>
+  <li>Include accessibility as an integral component of our UI/UX design specifications and software development lifecycle.</li>
+  <li>Ensure semantic HTML structure with ARIA landmarks, roles, and accessible names for interactive elements.</li>
+  <li>Maintain compliant color contrast ratios (minimum 4.5:1 for normal text and 3:1 for large text and interactive components).</li>
+  <li>Ensure full keyboard navigability with visible focus indicators and logical tab order.</li>
+  <li>Provide meaningful text alternatives (alt text) for non-decorative imagery and media.</li>
+  <li>Support zoom and magnification up to 200% without loss of content or functionality.</li>
+</ul>
+<p><strong>Conformance Status:</strong> <strong>${v.siteUrl}</strong> is partially conformant with WCAG 2.1 Level AA. Partially conformant means that while the vast majority of our digital surfaces meet the standard, some third-party components or integrations may still be undergoing optimization.</p>`
+  },
+  {
+    id: 'as-specs',
+    docType: 'accessibility_statement',
+    section: 'Compatibility',
+    title: 'Technical Specifications & Browser Compatibility',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EDPB_CONSENT,
+    template: (v) => `
+<h3>Technical Specifications & Compatibility</h3>
+<p>Accessibility of <strong>${v.siteUrl}</strong> relies on the following technologies to work with modern web browsers and assistive technologies (such as NVDA, JAWS, VoiceOver, and TalkBack):</p>
+<ul>
+  <li>HTML5 / WAI-ARIA 1.2</li>
+  <li>CSS3 / Responsive Flexbox and Grid layouts</li>
+  <li>ECMAScript / DOM accessibility APIs</li>
+</ul>
+<p>The platform is designed and tested to be compatible with major desktop and mobile browsers (Chrome, Firefox, Safari, Edge) running assistive screen readers.</p>`
+  },
+  {
+    id: 'as-feedback',
+    docType: 'accessibility_statement',
+    section: 'Feedback Contact',
+    title: 'Accessibility Feedback, Inquiries & Escalation',
+    jurisdiction: 'GLOBAL',
+    guidance: REGULATOR_CITATIONS.EDPB_CONSENT,
+    template: (v) => `
+<h3>Feedback, Inquiries & Escalation</h3>
+<p>We welcome your feedback on the accessibility of <strong>${v.siteUrl}</strong>. If you encounter accessibility barriers, require alternative formats, or need assistance, please contact our Accessibility Lead:</p>
+<div class="contact-dpo-box">
+  <p><strong>Accessibility Inquiries:</strong> <a href="mailto:${v.dpoEmail}">${v.dpoEmail}</a></p>
+  <p><strong>Responsible Entity:</strong> ${v.companyName}</p>
+  <p><strong>Mailing Address:</strong> ${v.companyAddress}</p>
+  <p><strong>Response Commitment:</strong> We endeavor to respond to accessibility inquiries and remediation requests within two (2) business days.</p>
+</div>`
   }
 ];
 
 // Helper to extract default cookies based on declared questionnaire answers
-export function buildCookieInventoryFromAnswers(answers: Record<string, any>, scannedCookies?: DetectedCookieItem[]): DetectedCookieItem[] {
+export function buildCookieInventoryFromAnswers(answers: Record<string, any>, scannedCookies?: DetectedCookieItem[], clientDomain = 'claudetest.com'): DetectedCookieItem[] {
   if (scannedCookies && scannedCookies.length > 0) {
     return scannedCookies;
   }
@@ -548,115 +854,213 @@ export function buildCookieInventoryFromAnswers(answers: Record<string, any>, sc
   const inventory: DetectedCookieItem[] = [
     {
       name: 'pl_consent',
-      provider: 'paperloo.com',
-      category: 'Necessary',
+      provider: `First-party (${clientDomain})`,
+      category: 'Strictly Necessary',
       expiry: '12 months',
-      purpose: 'Stores user consent preferences across session requests'
+      purpose: 'Stores user cookie consent choices across browser sessions and maps to Google Consent Mode v2'
     },
     {
-      name: 'PHPSESSID / session_id',
-      provider: 'First-party',
-      category: 'Necessary',
+      name: 'session_id / auth_token',
+      provider: `First-party (${clientDomain})`,
+      category: 'Strictly Necessary',
       expiry: 'Session',
-      purpose: 'Maintains user authentication state and csrf protection'
+      purpose: 'Maintains authenticated state and CSRF security tokens during navigation'
     }
   ];
 
-  if (answers.uses_analytics !== false) {
+  // Analytics cookies (Google Analytics & Hotjar)
+  if (answers.uses_analytics !== false || answers.uses_google_analytics !== false) {
     inventory.push(
       {
         name: '_ga',
-        provider: 'Google Analytics',
-        category: 'Analytics',
+        provider: 'Google Analytics (Google Ireland Ltd.)',
+        category: 'Analytics & Performance',
         expiry: '2 years',
-        purpose: 'Calculates visitor, session and campaign data for site analytics'
+        purpose: 'Calculates visitor, session and campaign data for aggregated site metrics'
       },
       {
         name: '_ga_*',
-        provider: 'Google Analytics',
-        category: 'Analytics',
+        provider: 'Google Analytics (Google Ireland Ltd.)',
+        category: 'Analytics & Performance',
         expiry: '2 years',
         purpose: 'Maintains session state and unique pageview counts'
       }
     );
   }
 
-  if (answers.uses_ads === true || answers.uses_marketing_trackers === true) {
+  // Hotjar telemetry (session recording / UX heatmaps)
+  if (answers.uses_session_recording !== false || answers.uses_hotjar === true || answers.uses_analytics !== false) {
     inventory.push(
       {
-        name: '_fbp',
-        provider: 'Meta Platforms (Facebook)',
-        category: 'Marketing',
-        expiry: '90 days',
-        purpose: 'Delivers targeted advertisements on Facebook following visit'
+        name: '_hjSessionUser_*',
+        provider: 'Hotjar Ltd. (EEA)',
+        category: 'Analytics & Performance',
+        expiry: '1 year',
+        purpose: 'Stores a unique user ID to attribute user sessions across multiple page loads'
       },
       {
-        name: '_gcl_au',
-        provider: 'Google AdSense / Ads',
-        category: 'Marketing',
-        expiry: '90 days',
-        purpose: 'Stores conversion tracking information for ad campaigns'
+        name: '_hjSession_*',
+        provider: 'Hotjar Ltd. (EEA)',
+        category: 'Analytics & Performance',
+        expiry: '30 minutes',
+        purpose: 'Maintains current session state to ensure subsequent requests are attributed correctly'
       }
     );
   }
 
-  if (answers.collects_payment !== false) {
+  // Advertising & Marketing trackers (Meta Pixel & Google Ads)
+  if (answers.uses_ads !== false || answers.uses_marketing_trackers !== false || answers.uses_meta_pixel === true) {
+    inventory.push(
+      {
+        name: '_fbp',
+        provider: 'Meta Platforms Ireland Ltd. (Facebook Pixel)',
+        category: 'Advertising & Marketing',
+        expiry: '90 days',
+        purpose: 'Stores and tracks visits across websites for social ad conversion measurement and retargeting'
+      },
+      {
+        name: '_fbc',
+        provider: 'Meta Platforms Ireland Ltd. (Facebook Pixel)',
+        category: 'Advertising & Marketing',
+        expiry: '90 days',
+        purpose: 'Stores click ID query parameters to attribute conversions from Facebook advertisements'
+      },
+      {
+        name: '_gcl_au',
+        provider: 'Google Ads (Google Ireland Ltd.)',
+        category: 'Advertising & Marketing',
+        expiry: '90 days',
+        purpose: 'Stores conversion tracking telemetry for Google Ads campaign performance attribution'
+      }
+    );
+  }
+
+  if (answers.collects_payment !== false || answers.uses_stripe === true) {
     inventory.push({
       name: '__stripe_mid / __stripe_sid',
       provider: 'Stripe Inc.',
-      category: 'Necessary',
+      category: 'Strictly Necessary',
       expiry: '1 year / 30 mins',
-      purpose: 'Enables fraud detection and secure payment processing'
+      purpose: 'Enables fraud mitigation, risk assessment, and secure PCI-DSS tokenized payment processing'
     });
   }
 
   return inventory;
 }
 
-// Helper to build sub-processors list from answers
-export function buildSubProcessorsFromAnswers(answers: Record<string, any>) {
-  const processors = [
-    {
-      name: 'Vercel / Cloud Infrastructure',
-      category: 'Hosting & CDN',
-      purpose: 'Edge compute, content delivery, and application hosting',
-      transferSafeguard: 'EU-US DPF / Standard Contractual Clauses'
-    }
-  ];
+// Helper to build sub-processors list from answers and detected cookies
+export function buildSubProcessorsFromAnswers(answers: Record<string, any>, scannedCookies?: DetectedCookieItem[]) {
+  const processors: { name: string; category: string; purpose: string; transferSafeguard: string }[] = [];
 
-  if (answers.collects_payment !== false) {
+  // Cloud & Hosting (Always present if web service)
+  processors.push({
+    name: 'Vercel Inc. / Amazon Web Services (AWS)',
+    category: 'Cloud Infrastructure & CDN',
+    purpose: 'Edge compute routing, TLS termination, high-availability hosting',
+    transferSafeguard: 'EU-US DPF Certified & Standard Contractual Clauses (SCCs 2021/914)'
+  });
+
+  // Database persistence
+  if (answers.uses_us_cloud !== false) {
     processors.push({
-      name: 'Stripe Payments Inc.',
-      category: 'Payment Processor',
-      purpose: 'Credit card processing, billing subscriptions, and fraud prevention',
-      transferSafeguard: 'PCI-DSS Level 1 & EU-US DPF Certified'
+      name: 'Supabase Inc. / Cloud Database Infrastructure',
+      category: 'Database & Auth Storage',
+      purpose: 'Persistent relational database, encrypted session credentials, audit logs',
+      transferSafeguard: 'EU-US Data Privacy Framework (DPF) Certified'
     });
   }
 
-  if (answers.uses_analytics !== false) {
+  // Payment processing
+  if (answers.collects_payment !== false || answers.uses_stripe === true) {
     processors.push({
-      name: 'Google LLC (Google Analytics 4)',
-      category: 'Web Analytics',
-      purpose: 'Aggregated website traffic analysis and event tracking',
-      transferSafeguard: 'EU-US DPF & SCCs 2021/914'
+      name: 'Stripe Payments Europe Ltd. / Stripe Inc.',
+      category: 'Payment Processor & Fraud Mitigation',
+      purpose: 'PCI-DSS Level 1 payment tokenization, subscription billing, and Radar fraud screening',
+      transferSafeguard: 'EU-US DPF Certified & Standard Contractual Clauses'
     });
   }
 
+  // Web analytics
+  const hasAnalyticsCookies = scannedCookies?.some(c => c.name.startsWith('_ga') || (c.provider || '').toLowerCase().includes('google'));
+  if (answers.uses_analytics !== false || hasAnalyticsCookies) {
+    processors.push({
+      name: 'Google Ireland Limited / Google LLC (Google Analytics 4)',
+      category: 'Web & Interaction Telemetry',
+      purpose: 'Aggregated website traffic analysis, event measurement, and session statistics',
+      transferSafeguard: 'Commission Implementing Decision (EU) 2021/914 (SCCs) & EU-US DPF'
+    });
+  }
+
+  // Social & Behavioral Ads (Meta Pixel)
+  const hasMetaCookies = scannedCookies?.some(c => c.name.includes('_fbp') || (c.provider || '').toLowerCase().includes('meta') || (c.provider || '').toLowerCase().includes('facebook'));
+  if (answers.uses_ads === true || answers.uses_marketing_trackers === true || hasMetaCookies) {
+    processors.push({
+      name: 'Meta Platforms Ireland Ltd. / Meta Platforms, Inc.',
+      category: 'Conversion Tracking & Social Retargeting',
+      purpose: 'Cross-context behavioral advertising attribution and conversion measurement',
+      transferSafeguard: 'EU-US DPF Certified & Standard Contractual Clauses (Module 2/3)'
+    });
+  }
+
+  // Google Ads
+  const hasGoogleAds = scannedCookies?.some(c => c.name.includes('_gcl') || (c.provider || '').toLowerCase().includes('ads'));
+  if (answers.uses_ads === true || hasGoogleAds) {
+    processors.push({
+      name: 'Google Ireland Limited (Google Ads)',
+      category: 'Search & Display Ad Attribution',
+      purpose: 'Ad conversion attribution, audience matching, and campaign effectiveness',
+      transferSafeguard: 'EU-US DPF Certified & SCCs 2021/914'
+    });
+  }
+
+  // TikTok Ads
+  const hasTikTok = scannedCookies?.some(c => (c.name || '').includes('tt_') || (c.provider || '').toLowerCase().includes('tiktok'));
+  if (hasTikTok) {
+    processors.push({
+      name: 'TikTok Information Technologies UK / TikTok Pte. Ltd.',
+      category: 'Video Ad Measurement',
+      purpose: 'Attribution and conversion telemetry for TikTok ad campaigns',
+      transferSafeguard: 'Standard Contractual Clauses with Supplementary Technical Measures'
+    });
+  }
+
+  // Session replay & Heatmaps (Hotjar / Microsoft Clarity)
+  const hasHotjar = scannedCookies?.some(c => (c.name || '').includes('_hj') || (c.provider || '').toLowerCase().includes('hotjar'));
+  const hasClarity = scannedCookies?.some(c => (c.name || '').includes('_cl') || (c.provider || '').toLowerCase().includes('clarity'));
+  if (answers.uses_session_recording === true || hasHotjar) {
+    processors.push({
+      name: 'Hotjar Ltd. (Malta / EEA)',
+      category: 'User Experience & Session Heatmapping',
+      purpose: 'Aggregated user interaction telemetry and behavioral UX heatmaps',
+      transferSafeguard: 'In-Region EEA Processing (Malta) & GDPR Art. 28 DPA'
+    });
+  }
+  if (answers.uses_session_recording === true || hasClarity) {
+    processors.push({
+      name: 'Microsoft Corporation (Microsoft Clarity)',
+      category: 'Behavioral Analytics & Session Playback',
+      purpose: 'Session click-tracking and diagnostic UX playback metrics',
+      transferSafeguard: 'EU-US DPF Certified & Standard Contractual Clauses'
+    });
+  }
+
+  // Email communications
   if (answers.uses_email_marketing === true || answers.uses_mailchimp === true) {
     processors.push({
-      name: 'Mailchimp / SendGrid',
-      category: 'Email Communications',
-      purpose: 'Transactional emails, newsletters, and user notifications',
-      transferSafeguard: 'Executed DPA with Standard Contractual Clauses'
+      name: 'Intuit Inc. (Mailchimp) / Twilio Inc. (SendGrid)',
+      category: 'Email Delivery & Transactional Messaging',
+      purpose: 'Service announcements, transactional receipts, and newsletter communications',
+      transferSafeguard: 'Executed DPA with Standard Contractual Clauses & EU-US DPF'
     });
   }
 
+  // Support chat
   if (answers.uses_support_chat === true || answers.uses_intercom === true) {
     processors.push({
-      name: 'Intercom / Zendesk',
-      category: 'Customer Support',
-      purpose: 'Live chat widget and customer ticket management',
-      transferSafeguard: 'EU-US DPF Certified'
+      name: 'Intercom R&D Unlimited Company / Zendesk Inc.',
+      category: 'Customer Support & Help Desk',
+      purpose: 'Direct customer service ticketing, real-time messaging, and helpdesk logging',
+      transferSafeguard: 'EU-US DPF Certified & Standard Contractual Clauses'
     });
   }
 
@@ -666,16 +1070,20 @@ export function buildSubProcessorsFromAnswers(answers: Record<string, any>) {
 // Assemble full document by assembling clauses deterministically
 export function assembleDocumentFromClauses(
   docType: ModularClause['docType'],
-  site: { name: string; url: string; jurisdictions?: string[] },
+  site: { name: string; url: string; jurisdictions?: string[]; contact_email?: string },
   answers: Record<string, any>,
   scannedCookies?: DetectedCookieItem[]
 ): { html: string; markdown: string; clausesUsed: string[]; wordCount: number } {
-  let domain = 'example.com';
-  try {
-    domain = site.url ? new URL(site.url.startsWith('http') ? site.url : `https://${site.url}`).hostname.replace('www.', '') : 'example.com';
-  } catch {
-    domain = site.url || 'example.com';
-  }
+  // Clean & sanitize email and domain
+  const rawEmailInput = answers.dpo_email || answers.privacy_email || answers.contact_email || site.contact_email;
+  const { email: dpoEmail, domain, siteUrl: cleanSiteUrl } = sanitizeEmailAndDomain(site.url, site.name, rawEmailInput);
+
+  // Derive active jurisdictions
+  const rawJurisdictions = (site.jurisdictions && site.jurisdictions.length > 0)
+    ? site.jurisdictions
+    : (answers.jurisdictions && answers.jurisdictions.length > 0 ? answers.jurisdictions : ['GDPR (EU)']);
+
+  const activeJurisdictions: string[] = Array.isArray(rawJurisdictions) ? rawJurisdictions : [rawJurisdictions];
 
   const collectedCategories: string[] = [];
   if (answers.collects_email !== false) collectedCategories.push('Identifiers (Email & Contact)');
@@ -685,20 +1093,24 @@ export function assembleDocumentFromClauses(
   if (answers.has_accounts !== false) collectedCategories.push('Account Credentials & Security Logs');
   if (collectedCategories.length === 0) collectedCategories.push('Directly Provided Contact Details');
 
-  const cookies = buildCookieInventoryFromAnswers(answers, scannedCookies);
-  const subProcessors = buildSubProcessorsFromAnswers(answers);
+  const cookies = buildCookieInventoryFromAnswers(answers, scannedCookies, domain);
+  const subProcessors = buildSubProcessorsFromAnswers(answers, scannedCookies);
 
   const vars: ClauseVariables = {
     companyName: site.name || 'Company Inc.',
-    siteUrl: site.url || `https://${domain}`,
+    siteUrl: cleanSiteUrl,
     domain,
-    jurisdictions: site.jurisdictions || ['GDPR (EU)', 'CCPA (California)', 'UK GDPR'],
-    jurisdictionsStr: (site.jurisdictions || ['GDPR (EU)', 'CCPA (California)', 'UK GDPR']).join(', '),
+    jurisdictions: activeJurisdictions,
+    jurisdictionsStr: activeJurisdictions.join(', '),
     dateStr: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-    dpoName: answers.dpo_name || (answers.has_data_officer ? 'Data Protection Officer' : undefined),
-    dpoEmail: answers.dpo_email || `privacy@${domain}`,
+    dpoName: answers.dpo_name || (answers.has_data_officer ? 'Data Protection Lead' : undefined),
+    dpoEmail,
     companyAddress: answers.company_address || '100 Compliance Way, Suite 400, San Francisco, CA 94105',
-    supervisoryAuthority: answers.supervisory_authority || 'Lead European Data Protection Authority (EDPB / UK ICO)',
+    supervisoryAuthority: answers.supervisory_authority || (
+      activeJurisdictions.some(j => /uk/i.test(j))
+        ? 'UK Information Commissioner\'s Office (ICO)'
+        : 'Lead European Data Protection Authority (EDPB member state authority)'
+    ),
     collectedDataList: collectedCategories.join(', '),
     collectedDataCategories: collectedCategories,
     trackersList: cookies.map(c => c.provider).filter((v, i, a) => a.indexOf(v) === i).join(', '),
@@ -711,32 +1123,44 @@ export function assembleDocumentFromClauses(
     hasSubscriptions: answers.has_subscriptions !== false || answers.collects_payment !== false,
     refundPeriodDays: Number(answers.refund_period_days) || 14,
     hasUgc: answers.hosts_ugc === true,
+    collectsSensitive: answers.collects_sensitive === true,
     governingLaw: answers.governing_law || 'State of California, United States',
     disputeForum: answers.dispute_forum || 'San Francisco, California'
   };
 
+  const context = {
+    site: { ...site, url: cleanSiteUrl },
+    jurisdictions: activeJurisdictions
+  };
+
   const matchingClauses = CLAUSE_CATALOG.filter(clause => {
     if (clause.docType !== docType) return false;
-    if (clause.requiredIf && !clause.requiredIf(answers)) return false;
+    if (clause.requiredIf && !clause.requiredIf(answers, context)) return false;
     return true;
   });
 
-  const bodyHtml = matchingClauses.map(c => c.template(vars)).join('\n\n');
+  const rawBodyHtml = matchingClauses.map(c => c.template(vars)).join('\n\n');
+
+  // Dynamic sequential renumbering for all <h3> section headers to prevent any numbering jumps
+  let sectionCounter = 1;
+  const renumberedHtml = rawBodyHtml.replace(/<h3(?:\s+[^>]*)?>(\d+\.)?\s*([^<]+)<\/h3>/gi, (_match, _num, titleText) => {
+    return `<h3>${sectionCounter++}. ${titleText.trim()}</h3>`;
+  });
 
   const disclaimerBanner = `
-<div class="legal-disclaimer-box" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 1.25rem; margin-bottom: 2rem; color: #ef4444; font-size: 0.875rem; line-height: 1.5;">
-  <strong>STATUTORY COMPLIANCE NOTICE:</strong> This legal document has been deterministically compiled by Paperloo's modular clause engine grounded in official regulator guidelines (EDPB, CPPA, ICO). It reflects the declared technical parameters of <code>${vars.siteUrl}</code>. Always have local legal counsel review before publishing.
+<div class="legal-disclaimer-box" style="background: rgba(200, 241, 53, 0.05); border: 1px solid rgba(200, 241, 53, 0.25); border-radius: 8px; padding: 1.25rem; margin-bottom: 2rem; color: #d4d4d8; font-size: 0.8125rem; line-height: 1.5;">
+  <strong style="color: #c8f135;">COMPLIANCE NOTICE &amp; DISCLAIMER:</strong> This legal document has been generated via Paperloo's modular clause engine based on user declarations and technical configuration for <code>${vars.siteUrl}</code>. It reflects regulatory guidelines including EDPB Guidelines 05/2020, CPPA Regulations, and ICO statutory guidance. This self-assessment document does not constitute formal legal advice, a certified statutory audit, or an attorney-client relationship. Review by qualified legal counsel in your operating jurisdiction is advised.
 </div>`;
 
-  const fullHtml = `<div class="paperloo-modular-document" dir="ltr">\n${disclaimerBanner}\n${bodyHtml}\n</div>`;
+  const fullHtml = `<div class="paperloo-modular-document" dir="ltr">\n${disclaimerBanner}\n${renumberedHtml}\n</div>`;
 
   // Strip HTML tags for word count
-  const rawText = bodyHtml.replace(/<[^>]*>/g, ' ');
+  const rawText = renumberedHtml.replace(/<[^>]*>/g, ' ');
   const wordCount = rawText.trim().split(/\s+/).filter(Boolean).length;
 
   return {
     html: fullHtml,
-    markdown: bodyHtml,
+    markdown: renumberedHtml,
     clausesUsed: matchingClauses.map(c => c.id),
     wordCount
   };

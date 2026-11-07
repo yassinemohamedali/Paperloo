@@ -1,6 +1,6 @@
-import http from 'http';
-import https from 'https';
-import dns from 'dns';
+import * as http from 'http';
+import * as https from 'https';
+import * as dns from 'dns';
 import { URL } from 'url';
 
 export interface ScannedCookie {

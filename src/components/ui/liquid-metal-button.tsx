@@ -30,24 +30,26 @@ export function LiquidMetalButton({
   const dimensions = useMemo(() => {
     if (viewMode === "icon") {
       return {
-        width: 52,
-        height: 52,
+        width: 54,
+        height: 54,
         innerWidth: 48,
         innerHeight: 48,
-        shaderWidth: 52,
-        shaderHeight: 52,
+        shaderWidth: 54,
+        shaderHeight: 54,
       };
     } else {
+      // Generous dynamic width so text has plenty of breathing room and is never cramped
+      const calcWidth = Math.max(300, (label?.length || 10) * 16 + 80);
       return {
-        width: 240,
-        height: 56,
-        innerWidth: 234,
-        innerHeight: 50,
-        shaderWidth: 240,
-        shaderHeight: 56,
+        width: calcWidth,
+        height: 54,
+        innerWidth: calcWidth - 6,
+        innerHeight: 48,
+        shaderWidth: calcWidth,
+        shaderHeight: 54,
       };
     }
-  }, [viewMode]);
+  }, [viewMode, label]);
 
   useEffect(() => {
     const styleId = "shader-canvas-style-paperloo";
@@ -210,15 +212,16 @@ export function LiquidMetalButton({
             {viewMode === "text" && (
               <span
                 style={{
-                  fontSize: "13px",
-                  letterSpacing: "0.15em",
+                  fontSize: "12px",
+                  letterSpacing: "0.12em",
                   color: "#c8f135",
-                  fontWeight: 700,
+                  fontWeight: 800,
                   textTransform: "uppercase",
                   textShadow: "0px 1px 3px rgba(0, 0, 0, 0.9)",
                   transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
                   transform: "scale(1)",
                   whiteSpace: "nowrap",
+                  padding: "0 18px",
                 }}
               >
                 {label}

@@ -9,6 +9,8 @@ import { cn } from '@/src/lib/utils';
 import { generateDocuments } from '@/src/services/aiService';
 import { calculateComplianceScore } from '@/src/lib/compliance';
 import { sanitizeDocHtml } from '@/src/lib/sanitizeHtml';
+import { GradientBlobBorder } from '@/src/components/ui/gradient-blob-border';
+import { sanitizeSiteUrl } from '@/src/data/clauseLibrary';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -487,8 +489,8 @@ export default function Documents() {
         <body>
           <div class="paperloo-banner">
             <div class="banner-top">
-              <div class="logo-text">PAPERLOO <span class="logo-accent">//</span> AI COMPLIANCE ENGINE</div>
-              <div class="badge-verified">✓ STATUTORY AUDIT CERTIFIED</div>
+              <div class="logo-text">PAPERLOO <span class="logo-accent">//</span> COMPLIANCE ENGINE</div>
+              <div class="badge-verified">SELF-ASSESSED COMPLIANCE DRAFT</div>
             </div>
             <h1 class="banner-title">${docTitle}</h1>
             <div class="banner-sub">MONITORED DIGITAL PROPERTY: ${siteName} • EFFECTIVE DATE: ${formattedDate}</div>
@@ -498,18 +500,18 @@ export default function Documents() {
             <div class="meta-grid">
               <div class="meta-item">
                 <span class="meta-label">Target Organization</span>
-                <span class="meta-val">${siteName} (${site?.url || 'Monitored Site'})</span>
+                <span class="meta-val">${siteName} (${sanitizeSiteUrl(site?.url, siteName).url})</span>
               </div>
               <div class="meta-item">
                 <span class="meta-label">Document Revision</span>
-                <span class="meta-val">VERSION ${docToDownload.version || '1.0'} (ACTIVE RELEASE)</span>
+                <span class="meta-val">VERSION ${docToDownload.version || '1.0'} (SELF-ASSESSMENT DRAFT)</span>
               </div>
               <div class="meta-item">
                 <span class="meta-label">Regulatory Frameworks</span>
-                <span class="meta-val">GDPR (EU/UK) • CCPA/CPRA (CA) • PIPEDA • VCDPA</span>
+                <span class="meta-val">${(site?.jurisdictions && site.jurisdictions.length > 0) ? site.jurisdictions.join(' • ') : 'GDPR (EU)'}</span>
               </div>
               <div class="meta-item">
-                <span class="meta-label">Cryptographic Audit Hash</span>
+                <span class="meta-label">Document Integrity Checksum</span>
                 <span class="meta-val">0x${(docToDownload.id || 'paperloo').replace(/[^a-f0-9]/gi, '').substring(0, 16).toUpperCase()}...SHA256</span>
               </div>
             </div>
@@ -518,16 +520,20 @@ export default function Documents() {
               ${docToDownload.content}
             </div>
 
+            <div style="margin-top: 32px; padding: 14px 18px; background: #f4f4f5; border: 1px solid #e4e4e7; border-radius: 6px; font-size: 10px; color: #52525b; line-height: 1.5;">
+              <strong>LEGAL SELF-ASSESSMENT NOTICE:</strong> This document was compiled deterministically from modular statutory clauses based on user-declared operational parameters. It does not constitute formal legal advice, a third-party statutory audit, or an attorney-client relationship. You should consult licensed counsel in your jurisdiction to verify specific regulatory requirements.
+            </div>
+
             <div class="footer-seal">
               <div class="seal-left">
                 <div class="seal-box">PL</div>
                 <div>
-                  <div class="seal-text-title">OFFICIAL COMPLIANCE CERTIFICATE</div>
-                  <div>GENERATED & VERIFIED BY PAPERLOO LEGAL ENGINE v4.2</div>
+                  <div class="seal-text-title">COMPLIANCE DOCUMENT RECORD</div>
+                  <div>COMPILED VIA PAPERLOO MODULAR CLAUSE ENGINE v4.2</div>
                 </div>
               </div>
               <div class="seal-right">
-                <div>AUDIT STAMP: ${new Date().toISOString()}</div>
+                <div>RECORD STAMP: ${new Date().toISOString()}</div>
                 <div>SECURE COMPLIANCE INFRASTRUCTURE</div>
               </div>
             </div>
@@ -638,7 +644,11 @@ export default function Documents() {
           const docClauses = customClauses.filter(c => c.document_type === type.id);
 
           return (
-            <div key={type.id} className="bg-surface border border-white/10 p-8 flex flex-col justify-between min-h-[350px] relative overflow-hidden group">
+            <GradientBlobBorder 
+              key={type.id} 
+              className="w-full h-full"
+              innerClassName="p-8 flex flex-col justify-between min-h-[350px] relative overflow-hidden group"
+            >
               <div className="absolute inset-0 scan-lines opacity-5 pointer-events-none" />
               
               <div className="space-y-6 relative z-10">
@@ -717,7 +727,7 @@ export default function Documents() {
                   GENERATE NOW
                 </Link>
               )}
-            </div>
+            </GradientBlobBorder>
           );
         })}
       </div>

@@ -11,6 +11,8 @@ import { Globe, Plus, Search, Trash2, ExternalLink, X, Upload, Copy, AlertTriang
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import Papa from 'papaparse';
+import { GradientBlobBorder } from '@/src/components/ui/gradient-blob-border';
+import { sanitizeSiteUrl } from '@/src/data/clauseLibrary';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 
@@ -372,12 +374,13 @@ export default function Sites() {
 
   const createMutation = useMutation({
     mutationFn: async (data: SiteForm) => {
+      const cleanUrl = sanitizeSiteUrl(data.url, data.name).url;
       const { data: newSite, error } = await supabase
         .from('sites')
         .insert({
           agency_id: user?.id as string,
           name: data.name,
-          url: data.url,
+          url: cleanUrl,
           jurisdictions: data.jurisdictions,
           industry_type: data.industryType,
           status: 'pending',
@@ -661,65 +664,68 @@ export default function Sites() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredSites?.map((site, idx) => (
-            <div 
-              key={site.id} 
-              style={{ transitionDelay: `${idx * 50}ms` }}
-              className="bg-surface border border-white/10 p-8 group relative flex flex-col justify-between min-h-[250px] overflow-hidden reveal-up hover:border-accent/50 hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(200,241,53,0.05)]"
-            >
-              <div className="absolute inset-0 scan-lines opacity-5 pointer-events-none" />
-              
-              <div className="space-y-6 relative z-10">
-                <div className="flex items-start justify-between">
-                  <div className="h-12 w-12 rounded-[10px] bg-accent/10 flex items-center justify-center">
-                    <Globe className="h-6 w-6 text-accent" />
+          {filteredSites?.map((site, idx) => {
+            const cleanUrl = sanitizeSiteUrl(site.url, site.name).url;
+            return (
+              <GradientBlobBorder
+                key={site.id}
+                className="w-full h-full"
+                innerClassName="p-8 group relative flex flex-col justify-between min-h-[250px] overflow-hidden hover:border-accent/50 transition-all duration-300"
+              >
+                <div className="absolute inset-0 scan-lines opacity-5 pointer-events-none" />
+                
+                <div className="space-y-6 relative z-10">
+                  <div className="flex items-start justify-between">
+                    <div className="h-12 w-12 rounded-[10px] bg-accent/10 flex items-center justify-center">
+                      <Globe className="h-6 w-6 text-accent" />
+                    </div>
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => duplicateMutation.mutate(site)} className="p-2 text-muted hover:text-accent transition-colors" title="Duplicate">
+                        <Copy className="h-4 w-4" />
+                      </button>
+                      <Link to={`/sites/${site.id}`} className="p-2 text-muted hover:text-accent transition-colors" title="Manage">
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                      <button onClick={() => setDeleteId(site.id)} className="p-2 text-muted hover:text-red-500 transition-colors" title="Delete">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => duplicateMutation.mutate(site)} className="p-2 text-muted hover:text-accent transition-colors" title="Duplicate">
-                      <Copy className="h-4 w-4" />
-                    </button>
-                    <Link to={`/sites/${site.id}`} className="p-2 text-muted hover:text-accent transition-colors" title="Manage">
-                      <ExternalLink className="h-4 w-4" />
-                    </Link>
-                    <button onClick={() => setDeleteId(site.id)} className="p-2 text-muted hover:text-red-500 transition-colors" title="Delete">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  <div>
+                    <h4 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase truncate">{site.name}</h4>
+                    <p className="text-[10px] text-muted truncate font-bold uppercase tracking-widest mt-1">{cleanUrl}</p>
                   </div>
                 </div>
-                <div>
-                  <h4 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase truncate">{site.name}</h4>
-                  <p className="text-[10px] text-muted truncate font-bold uppercase tracking-widest mt-1">{site.url}</p>
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between mt-8 pt-8 border-t border-white/5 relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "h-8 w-8 rounded-full border flex items-center justify-center font-sans font-extrabold text-xs tracking-[0.04em]",
-                    site.compliance_grade === 'A' ? "border-green-500 text-green-500" :
-                    site.compliance_grade === 'B' ? "border-blue-500 text-blue-500" :
-                    site.compliance_grade === 'C' ? "border-yellow-500 text-yellow-500" :
-                    "border-red-500 text-red-500"
-                  )}>
-                    {site.compliance_grade || 'F'}
+                <div className="flex items-center justify-between mt-8 pt-8 border-t border-white/5 relative z-10">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "h-8 w-8 rounded-full border flex items-center justify-center font-sans font-extrabold text-xs tracking-[0.04em]",
+                      site.compliance_grade === 'A' ? "border-green-500 text-green-500" :
+                      site.compliance_grade === 'B' ? "border-blue-500 text-blue-500" :
+                      site.compliance_grade === 'C' ? "border-yellow-500 text-yellow-500" :
+                      "border-red-500 text-red-500"
+                    )}>
+                      {site.compliance_grade || 'F'}
+                    </div>
+                    <span className="text-[10px] font-bold text-muted uppercase tracking-widest">
+                      {site.status}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold text-muted uppercase tracking-widest">
-                    {site.status}
-                  </span>
+                  <Link to={`/sites/${site.id}/documents`} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest">
+                    DOCUMENTS
+                  </Link>
                 </div>
-                <Link to={`/sites/${site.id}/documents`} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest">
-                  DOCUMENTS
-                </Link>
-              </div>
 
-              {/* Stale Warning */}
-              {site.compliance_grade === 'F' && (
-                <div className="absolute top-4 right-4 text-red-500 animate-pulse">
-                  <AlertTriangle className="h-5 w-5" />
-                </div>
-              )}
-            </div>
-          ))}
+                {/* Stale Warning */}
+                {site.compliance_grade === 'F' && (
+                  <div className="absolute top-4 right-4 text-red-500 animate-pulse">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                )}
+              </GradientBlobBorder>
+            );
+          })}
         </div>
       )}
 

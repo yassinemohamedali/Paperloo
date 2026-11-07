@@ -6,10 +6,12 @@ import { Globe, FileText, Settings, ArrowLeft, ExternalLink, RefreshCw, AlertCir
 import { cn } from '@/src/lib/utils';
 import { toast } from 'sonner';
 import { calculateComplianceScore } from '@/src/lib/compliance';
+import { sanitizeSiteUrl } from '@/src/data/clauseLibrary';
 import CookieBanner from '@/src/components/sites/CookieBanner';
 import CookieScanner from '@/src/components/sites/CookieScanner';
 import DSARInbox from '@/src/components/sites/DSARInbox';
 import GtmIntegration from '@/src/components/sites/GtmIntegration';
+import { GradientBlobBorder } from '@/src/components/ui/gradient-blob-border';
 
 type Site = Database['public']['Tables']['sites']['Row'];
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -314,7 +316,7 @@ export default function SiteDetail() {
 
       {activeTab === 'overview' && (
         <>
-          <div className="bg-surface border border-white/10 p-12 flex flex-col md:flex-row justify-between gap-12 relative overflow-hidden">
+          <GradientBlobBorder className="w-full" innerClassName="p-10 md:p-12 flex flex-col md:flex-row justify-between gap-12 relative overflow-hidden">
             <div className="absolute inset-0 scan-lines opacity-5 pointer-events-none" />
             
             <div className="space-y-8 relative z-10">
@@ -322,11 +324,16 @@ export default function SiteDetail() {
                 <Globe className="h-8 w-8 text-accent" />
               </div>
               <div className="space-y-2">
-                <h1 className="text-5xl font-sans font-extrabold tracking-[0.04em] uppercase">{site?.name}</h1>
-                <a href={site?.url} target="_blank" className="text-muted hover:text-accent flex items-center gap-2 text-xs tracking-widest uppercase">
-                  {site?.url}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+                <h1 className="text-4xl md:text-5xl font-sans font-extrabold tracking-[0.04em] uppercase">{site?.name}</h1>
+                {(() => {
+                  const cleanUrl = site?.url ? sanitizeSiteUrl(site.url, site.name).url : '';
+                  return (
+                    <a href={cleanUrl} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent flex items-center gap-2 text-xs tracking-widest uppercase">
+                      {cleanUrl}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  );
+                })()}
               </div>
             </div>
 
@@ -362,11 +369,11 @@ export default function SiteDetail() {
                 ))}
               </div>
             </div>
-          </div>
+          </GradientBlobBorder>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Documents Card */}
-            <div className="bg-surface border border-white/10 p-10 space-y-10">
+            <GradientBlobBorder className="w-full" innerClassName="p-8 md:p-10 space-y-10">
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase flex items-center gap-4">
                   <FileText className="h-6 w-6 text-accent" />
@@ -379,7 +386,7 @@ export default function SiteDetail() {
                 {['privacy_policy', 'terms_of_service', 'cookie_policy'].map(type => {
                   const doc = documents?.find(d => d.type === type);
                   return (
-                    <div key={type} className="flex items-center justify-between p-5 bg-white/[0.02] border border-white/10">
+                    <div key={type} className="flex items-center justify-between p-5 bg-white/[0.02] border border-white/10 rounded-lg">
                       <span className="text-xs font-bold uppercase tracking-widest">{type.replace(/_/g, ' ')}</span>
                       {doc ? (
                         <span className="text-[10px] font-bold uppercase tracking-widest text-green-500">ACTIVE</span>
@@ -390,10 +397,10 @@ export default function SiteDetail() {
                   );
                 })}
               </div>
-            </div>
+            </GradientBlobBorder>
 
             {/* Team Comments Card */}
-            <div className="bg-surface border border-white/10 p-10 flex flex-col h-[500px]">
+            <GradientBlobBorder className="w-full" innerClassName="p-8 md:p-10 flex flex-col h-[500px]">
               <h3 className="text-2xl font-sans font-extrabold tracking-[0.04em] uppercase flex items-center gap-4 mb-8">
                 <MessageSquare className="h-6 w-6 text-accent" />
                 TEAM COMMENTS
@@ -412,7 +419,7 @@ export default function SiteDetail() {
                         <span className="text-[10px] font-black text-accent uppercase tracking-widest">AGENCY TEAM</span>
                         <span className="text-[8px] text-muted uppercase">{new Date(comment.created_at).toLocaleString()}</span>
                       </div>
-                      <div className="bg-white/5 p-4 border-l-2 border-accent">
+                      <div className="bg-white/5 p-4 border-l-2 border-accent rounded-r-lg">
                         <p className="text-xs uppercase tracking-wider leading-relaxed">{comment.content}</p>
                       </div>
                     </div>
@@ -436,7 +443,7 @@ export default function SiteDetail() {
                   <Send className="h-4 w-4" />
                 </button>
               </form>
-            </div>
+            </GradientBlobBorder>
           </div>
         </>
       )}

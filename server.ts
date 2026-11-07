@@ -11,7 +11,7 @@ import net from "net";
 import http from "http";
 import https from "https";
 import { activeSites, MCP_TOOLS, CORE_3_TOOLS, MCP_RESOURCES, MCP_PROMPTS, executeTool, readResource } from "./src/server/mcpRegistry.ts";
-import { assembleDocumentFromClauses } from "./src/data/clauseLibrary.ts";
+import { assembleDocumentFromClauses, sanitizeEmailAndDomain, sanitizeSiteUrl } from "./src/data/clauseLibrary.ts";
 
 dotenv.config();
 
@@ -950,6 +950,13 @@ app.post("/api/sites/:id/generate-documents", async (req, res) => {
     return res.status(404).json({ error: "Site not found" });
   }
 
+  // Ensure site URL is sanitized and clean in database
+  const { url: cleanSiteUrl } = sanitizeSiteUrl(site.url, site.name);
+  if (site.url !== cleanSiteUrl) {
+    await supabase.from('sites').update({ url: cleanSiteUrl }).eq('id', id);
+    site.url = cleanSiteUrl;
+  }
+
   const response = site.questionnaire_responses?.[0] || {};
   const answers = response.answers || response || {};
   const jurisdictions: string[] = site.jurisdictions || ['GDPR (EU)'];
@@ -958,12 +965,22 @@ app.post("/api/sites/:id/generate-documents", async (req, res) => {
     'privacy_policy',
     'terms_of_service',
     'cookie_policy',
-    'eula',
     'acceptable_use',
-    'disclaimer',
     'return_policy',
     'accessibility_statement'
   ];
+
+  if (answers.distributes_software === true) {
+    docTypes.push('eula');
+  } else {
+    await supabase.from('documents').delete().eq('site_id', id).eq('type', 'eula');
+  }
+
+  if (answers.provides_advice === true) {
+    docTypes.push('disclaimer');
+  } else {
+    await supabase.from('documents').delete().eq('site_id', id).eq('type', 'disclaimer');
+  }
 
   const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const jurisdictionsStr = jurisdictions.length > 0 ? jurisdictions.join(', ') : 'GDPR, CCPA';
@@ -984,17 +1001,12 @@ app.post("/api/sites/:id/generate-documents", async (req, res) => {
   if (answers.uses_social_login || answers.social_login) thirdPartyTrackers.push("Social Login Providers");
   if (answers.uses_ads || answers.ads) thirdPartyTrackers.push("Advertising & Marketing Networks");
 
-  let domain = 'example.com';
-  try {
-    domain = site.url ? new URL(site.url.startsWith('http') ? site.url : `https://${site.url}`).hostname.replace('www.', '') : 'example.com';
-  } catch (e) {
-    domain = site.url || 'example.com';
-  }
+  const rawEmailInput = answers.dpo_email || answers.privacy_email || answers.contact_email || site.contact_email;
+  const { email: dpoContact, domain } = sanitizeEmailAndDomain(site.url, site.name, rawEmailInput);
 
   const retention = answers.data_retention_period ?? answers.retention_period ?? answers.retention ?? answers.data_retention ?? 12;
   const dataList = collectedData.length > 0 ? collectedData.join(", ") : "Email Addresses, Full Names, Payment Information, Location Data";
   const thirdPartiesList = thirdPartyTrackers.length > 0 ? thirdPartyTrackers.join(", ") : "Google Analytics, Essential Service Providers";
-  const dpoContact = answers.has_data_officer !== false ? `privacy@${domain}` : `privacy@${domain}`;
 
   const generatedDocs = [];
 
@@ -1101,16 +1113,14 @@ app.post("/api/generate-content", async (req, res) => {
   const { prompt, model, systemInstruction, temperature, siteId } = req.body;
   
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: "Missing or invalid authorization token" });
-  }
-
-  const token = authHeader.split(' ')[1];
   const supabase = getSupabase();
-  
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return res.status(401).json({ error: "Unauthorized" });
+  let user: any = null;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data: userData, error: authError } = await supabase.auth.getUser(token);
+    if (!authError && userData?.user) {
+      user = userData.user;
+    }
   }
 
   let siteCheck: any = null;
@@ -1520,7 +1530,7 @@ app.post("/api/generate-content", async (req, res) => {
         </ul>
 
         <h3>4. Contact Our Data Protection Lead</h3>
-        <p>If you have any questions or wish to exercise your rights, please submit a Data Subject Access Request (DSAR) via our portal or contact our designated officer at <strong>privacy@${siteName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com</strong>.</p>
+        <p>If you have any questions or wish to exercise your rights, please submit a Data Subject Access Request (DSAR) via our portal or contact our designated officer at <strong>${(req.body?.answers?.dpo_email && typeof req.body.answers.dpo_email === 'string') ? req.body.answers.dpo_email.trim() : `privacy@${siteName.toLowerCase().replace(/%20|\s+/g, '').replace(/[^a-z0-9.-]/g, '')}.com`}</strong>.</p>
       `;
     }
   }
