@@ -13,16 +13,73 @@ export interface ScannedCookie {
   source: 'http_header' | 'detected_script' | 'manual';
 }
 
+export interface SecurityHeadersReport {
+  hsts: boolean;
+  csp: boolean;
+  x_frame_options: string | null;
+  x_content_type_options: string | null;
+  strict_transport_security?: string | null;
+  content_security_policy?: string | null;
+}
+
+export interface LegalLinksReport {
+  privacy_policy: boolean;
+  terms_of_service: boolean;
+  cookie_policy: boolean;
+  accessibility_statement: boolean;
+  ccpa_do_not_sell: boolean;
+  detected_links: Array<{ type: string; href: string; anchor_text: string }>;
+}
+
+export interface ConsentModeReport {
+  cmp_detected: boolean;
+  cmp_name: string | null;
+  gcm_v2_detected: boolean;
+  gcm_defaults?: {
+    ad_storage?: string;
+    analytics_storage?: string;
+    ad_user_data?: string;
+    ad_personalization?: string;
+  };
+  prior_consent_enforced: boolean;
+  consent_violation_reasons: string[];
+}
+
+export interface WcagMetricsReport {
+  total_images_count: number;
+  missing_alt_images_count: number;
+  landmarks_detected: string[];
+  missing_form_labels_count: number;
+  has_document_title: boolean;
+  has_html_lang: boolean;
+  accessibility_score: number;
+  issues: string[];
+}
+
+export interface AiTransparencyReport {
+  ai_chatbots_detected: string[];
+  ai_synthetic_disclosure: boolean;
+  ai_crawler_directives: Array<{ bot: string; status: 'allowed' | 'disallowed' | 'not_specified' }>;
+  ai_act_compliance_status: 'COMPLIANT' | 'NEEDS_DISCLOSURE' | 'HIGH_RISK_REVIEW';
+  issues: string[];
+}
+
 export interface RealScanResult {
   success: boolean;
   reachable: boolean;
   scanned_url: string;
   final_url?: string;
   status_code?: number;
+  is_https: boolean;
   total_cookies_found: number;
   cookie_inventory: ScannedCookie[];
   scripts_detected: string[];
   headers_analyzed: boolean;
+  security_headers: SecurityHeadersReport;
+  legal_links: LegalLinksReport;
+  consent_mode: ConsentModeReport;
+  wcag_metrics: WcagMetricsReport;
+  ai_transparency: AiTransparencyReport;
   message: string;
   error?: string;
 }
@@ -159,23 +216,71 @@ const SCRIPT_TRACKERS: Array<{
   }
 ];
 
+// Helper to create empty scan failure result
+function createFailureResult(cleanUrl: string, message: string, error?: string): RealScanResult {
+  const isHttps = cleanUrl.startsWith('https://');
+  return {
+    success: false,
+    reachable: false,
+    scanned_url: cleanUrl,
+    is_https: isHttps,
+    status_code: 0,
+    total_cookies_found: 0,
+    cookie_inventory: [],
+    scripts_detected: [],
+    headers_analyzed: false,
+    security_headers: {
+      hsts: false,
+      csp: false,
+      x_frame_options: null,
+      x_content_type_options: null
+    },
+    legal_links: {
+      privacy_policy: false,
+      terms_of_service: false,
+      cookie_policy: false,
+      accessibility_statement: false,
+      ccpa_do_not_sell: false,
+      detected_links: []
+    },
+    consent_mode: {
+      cmp_detected: false,
+      cmp_name: null,
+      gcm_v2_detected: false,
+      prior_consent_enforced: false,
+      consent_violation_reasons: ['Domain unreachable - cannot verify consent mode or tracking tags']
+    },
+    wcag_metrics: {
+      total_images_count: 0,
+      missing_alt_images_count: 0,
+      landmarks_detected: [],
+      missing_form_labels_count: 0,
+      has_document_title: false,
+      has_html_lang: false,
+      accessibility_score: 0,
+      issues: ['Website unreachable or invalid domain']
+    },
+    ai_transparency: {
+      ai_chatbots_detected: [],
+      ai_synthetic_disclosure: false,
+      ai_crawler_directives: [],
+      ai_act_compliance_status: 'NEEDS_DISCLOSURE',
+      issues: ['Website unreachable or invalid domain']
+    },
+    message,
+    error
+  };
+}
+
 /**
- * Executes a REAL live HTTP crawl to detect actual cookies and tracking scripts.
- * Never invents mock cookies. If site is clean or empty, returns 0 cookies.
+ * Executes a live HTTP/HTTPS crawl to detect real cookies, tracking scripts,
+ * security headers, legal links, Google Consent Mode v2, WCAG 2.1 AA signals,
+ * and EU AI Act disclosures.
  */
 export async function scanWebsiteRealTrackers(targetUrlInput: string): Promise<RealScanResult> {
   let cleanUrl = (targetUrlInput || '').trim();
   if (!cleanUrl) {
-    return {
-      success: false,
-      reachable: false,
-      scanned_url: '',
-      total_cookies_found: 0,
-      cookie_inventory: [],
-      scripts_detected: [],
-      headers_analyzed: false,
-      message: 'No website URL provided.'
-    };
+    return createFailureResult('', 'No website URL provided.');
   }
 
   if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
@@ -185,34 +290,22 @@ export async function scanWebsiteRealTrackers(targetUrlInput: string): Promise<R
   let parsedUrl: URL;
   try {
     parsedUrl = new URL(cleanUrl);
-  } catch (err) {
-    return {
-      success: false,
-      reachable: false,
-      scanned_url: cleanUrl,
-      total_cookies_found: 0,
-      cookie_inventory: [],
-      scripts_detected: [],
-      headers_analyzed: false,
-      message: 'Invalid URL format.'
-    };
+    if (!parsedUrl.hostname || !parsedUrl.hostname.includes('.')) {
+      return createFailureResult(cleanUrl, `Invalid domain hostname: ${parsedUrl.hostname || 'empty'}`);
+    }
+  } catch (err: any) {
+    return createFailureResult(cleanUrl, 'Invalid URL format.', err.message);
   }
 
   // Pre-check DNS resolution
   try {
     await dns.promises.lookup(parsedUrl.hostname);
   } catch (dnsErr: any) {
-    return {
-      success: false,
-      reachable: false,
-      scanned_url: cleanUrl,
-      total_cookies_found: 0,
-      cookie_inventory: [],
-      scripts_detected: [],
-      headers_analyzed: false,
-      message: `Could not reach ${parsedUrl.hostname}. DNS lookup failed (${dnsErr.code || 'ENOTFOUND'}).`,
-      error: dnsErr.message
-    };
+    return createFailureResult(
+      cleanUrl,
+      `Could not reach ${parsedUrl.hostname}. DNS lookup failed (${dnsErr.code || 'ENOTFOUND'}).`,
+      dnsErr.message
+    );
   }
 
   // Perform real HTTP request
@@ -235,6 +328,21 @@ export async function scanWebsiteRealTrackers(targetUrlInput: string): Promise<R
         const statusCode = res.statusCode || 0;
         const setCookieHeaders = res.headers['set-cookie'] || [];
         let htmlBody = '';
+
+        // Security headers evaluation
+        const hstsHeader = res.headers['strict-transport-security'] as string | undefined;
+        const cspHeader = res.headers['content-security-policy'] as string | undefined;
+        const xFrameHeader = res.headers['x-frame-options'] as string | undefined;
+        const xContentTypeHeader = res.headers['x-content-type-options'] as string | undefined;
+
+        const securityHeaders: SecurityHeadersReport = {
+          hsts: !!hstsHeader,
+          csp: !!cspHeader,
+          x_frame_options: xFrameHeader || null,
+          x_content_type_options: xContentTypeHeader || null,
+          strict_transport_security: hstsHeader || null,
+          content_security_policy: cspHeader ? (cspHeader.length > 120 ? cspHeader.slice(0, 120) + '...' : cspHeader) : null
+        };
 
         res.setEncoding('utf8');
         res.on('data', (chunk) => {
@@ -290,7 +398,6 @@ export async function scanWebsiteRealTrackers(targetUrlInput: string): Promise<R
                 source: 'http_header'
               });
             } else {
-              // Intelligently classify unknown real cookies from headers
               const isSession = /sess|token|auth|id|csrf|jwt/i.test(cookieName);
               const isTracking = /track|utm|ad|pixel|campaign|affiliate/i.test(cookieName);
               const category = isSession ? 'Necessary' : isTracking ? 'Marketing' : 'Analytics';
@@ -328,16 +435,280 @@ export async function scanWebsiteRealTrackers(targetUrlInput: string): Promise<R
           }
 
           const cookies = Array.from(cookieMap.values());
+          const hasTrackingCookies = cookies.some(c => c.category === 'Marketing' || c.category === 'Analytics');
+
+          // 3. Legal Links Discovery in DOM
+          const detectedLinks: Array<{ type: string; href: string; anchor_text: string }> = [];
+          let hasPrivacyLink = false;
+          let hasTermsLink = false;
+          let hasCookieLink = false;
+          let hasAccessibilityLink = false;
+          let hasCcpaDoNotSell = false;
+
+          if (htmlBody) {
+            const linkTagRegex = /<a\b[^>]*href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
+            let match: RegExpExecArray | null;
+            while ((match = linkTagRegex.exec(htmlBody)) !== null) {
+              const href = match[1]?.trim() || '';
+              const text = (match[2] || '').replace(/<[^>]*>/g, '').trim().toLowerCase();
+              const fullMatch = `${href} ${text}`.toLowerCase();
+
+              if (!hasPrivacyLink && (fullMatch.includes('privacy') || fullMatch.includes('datenschutz') || fullMatch.includes('confidentialite'))) {
+                hasPrivacyLink = true;
+                detectedLinks.push({ type: 'privacy_policy', href, anchor_text: text || 'Privacy Policy' });
+              }
+              if (!hasTermsLink && (fullMatch.includes('terms') || fullMatch.includes('tos') || fullMatch.includes('agb') || fullMatch.includes('conditions'))) {
+                hasTermsLink = true;
+                detectedLinks.push({ type: 'terms_of_service', href, anchor_text: text || 'Terms of Service' });
+              }
+              if (!hasCookieLink && (fullMatch.includes('cookie') || fullMatch.includes('cookie-policy') || fullMatch.includes('cookie-settings'))) {
+                hasCookieLink = true;
+                detectedLinks.push({ type: 'cookie_policy', href, anchor_text: text || 'Cookie Policy' });
+              }
+              if (!hasAccessibilityLink && (fullMatch.includes('accessibility') || fullMatch.includes('barrierefreiheit') || fullMatch.includes('a11y'))) {
+                hasAccessibilityLink = true;
+                detectedLinks.push({ type: 'accessibility_statement', href, anchor_text: text || 'Accessibility' });
+              }
+              if (!hasCcpaDoNotSell && (fullMatch.includes('do not sell') || fullMatch.includes('your privacy choices') || fullMatch.includes('opt-out') || fullMatch.includes('opt out'))) {
+                hasCcpaDoNotSell = true;
+                detectedLinks.push({ type: 'ccpa_do_not_sell', href, anchor_text: text || 'Do Not Sell or Share My Personal Info' });
+              }
+            }
+
+            // Fallback plain-text link search
+            if (!hasPrivacyLink && /(href=["'][^"']*privacy[^"']*["']|\/privacy)/i.test(htmlBody)) hasPrivacyLink = true;
+            if (!hasTermsLink && /(href=["'][^"']*terms[^"']*["']|\/terms)/i.test(htmlBody)) hasTermsLink = true;
+            if (!hasCookieLink && /(href=["'][^"']*cookie[^"']*["']|\/cookies)/i.test(htmlBody)) hasCookieLink = true;
+            if (!hasAccessibilityLink && /(href=["'][^"']*accessibility[^"']*["']|\/accessibility)/i.test(htmlBody)) hasAccessibilityLink = true;
+            if (!hasCcpaDoNotSell && /(do\s+not\s+sell|your\s+privacy\s+choices)/i.test(htmlBody)) hasCcpaDoNotSell = true;
+          }
+
+          // 4. CMP & Google Consent Mode v2 Detection
+          let cmpDetected = false;
+          let cmpName: string | null = null;
+          if (htmlBody) {
+            if (/onetrust|optanon/i.test(htmlBody)) {
+              cmpDetected = true;
+              cmpName = 'OneTrust';
+            } else if (/cookiebot/i.test(htmlBody)) {
+              cmpDetected = true;
+              cmpName = 'Cookiebot';
+            } else if (/cookieyes/i.test(htmlBody)) {
+              cmpDetected = true;
+              cmpName = 'CookieYes';
+            } else if (/pl_consent|paperloo.*banner|paperloo\.vercel\.app\/api\/banner/i.test(htmlBody)) {
+              cmpDetected = true;
+              cmpName = 'Paperloo Consent Platform';
+            } else if (/usercentrics/i.test(htmlBody)) {
+              cmpDetected = true;
+              cmpName = 'Usercentrics';
+            } else if (/axeptio/i.test(htmlBody)) {
+              cmpDetected = true;
+              cmpName = 'Axeptio';
+            } else if (/klaro/i.test(htmlBody)) {
+              cmpDetected = true;
+              cmpName = 'Klaro';
+            } else if (/termly/i.test(htmlBody)) {
+              cmpDetected = true;
+              cmpName = 'Termly';
+            }
+          }
+
+          let gcmV2Detected = false;
+          let gcmDefaults: ConsentModeReport['gcm_defaults'] = undefined;
+          if (htmlBody) {
+            const gcmMatch = /gtag\s*\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*({[\s\S]*?})\)/i.exec(htmlBody);
+            if (gcmMatch && gcmMatch[1]) {
+              try {
+                // Parse default signals from JS object literal
+                const rawObj = gcmMatch[1];
+                const adStorage = /['"]?ad_storage['"]?\s*:\s*['"](denied|granted)['"]/i.exec(rawObj)?.[1];
+                const analyticsStorage = /['"]?analytics_storage['"]?\s*:\s*['"](denied|granted)['"]/i.exec(rawObj)?.[1];
+                const adUserData = /['"]?ad_user_data['"]?\s*:\s*['"](denied|granted)['"]/i.exec(rawObj)?.[1];
+                const adPersonalization = /['"]?ad_personalization['"]?\s*:\s*['"](denied|granted)['"]/i.exec(rawObj)?.[1];
+
+                gcmDefaults = {
+                  ad_storage: adStorage,
+                  analytics_storage: analyticsStorage,
+                  ad_user_data: adUserData,
+                  ad_personalization: adPersonalization
+                };
+
+                if (adStorage === 'denied' && analyticsStorage === 'denied') {
+                  gcmV2Detected = true;
+                }
+              } catch {
+                gcmV2Detected = true;
+              }
+            } else if (/gtag\s*\(\s*['"]consent['"]\s*,\s*['"]default['"]/i.test(htmlBody)) {
+              gcmV2Detected = true;
+            }
+          }
+
+          // Strict GDPR Art. 5(3) & ePrivacy prior consent enforcement:
+          // If tracking cookies or scripts are detected, but neither CMP nor GCM v2 default denied is present,
+          // it is a CRITICAL VIOLATION.
+          const consentViolationReasons: string[] = [];
+          let priorConsentEnforced = true;
+
+          if (hasTrackingCookies || detectedScripts.length > 0) {
+            if (!cmpDetected && !gcmV2Detected) {
+              priorConsentEnforced = false;
+              consentViolationReasons.push(
+                'Tracking scripts and cookies (e.g. Google Analytics / Meta Pixel) fired on initial page load without Google Consent Mode v2 default "denied" state or a blocking CMP barrier. This directly violates GDPR Art. 5(3) (ePrivacy Directive).'
+              );
+            }
+          }
+
+          // 5. WCAG 2.1 AA Domestic Accessibility Evaluation
+          const wcagIssues: string[] = [];
+          let totalImages = 0;
+          let missingAltImages = 0;
+          const landmarksDetected: string[] = [];
+          let missingFormLabels = 0;
+          let hasDocTitle = false;
+          let hasHtmlLang = false;
+
+          if (htmlBody) {
+            // Images check
+            const imgRegex = /<img\b([^>]*)>/gi;
+            let imgMatch: RegExpExecArray | null;
+            while ((imgMatch = imgRegex.exec(htmlBody)) !== null) {
+              totalImages++;
+              const attrs = imgMatch[1] || '';
+              const altMatch = /\balt\s*=\s*(['"])(.*?)\1/i.exec(attrs);
+              if (!altMatch) {
+                missingAltImages++;
+              }
+            }
+            if (missingAltImages > 0) {
+              wcagIssues.push(`${missingAltImages} of ${totalImages} image(s) lack an 'alt' text attribute (WCAG 2.1 AA 1.1.1 Non-text Content).`);
+            }
+
+            // Semantic landmarks check
+            if (/<(main|nav|header|footer|aside)\b|role=["'](main|navigation|banner|contentinfo|complementary)["']/i.test(htmlBody)) {
+              if (/<main\b|role=["']main["']/i.test(htmlBody)) landmarksDetected.push('main');
+              if (/<nav\b|role=["']navigation["']/i.test(htmlBody)) landmarksDetected.push('navigation');
+              if (/<header\b|role=["']banner["']/i.test(htmlBody)) landmarksDetected.push('header');
+              if (/<footer\b|role=["']contentinfo["']/i.test(htmlBody)) landmarksDetected.push('footer');
+            } else {
+              wcagIssues.push('No semantic HTML5 landmarks (<main>, <nav>, <header>, <footer>) or ARIA landmark roles found (WCAG 2.1 AA 1.3.1 Info and Relationships).');
+            }
+
+            // Form labels check
+            const inputRegex = /<input\b([^>]*)>/gi;
+            let inputMatch: RegExpExecArray | null;
+            while ((inputMatch = inputRegex.exec(htmlBody)) !== null) {
+              const attrs = inputMatch[1] || '';
+              if (/type=["'](hidden|submit|button|reset|image)["']/i.test(attrs)) continue;
+              const hasAria = /aria-label\s*=|aria-labelledby\s*=/i.test(attrs);
+              const hasId = /\bid\s*=\s*['"]([^'"]+)['"]/i.exec(attrs);
+              let hasAssociatedLabel = false;
+              if (hasId && hasId[1]) {
+                const labelRegex = new RegExp(`<label\\b[^>]*for=["']${hasId[1]}["']`, 'i');
+                if (labelRegex.test(htmlBody)) hasAssociatedLabel = true;
+              }
+              if (!hasAria && !hasAssociatedLabel) {
+                missingFormLabels++;
+              }
+            }
+            if (missingFormLabels > 0) {
+              wcagIssues.push(`${missingFormLabels} form input(s) lack associated <label> or aria-label attributes (WCAG 2.1 AA 3.3.2 Labels or Instructions).`);
+            }
+
+            // Title & Lang
+            hasDocTitle = /<title[^>]*>[\s\S]+?<\/title>/i.test(htmlBody);
+            if (!hasDocTitle) wcagIssues.push('Missing or empty <title> element in document <head> (WCAG 2.1 AA 2.4.2 Page Titled).');
+
+            hasHtmlLang = /<html[^>]*lang=["'][a-zA-Z-]+["']/i.test(htmlBody);
+            if (!hasHtmlLang) wcagIssues.push('Missing lang attribute on <html> element (WCAG 2.1 AA 3.1.1 Language of Page).');
+          }
+
+          let accessibilityScore = 100;
+          if (missingAltImages > 0) accessibilityScore -= Math.min(25, missingAltImages * 5);
+          if (landmarksDetected.length === 0) accessibilityScore -= 20;
+          if (missingFormLabels > 0) accessibilityScore -= Math.min(20, missingFormLabels * 5);
+          if (!hasDocTitle) accessibilityScore -= 10;
+          if (!hasHtmlLang) accessibilityScore -= 10;
+          accessibilityScore = Math.max(0, accessibilityScore);
+
+          // 6. EU AI Act & Automated Intelligence Detection
+          const aiChatbots: string[] = [];
+          const aiIssues: string[] = [];
+          let aiSyntheticDisclosure = false;
+
+          if (htmlBody) {
+            if (/widget\.intercom\.io|js\.intercomcdn\.com/i.test(htmlBody)) aiChatbots.push('Intercom AI Messenger / Fin');
+            if (/client\.crisp\.chat/i.test(htmlBody)) aiChatbots.push('Crisp Live Chat / AI');
+            if (/chatbase\.co\/embed/i.test(htmlBody)) aiChatbots.push('Chatbase AI Assistant');
+            if (/voiceflow\.com\/widget/i.test(htmlBody)) aiChatbots.push('Voiceflow Conversational AI');
+            if (/botpress\.cloud|botpress\.webchat/i.test(htmlBody)) aiChatbots.push('Botpress Webchat Agent');
+            if (/code\.tidio\.co/i.test(htmlBody)) aiChatbots.push('Tidio Lyro AI Chatbot');
+            if (/assets\.zendesk\.com|zopim\.com/i.test(htmlBody)) aiChatbots.push('Zendesk AI Answer Bot');
+
+            aiSyntheticDisclosure = /ai-generated|synthetic\s+content|automated\s+decision|artificial\s+intelligence|eu\s+ai\s+act/i.test(htmlBody);
+          }
+
+          let aiActStatus: AiTransparencyReport['ai_act_compliance_status'] = 'COMPLIANT';
+          if (aiChatbots.length > 0 && !aiSyntheticDisclosure) {
+            aiActStatus = 'NEEDS_DISCLOSURE';
+            aiIssues.push(
+              `AI Chatbot system detected (${aiChatbots.join(', ')}), but no explicit AI disclosure was found. EU AI Act Article 50 mandates that users must be clearly informed when interacting with an AI system.`
+            );
+          }
+
+          const crawlerDirectives: AiTransparencyReport['ai_crawler_directives'] = [
+            { bot: 'GPTBot', status: 'not_specified' },
+            { bot: 'CCBot', status: 'not_specified' },
+            { bot: 'ClaudeBot', status: 'not_specified' },
+            { bot: 'Anthropic-ai', status: 'not_specified' },
+            { bot: 'Google-Extended', status: 'not_specified' }
+          ];
 
           resolve({
             success: true,
             reachable: true,
             scanned_url: cleanUrl,
             status_code: statusCode,
+            is_https: isHttps,
             total_cookies_found: cookies.length,
             cookie_inventory: cookies,
             scripts_detected: detectedScripts,
             headers_analyzed: true,
+            security_headers: securityHeaders,
+            legal_links: {
+              privacy_policy: hasPrivacyLink,
+              terms_of_service: hasTermsLink,
+              cookie_policy: hasCookieLink,
+              accessibility_statement: hasAccessibilityLink,
+              ccpa_do_not_sell: hasCcpaDoNotSell,
+              detected_links: detectedLinks
+            },
+            consent_mode: {
+              cmp_detected: cmpDetected,
+              cmp_name: cmpName,
+              gcm_v2_detected: gcmV2Detected,
+              gcm_defaults: gcmDefaults,
+              prior_consent_enforced: priorConsentEnforced,
+              consent_violation_reasons: consentViolationReasons
+            },
+            wcag_metrics: {
+              total_images_count: totalImages,
+              missing_alt_images_count: missingAltImages,
+              landmarks_detected: landmarksDetected,
+              missing_form_labels_count: missingFormLabels,
+              has_document_title: hasDocTitle,
+              has_html_lang: hasHtmlLang,
+              accessibility_score: accessibilityScore,
+              issues: wcagIssues
+            },
+            ai_transparency: {
+              ai_chatbots_detected: aiChatbots,
+              ai_synthetic_disclosure: aiSyntheticDisclosure,
+              ai_crawler_directives: crawlerDirectives,
+              ai_act_compliance_status: aiActStatus,
+              issues: aiIssues
+            },
             message: cookies.length > 0
               ? `Found ${cookies.length} real cookies/trackers on ${parsedUrl.hostname} (${detectedScripts.length} tracking scripts detected).`
               : `Scan complete: No cookies or third-party trackers detected on ${parsedUrl.hostname}.`
@@ -348,30 +719,11 @@ export async function scanWebsiteRealTrackers(targetUrlInput: string): Promise<R
 
     req.on('timeout', () => {
       req.destroy();
-      resolve({
-        success: false,
-        reachable: false,
-        scanned_url: cleanUrl,
-        total_cookies_found: 0,
-        cookie_inventory: [],
-        scripts_detected: [],
-        headers_analyzed: false,
-        message: `Connection to ${parsedUrl.hostname} timed out after 8 seconds.`
-      });
+      resolve(createFailureResult(cleanUrl, `Connection to ${parsedUrl.hostname} timed out after 8 seconds.`));
     });
 
     req.on('error', (err: any) => {
-      resolve({
-        success: false,
-        reachable: false,
-        scanned_url: cleanUrl,
-        total_cookies_found: 0,
-        cookie_inventory: [],
-        scripts_detected: [],
-        headers_analyzed: false,
-        message: `Could not reach ${parsedUrl.hostname}: ${err.message}`,
-        error: err.message
-      });
+      resolve(createFailureResult(cleanUrl, `Could not reach ${parsedUrl.hostname}: ${err.message}`, err.message));
     });
   });
 }

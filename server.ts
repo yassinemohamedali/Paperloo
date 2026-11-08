@@ -700,12 +700,11 @@ async function handleMcpEndpoint(req: any, res: any) {
     }
 
     if (method === "tools/list") {
-      const tools = (params.full === true || params.all === true) ? MCP_TOOLS : CORE_3_TOOLS;
       return res.json({
         jsonrpc: "2.0",
         id,
         result: {
-          tools
+          tools: MCP_TOOLS
         }
       });
     }
